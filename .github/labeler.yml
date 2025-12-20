@@ -1,0 +1,28 @@
+# Labels for PR based on file paths
+backend:
+  - changed-files:
+      - any-glob-to-any-file: 'backend/**/*'
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/**/*'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: '**/*.md'
+
+configuration:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.yml'
+          - '**/*.yaml'
+          - '**/*.xml'
+          - '.github/**/*'
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/test/**/*'
+          - '**/*Test.java'
+          - '**/*.test.ts'
+          - '**/*.spec.ts'

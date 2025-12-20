@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Backend (H2)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="application" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.vetclinic.VetClinicApplication" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/backend/application" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

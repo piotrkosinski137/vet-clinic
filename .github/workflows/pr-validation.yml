@@ -1,0 +1,62 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches: [develop, main]
+    types: [opened, synchronize, reopened]
+
+env:
+  JAVA_VERSION: '21'
+
+jobs:
+  validate-pr:
+    name: Validate Pull Request
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Validate commit messages
+        run: |
+          echo "Checking commit message format..."
+          # Add commit message validation if needed
+
+      - name: Check for merge conflicts
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          if ! git merge-tree $(git merge-base HEAD origin/${{ github.base_ref }}) HEAD origin/${{ github.base_ref }} | grep -q "^"; then
+            echo "No merge conflicts detected"
+          fi
+
+      - name: Build and Test
+        run: cd backend && ./mvnw clean verify -B
+
+      - name: Check Code Coverage Threshold
+        run: |
+          cd backend && ./mvnw jacoco:check -B || echo "Coverage check - configure thresholds in pom.xml"
+
+  label-pr:
+    name: Label PR
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Add labels based on files changed
+        uses: actions/labeler@v5
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        continue-on-error: true

@@ -6,10 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-import com.vetclinic.patient.domain.model.Patient;
-import com.vetclinic.patient.domain.model.Species;
-import com.vetclinic.patient.domain.port.PatientRepository;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -21,11 +17,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.vetclinic.patient.domain.model.Patient;
+import com.vetclinic.patient.domain.model.Species;
+import com.vetclinic.patient.domain.port.PatientRepository;
+
 @ExtendWith(MockitoExtension.class)
 class PatientServiceTest {
 
-    @Mock
-    private PatientRepository patientRepository;
+    @Mock private PatientRepository patientRepository;
 
     private PatientService patientService;
 
@@ -77,10 +76,10 @@ class PatientServiceTest {
     @Test
     void shouldGetAllPatients() {
         // given
-        List<Patient> patients = List.of(
-                createPatient("Buddy", Species.DOG),
-                createPatient("Whiskers", Species.CAT)
-        );
+        List<Patient> patients =
+                List.of(
+                        createPatient("Buddy", Species.DOG),
+                        createPatient("Whiskers", Species.CAT));
         given(patientRepository.findAll()).willReturn(patients);
 
         // when

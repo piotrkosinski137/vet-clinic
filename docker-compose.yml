@@ -18,5 +18,58 @@ services:
       timeout: 5s
       retries: 5
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: vetclinic-keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_DB: dev-file
+      KC_HOSTNAME: localhost
+      KC_HTTP_PORT: 8180
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8180:8180"
+    volumes:
+      - ./docker/keycloak:/opt/keycloak/data/import
+      - keycloak_data:/opt/keycloak/data
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8180;echo -e 'GET /health/ready HTTP/1.1\\r\\nhost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3;if [ $? -eq 0 ]; then echo 'Healthcheck Successful';exit 0;else echo 'Healthcheck Failed';exit 1;fi;"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Backend service (build from local Dockerfile)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vetclinic-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vetclinic
+      SPRING_DATASOURCE_USERNAME: vetclinic
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-vetclinic}
+      KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/vetclinic
+      KEYCLOAK_JWK_URI: http://keycloak:8180/realms/vetclinic/protocol/openid-connect/certs
+      KEYCLOAK_URL: http://keycloak:8180
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+      start_period: 60s
+    profiles:
+      - full  # Only start with: docker-compose --profile full up
+
 volumes:
   postgres_data:
+  keycloak_data:

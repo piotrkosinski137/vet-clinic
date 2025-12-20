@@ -10,16 +10,28 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:create-drop}
+      ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
         format_sql: true
 
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
   h2:
     console:
       enabled: ${H2_CONSOLE_ENABLED:true}
       path: /h2-console
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/vetclinic}
+          jwk-set-uri: ${KEYCLOAK_JWK_URI:http://localhost:8180/realms/vetclinic/protocol/openid-connect/certs}
 
 server:
   port: ${SERVER_PORT:8080}
@@ -42,6 +54,13 @@ springdoc:
     operationsSorter: method
     tagsSorter: alpha
 
+# Keycloak configuration for token endpoint
+keycloak:
+  auth-server-url: ${KEYCLOAK_URL:http://localhost:8180}
+  realm: vetclinic
+  client-id: vetclinic-app
+  client-secret: vetclinic-secret
+
 logging:
   level:
     com.vetclinic: DEBUG
@@ -62,11 +81,21 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
 
   h2:
     console:
       enabled: false
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8180/realms/vetclinic
+          jwk-set-uri: http://keycloak:8180/realms/vetclinic/protocol/openid-connect/certs
+
+keycloak:
+  auth-server-url: http://keycloak:8180
 
 ---
 # PostgreSQL profile (for local dev with Docker DB)
@@ -83,7 +112,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
 
   h2:
     console:

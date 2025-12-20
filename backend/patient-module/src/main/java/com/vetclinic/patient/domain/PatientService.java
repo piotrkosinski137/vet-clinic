@@ -1,15 +1,15 @@
 package com.vetclinic.patient.domain;
 
-import com.vetclinic.patient.domain.model.Patient;
-import com.vetclinic.patient.domain.port.PatientRepository;
-
 import java.util.List;
 import java.util.UUID;
 
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.vetclinic.patient.domain.model.Patient;
+import com.vetclinic.patient.domain.port.PatientRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -24,8 +24,7 @@ public class PatientService {
     }
 
     public Patient getPatient(UUID id) {
-        return patientRepository.findById(id)
-                .orElseThrow(() -> new PatientNotFoundException(id));
+        return patientRepository.findById(id).orElseThrow(() -> new PatientNotFoundException(id));
     }
 
     public List<Patient> getAllPatients() {

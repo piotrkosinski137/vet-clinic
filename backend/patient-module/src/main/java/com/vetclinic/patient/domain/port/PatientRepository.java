@@ -1,14 +1,13 @@
 package com.vetclinic.patient.domain.port;
 
-import com.vetclinic.patient.domain.model.Patient;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.vetclinic.patient.domain.model.Patient;
+
 /**
- * Port for patient persistence operations.
- * This interface is implemented by infrastructure layer.
+ * Port for patient persistence operations. This interface is implemented by infrastructure layer.
  */
 public interface PatientRepository {
 

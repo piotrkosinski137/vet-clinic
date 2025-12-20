@@ -7,5 +7,4 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @Configuration
 @ComponentScan(basePackages = "com.vetclinic.client")
 @EnableJpaRepositories(basePackages = "com.vetclinic.client.infrastructure.persistence")
-public class ClientModuleConfig {
-}
+public class ClientModuleConfig {}

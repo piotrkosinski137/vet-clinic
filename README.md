@@ -7,23 +7,86 @@ A modular monolithic veterinary clinic management system built with Java 21, Spr
 - Java 21 (JDK)
 - Maven 3.9+
 - Docker & Docker Compose
-- Node.js 20+ (for frontend - coming soon)
+- Node.js 20+
 
-## Quick Start
+## Quick Start (Full Stack with Auth)
+
+### 1. Start Keycloak & PostgreSQL
+
+```bash
+docker-compose up -d
+```
+
+Wait ~30 seconds for Keycloak to start.
+
+### 2. Start Backend
+
+```bash
+cd backend
+mvn spring-boot:run -pl application
+```
+
+### 3. Start Frontend (new terminal)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### 4. Access
+
+- **Frontend**: http://localhost:3000
+- **Keycloak Admin**: http://localhost:8180 (admin/admin)
+- **Swagger UI**: http://localhost:8080/swagger-ui.html
+
+### 5. Login
+
+- **Username**: `user`
+- **Password**: `user`
+
+## Authentication
+
+### Keycloak Setup
+
+Keycloak is pre-configured with:
+- **Realm**: `vetclinic`
+- **Users**: `user/user` and `admin/admin`
+- **Token lifetime**: 30 days (for easy testing)
+
+### Get Token for API Testing
+
+```bash
+# Get token
+curl -X POST http://localhost:8080/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{"username": "user", "password": "user"}'
+
+# Use token in requests
+curl http://localhost:8080/api/v1/patients \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+### Direct Keycloak Token (alternative)
+
+```bash
+curl -X POST http://localhost:8180/realms/vetclinic/protocol/openid-connect/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "client_id=vetclinic-app" \
+  -d "client_secret=vetclinic-secret" \
+  -d "username=user" \
+  -d "password=user"
+```
+
+## Backend Only
 
 ### Option 1: Run with H2 (In-Memory Database)
-
-No setup required - just run:
 
 ```bash
 cd backend
 ./mvnw spring-boot:run -pl application
 ```
-
-Access:
-- API: http://localhost:8080
-- Swagger UI: http://localhost:8080/swagger-ui.html
-- H2 Console: http://localhost:8080/h2-console
 
 ### Option 2: Run with PostgreSQL (Docker)
 
@@ -102,6 +165,21 @@ cd backend
 ./mvnw verify -Pci
 ```
 
+## API Client Generation
+
+The frontend uses **OpenAPI Generator** to auto-generate TypeScript API client from the backend's OpenAPI spec. This keeps frontend/backend types in sync.
+
+```bash
+# 1. Backend must be running
+cd backend && mvn spring-boot:run -pl application
+
+# 2. Generate API client (new terminal)
+cd frontend
+npm run api:generate
+```
+
+This creates typed client in `frontend/src/api/generated/`. Regenerate after backend API changes.
+
 ## Project Structure
 
 ```
@@ -109,6 +187,14 @@ vet-clinic/
 ├── docker-compose.yml          # PostgreSQL for development
 ├── README.md
 ├── Makefile                    # Common commands
+│
+├── frontend/                   # React + TypeScript + Vite
+│   ├── src/
+│   │   ├── api/                # API client (manual + generated)
+│   │   ├── pages/              # Page components
+│   │   └── hooks/              # Custom hooks
+│   ├── openapitools.json       # OpenAPI Generator config
+│   └── package.json
 │
 └── backend/
     ├── pom.xml                 # Parent POM
@@ -180,10 +266,20 @@ Modules are isolated using **ArchUnit tests** that enforce:
 
 ## Example Requests
 
+All API requests require authentication. Get a token first:
+
+```bash
+# Get token and extract access_token
+TOKEN=$(curl -s -X POST http://localhost:8080/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{"username": "user", "password": "user"}' | jq -r '.access_token')
+```
+
 ### Create a Client
 ```bash
 curl -X POST http://localhost:8080/api/v1/clients \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "firstName": "John",
     "lastName": "Doe",
@@ -196,6 +292,7 @@ curl -X POST http://localhost:8080/api/v1/clients \
 ```bash
 curl -X POST http://localhost:8080/api/v1/patients \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "name": "Buddy",
     "species": "DOG",

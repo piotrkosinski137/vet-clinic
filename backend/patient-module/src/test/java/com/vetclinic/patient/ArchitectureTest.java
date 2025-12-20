@@ -11,67 +11,92 @@ import com.tngtech.archunit.lang.ArchRule;
 
 @AnalyzeClasses(
         packages = "com.vetclinic.patient",
-        importOptions = ImportOption.DoNotIncludeTests.class
-)
+        importOptions = ImportOption.DoNotIncludeTests.class)
+@SuppressWarnings({
+    "checkstyle:HideUtilityClassConstructor",
+    "checkstyle:ConstantName"
+}) // ArchUnit test naming convention uses snake_case for readability
 class ArchitectureTest {
 
     @ArchTest
     static final ArchRule layered_architecture_is_respected =
             layeredArchitecture()
                     .consideringAllDependencies()
-                    .layer("API").definedBy("..api..")
-                    .layer("Domain").definedBy("..domain..")
-                    .layer("Infrastructure").definedBy("..infrastructure..")
-                    .whereLayer("API").mayNotBeAccessedByAnyLayer()
-                    .whereLayer("Infrastructure").mayNotBeAccessedByAnyLayer()
-                    .whereLayer("Domain").mayOnlyBeAccessedByLayers("API", "Infrastructure");
+                    .layer("API")
+                    .definedBy("..api..")
+                    .layer("Domain")
+                    .definedBy("..domain..")
+                    .layer("Infrastructure")
+                    .definedBy("..infrastructure..")
+                    .whereLayer("API")
+                    .mayNotBeAccessedByAnyLayer()
+                    .whereLayer("Infrastructure")
+                    .mayNotBeAccessedByAnyLayer()
+                    .whereLayer("Domain")
+                    .mayOnlyBeAccessedByLayers("API", "Infrastructure");
 
     @ArchTest
     static final ArchRule domain_should_not_depend_on_infrastructure =
             noClasses()
-                    .that().resideInAPackage("..domain..")
-                    .should().dependOnClassesThat()
+                    .that()
+                    .resideInAPackage("..domain..")
+                    .should()
+                    .dependOnClassesThat()
                     .resideInAPackage("..infrastructure..");
 
     @ArchTest
     static final ArchRule domain_should_not_depend_on_api =
             noClasses()
-                    .that().resideInAPackage("..domain..")
-                    .should().dependOnClassesThat()
+                    .that()
+                    .resideInAPackage("..domain..")
+                    .should()
+                    .dependOnClassesThat()
                     .resideInAPackage("..api..");
 
     @ArchTest
     static final ArchRule domain_should_not_use_spring_annotations =
             noClasses()
-                    .that().resideInAPackage("..domain.model..")
-                    .should().dependOnClassesThat()
+                    .that()
+                    .resideInAPackage("..domain.model..")
+                    .should()
+                    .dependOnClassesThat()
                     .resideInAPackage("org.springframework..")
-                    .because("Domain models should be framework-agnostic (except for JPA annotations)");
+                    .because(
+                            "Domain models should be framework-agnostic (except for JPA annotations)");
 
     @ArchTest
     static final ArchRule controllers_should_be_in_api_package =
             classes()
-                    .that().haveSimpleNameEndingWith("Controller")
-                    .should().resideInAPackage("..api..");
+                    .that()
+                    .haveSimpleNameEndingWith("Controller")
+                    .should()
+                    .resideInAPackage("..api..");
 
     @ArchTest
     static final ArchRule services_should_be_in_domain_package =
             classes()
-                    .that().haveSimpleNameEndingWith("Service")
-                    .and().areNotInterfaces()
-                    .should().resideInAPackage("..domain..");
+                    .that()
+                    .haveSimpleNameEndingWith("Service")
+                    .and()
+                    .areNotInterfaces()
+                    .should()
+                    .resideInAPackage("..domain..");
 
     @ArchTest
     static final ArchRule repositories_should_be_in_infrastructure_or_domain_port =
             classes()
-                    .that().haveSimpleNameEndingWith("Repository")
-                    .should().resideInAnyPackage("..infrastructure..", "..domain.port..");
+                    .that()
+                    .haveSimpleNameEndingWith("Repository")
+                    .should()
+                    .resideInAnyPackage("..infrastructure..", "..domain.port..");
 
     @ArchTest
     static final ArchRule patient_module_should_not_depend_on_client_module =
             noClasses()
-                    .that().resideInAPackage("com.vetclinic.patient..")
-                    .should().dependOnClassesThat()
+                    .that()
+                    .resideInAPackage("com.vetclinic.patient..")
+                    .should()
+                    .dependOnClassesThat()
                     .resideInAPackage("com.vetclinic.client..")
                     .because("Modules should not have direct dependencies on each other");
 }

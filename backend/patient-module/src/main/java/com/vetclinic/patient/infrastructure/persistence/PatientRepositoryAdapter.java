@@ -1,15 +1,15 @@
 package com.vetclinic.patient.infrastructure.persistence;
 
-import com.vetclinic.patient.domain.model.Patient;
-import com.vetclinic.patient.domain.port.PatientRepository;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Repository;
+
+import com.vetclinic.patient.domain.model.Patient;
+import com.vetclinic.patient.domain.port.PatientRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor

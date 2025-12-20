@@ -1,10 +1,10 @@
 package com.vetclinic.patient.api.dto;
 
-import com.vetclinic.patient.domain.model.Species;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+
+import com.vetclinic.patient.domain.model.Species;
 
 import lombok.Builder;
 import lombok.Value;

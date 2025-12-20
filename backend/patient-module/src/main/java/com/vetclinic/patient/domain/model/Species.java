@@ -1,8 +1,6 @@
 package com.vetclinic.patient.domain.model;
 
-/**
- * Supported animal species.
- */
+/** Supported animal species. */
 public enum Species {
     DOG,
     CAT,

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Exclude EI_EXPOSE_REP2 for Spring dependency injection - storing injected dependencies is standard practice -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Or>
+            <!-- Controllers with injected services -->
+            <Class name="~.*Controller"/>
+            <!-- Services with injected repositories -->
+            <Class name="~.*Service"/>
+        </Or>
+    </Match>
+
+    <!-- Generated code like MapStruct mappers -->
+    <Match>
+        <Class name="~.*MapperImpl"/>
+    </Match>
+</FindBugsFilter>

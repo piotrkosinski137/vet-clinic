@@ -55,3 +55,7 @@ coverage/
 # Test results
 test-results/
 surefire-reports/
+
+# Windows reserved names
+nul
+NUL

@@ -93,9 +93,4 @@
         <module name="SuppressionCommentFilter"/>
     </module>
 
-    <!-- Suppress checks for test files -->
-    <module name="SuppressionFilter">
-        <property name="file" value="${config_loc}/checkstyle-suppressions.xml" default=""/>
-        <property name="optional" value="true"/>
-    </module>
 </module>

@@ -1,6 +1,7 @@
 package com.vetclinic.patient.domain.model;
 
-import com.vetclinic.common.domain.BaseEntity;
+import java.time.LocalDate;
+import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -8,8 +9,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
-import java.time.LocalDate;
-import java.util.UUID;
+import com.vetclinic.common.domain.BaseEntity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

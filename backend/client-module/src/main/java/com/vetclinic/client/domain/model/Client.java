@@ -1,10 +1,10 @@
 package com.vetclinic.client.domain.model;
 
-import com.vetclinic.common.domain.BaseEntity;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+
+import com.vetclinic.common.domain.BaseEntity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

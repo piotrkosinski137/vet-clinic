@@ -1,15 +1,15 @@
 package com.vetclinic.client.domain;
 
-import com.vetclinic.client.domain.model.Client;
-import com.vetclinic.client.domain.port.ClientRepository;
-
 import java.util.List;
 import java.util.UUID;
 
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.vetclinic.client.domain.model.Client;
+import com.vetclinic.client.domain.port.ClientRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +27,7 @@ public class ClientService {
     }
 
     public Client getClient(UUID id) {
-        return clientRepository.findById(id)
-                .orElseThrow(() -> new ClientNotFoundException(id));
+        return clientRepository.findById(id).orElseThrow(() -> new ClientNotFoundException(id));
     }
 
     public List<Client> getAllClients() {

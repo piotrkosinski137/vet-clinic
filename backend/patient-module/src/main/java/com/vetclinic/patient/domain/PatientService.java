@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.vetclinic.common.exception.ResourceNotFoundException;
 import com.vetclinic.patient.domain.model.Patient;
 import com.vetclinic.patient.domain.port.PatientRepository;
 
@@ -24,7 +25,9 @@ public class PatientService {
     }
 
     public Patient getPatient(UUID id) {
-        return patientRepository.findById(id).orElseThrow(() -> new PatientNotFoundException(id));
+        return patientRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", id));
     }
 
     public List<Patient> getAllPatients() {
@@ -50,7 +53,7 @@ public class PatientService {
     @Transactional
     public void deletePatient(UUID id) {
         if (!patientRepository.existsById(id)) {
-            throw new PatientNotFoundException(id);
+            throw new ResourceNotFoundException("Patient", id);
         }
         patientRepository.deleteById(id);
     }

@@ -2,7 +2,6 @@ package com.vetclinic.config;
 
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -28,18 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AuthController {
 
-    @Value("${keycloak.auth-server-url:http://localhost:8180}")
-    private String keycloakUrl;
-
-    @Value("${keycloak.realm:vetclinic}")
-    private String realm;
-
-    @Value("${keycloak.client-id:vetclinic-app}")
-    private String clientId;
-
-    @Value("${keycloak.client-secret:vetclinic-secret}")
-    private String clientSecret;
-
+    private final KeycloakProperties keycloakProperties;
     private final RestTemplate restTemplate = new RestTemplate();
 
     /**
@@ -53,15 +41,17 @@ public class AuthController {
     @PostMapping("/token")
     public ResponseEntity<Map<String, Object>> getToken(@RequestBody TokenRequest request) {
         String tokenUrl =
-                String.format("%s/realms/%s/protocol/openid-connect/token", keycloakUrl, realm);
+                String.format(
+                        "%s/realms/%s/protocol/openid-connect/token",
+                        keycloakProperties.getAuthServerUrl(), keycloakProperties.getRealm());
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "password");
-        body.add("client_id", clientId);
-        body.add("client_secret", clientSecret);
+        body.add("client_id", keycloakProperties.getClientId());
+        body.add("client_secret", keycloakProperties.getClientSecret());
         body.add("username", request.username());
         body.add("password", request.password());
 

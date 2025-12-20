@@ -22,6 +22,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import com.vetclinic.client.domain.ClientNotFoundException;
 import com.vetclinic.client.domain.EmailAlreadyExistsException;
 import com.vetclinic.common.api.ApiError;
+import com.vetclinic.common.exception.BusinessException;
 import com.vetclinic.patient.domain.PatientNotFoundException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,30 @@ import lombok.extern.slf4j.Slf4j;
 public class GlobalExceptionHandler {
 
     private static final MediaType PROBLEM_JSON = MediaType.valueOf("application/problem+json");
+
+    /**
+     * Handles all BusinessException subclasses with their error code and HTTP status.
+     *
+     * <p>This handler automatically extracts error code, HTTP status, and context data from the
+     * exception. This is the generic handler that works with all custom business exceptions.
+     */
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiError> handleBusinessException(
+            BusinessException ex, HttpServletRequest request) {
+        log.debug("Business exception: {} - {}", ex.getErrorCode(), ex.getMessage());
+
+        ApiError error =
+                new ApiError(
+                        "https://api.vetclinic.com/errors/" + ex.getErrorCode().toKebabCase(),
+                        ex.getErrorCode().name().replace('_', ' '),
+                        ex.getHttpStatus().value(),
+                        ex.getMessage(),
+                        request.getRequestURI(),
+                        Instant.now(),
+                        null);
+
+        return ResponseEntity.status(ex.getHttpStatus()).contentType(PROBLEM_JSON).body(error);
+    }
 
     @ExceptionHandler(PatientNotFoundException.class)
     public ResponseEntity<ApiError> handlePatientNotFound(

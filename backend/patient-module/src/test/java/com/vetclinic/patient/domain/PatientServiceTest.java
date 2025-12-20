@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.vetclinic.common.exception.ResourceNotFoundException;
 import com.vetclinic.patient.domain.model.Patient;
 import com.vetclinic.patient.domain.model.Species;
 import com.vetclinic.patient.domain.port.PatientRepository;
@@ -69,7 +70,7 @@ class PatientServiceTest {
 
         // when/then
         assertThatThrownBy(() -> patientService.getPatient(id))
-                .isInstanceOf(PatientNotFoundException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining(id.toString());
     }
 
@@ -124,7 +125,7 @@ class PatientServiceTest {
 
         // when/then
         assertThatThrownBy(() -> patientService.deletePatient(id))
-                .isInstanceOf(PatientNotFoundException.class);
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
     private Patient createPatient(String name, Species species) {

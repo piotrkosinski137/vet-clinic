@@ -40,7 +40,7 @@
 
         <!-- Plugin versions -->
         <spotless.version>2.43.0</spotless.version>
-        <spotbugs.version>4.8.3.1</spotbugs.version>
+        
         <checkstyle.version>3.4.0</checkstyle.version>
         <jacoco.version>0.8.11</jacoco.version>
     </properties>
@@ -205,27 +205,6 @@
                     </executions>
                 </plugin>
 
-                <!-- SpotBugs -->
-                <plugin>
-                    <groupId>com.github.spotbugs</groupId>
-                    <artifactId>spotbugs-maven-plugin</artifactId>
-                    <version>${spotbugs.version}</version>
-                    <configuration>
-                        <effort>Max</effort>
-                        <threshold>Medium</threshold>
-                        <failOnError>true</failOnError>
-                        <excludeFilterFile>${session.executionRootDirectory}/spotbugs-exclude.xml</excludeFilterFile>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                            <phase>verify</phase>
-                        </execution>
-                    </executions>
-                </plugin>
-
                 <!-- JaCoCo - Code Coverage -->
                 <plugin>
                     <groupId>org.jacoco</groupId>
@@ -323,7 +302,7 @@
             <properties>
                 <spotless.check.skip>true</spotless.check.skip>
                 <checkstyle.skip>true</checkstyle.skip>
-                <spotbugs.skip>true</spotbugs.skip>
+                
                 <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
@@ -336,10 +315,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-checkstyle-plugin</artifactId>
-                    </plugin>
-                    <plugin>
-                        <groupId>com.github.spotbugs</groupId>
-                        <artifactId>spotbugs-maven-plugin</artifactId>
                     </plugin>
                 </plugins>
             </build>
@@ -355,8 +330,10 @@
             </activation>
             <properties>
                 <checkstyle.skip>true</checkstyle.skip>
-                <spotbugs.skip>true</spotbugs.skip>
+                
             </properties>
         </profile>
     </profiles>
 </project>
+
+

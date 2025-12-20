@@ -1,5 +1,6 @@
 package com.vetclinic.config;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -21,10 +22,15 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import lombok.RequiredArgsConstructor;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final CorsProperties corsProperties;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -73,11 +79,34 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
+
+        // Parse comma-separated origins
+        List<String> origins = new ArrayList<>();
+        for (String origin : corsProperties.getAllowedOrigins().split(",")) {
+            origins.add(origin.trim());
+        }
+        configuration.setAllowedOrigins(origins);
+
+        // Parse comma-separated methods
+        List<String> methods = new ArrayList<>();
+        for (String method : corsProperties.getAllowedMethods().split(",")) {
+            methods.add(method.trim());
+        }
+        configuration.setAllowedMethods(methods);
+
+        // Parse comma-separated headers (or use wildcard)
+        if ("*".equals(corsProperties.getAllowedHeaders().trim())) {
+            configuration.setAllowedHeaders(List.of("*"));
+        } else {
+            List<String> headers = new ArrayList<>();
+            for (String header : corsProperties.getAllowedHeaders().split(",")) {
+                headers.add(header.trim());
+            }
+            configuration.setAllowedHeaders(headers);
+        }
+
+        configuration.setAllowCredentials(corsProperties.getAllowCredentials());
+        configuration.setMaxAge(corsProperties.getMaxAge());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

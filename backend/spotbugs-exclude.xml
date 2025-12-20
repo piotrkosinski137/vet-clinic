@@ -11,6 +11,12 @@
         </Or>
     </Match>
 
+    <!-- Records that use List.copyOf() in compact constructor - already immutable -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+        <Class name="com.vetclinic.common.api.ApiError"/>
+    </Match>
+
     <!-- Generated code like MapStruct mappers -->
     <Match>
         <Class name="~.*MapperImpl"/>

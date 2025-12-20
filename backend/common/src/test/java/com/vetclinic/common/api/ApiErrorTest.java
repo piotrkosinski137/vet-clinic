@@ -14,39 +14,34 @@ class ApiErrorTest {
         Instant now = Instant.now();
 
         ApiError error =
-                ApiError.builder()
-                        .type("https://api.vetclinic.com/errors/validation")
-                        .title("Validation Error")
-                        .status(400)
-                        .detail("One or more fields failed validation")
-                        .instance("/api/v1/patients")
-                        .timestamp(now)
-                        .errors(
-                                List.of(
-                                        ApiError.FieldError.builder()
-                                                .field("name")
-                                                .message("must not be blank")
-                                                .rejectedValue("")
-                                                .build()))
-                        .build();
+                new ApiError(
+                        "https://api.vetclinic.com/errors/validation",
+                        "Validation Error",
+                        400,
+                        "One or more fields failed validation",
+                        "/api/v1/patients",
+                        now,
+                        List.of(new ApiError.FieldError("name", "must not be blank", "")));
 
-        assertThat(error.getStatus()).isEqualTo(400);
-        assertThat(error.getTitle()).isEqualTo("Validation Error");
-        assertThat(error.getErrors()).hasSize(1);
-        assertThat(error.getErrors().get(0).getField()).isEqualTo("name");
+        assertThat(error.status()).isEqualTo(400);
+        assertThat(error.title()).isEqualTo("Validation Error");
+        assertThat(error.errors()).hasSize(1);
+        assertThat(error.errors().get(0).field()).isEqualTo("name");
     }
 
     @Test
     void shouldBuildApiErrorWithoutFieldErrors() {
         ApiError error =
-                ApiError.builder()
-                        .type("https://api.vetclinic.com/errors/not-found")
-                        .title("Not Found")
-                        .status(404)
-                        .detail("Patient with ID 123 not found")
-                        .build();
+                new ApiError(
+                        "https://api.vetclinic.com/errors/not-found",
+                        "Not Found",
+                        404,
+                        "Patient with ID 123 not found",
+                        null,
+                        null,
+                        null);
 
-        assertThat(error.getStatus()).isEqualTo(404);
-        assertThat(error.getErrors()).isEmpty();
+        assertThat(error.status()).isEqualTo(404);
+        assertThat(error.errors()).isEmpty();
     }
 }

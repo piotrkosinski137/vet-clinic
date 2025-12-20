@@ -57,7 +57,12 @@
         <module name="ParenPad"/>
         <module name="TypecastParenPad"/>
         <module name="WhitespaceAfter"/>
-        <module name="WhitespaceAround"/>
+        <module name="WhitespaceAround">
+            <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+            <property name="allowEmptyTypes" value="true"/>
+            <property name="allowEmptyLambdas" value="true"/>
+        </module>
 
         <!-- Modifiers -->
         <module name="ModifierOrder"/>
@@ -91,6 +96,12 @@
 
         <!-- Suppress warnings for generated code -->
         <module name="SuppressionCommentFilter"/>
+
+        <!-- Enable @SuppressWarnings annotation support -->
+        <module name="SuppressWarningsHolder"/>
     </module>
+
+    <!-- Enable @SuppressWarnings for checkstyle rules -->
+    <module name="SuppressWarningsFilter"/>
 
 </module>

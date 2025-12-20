@@ -66,23 +66,21 @@ public class GlobalExceptionHandler {
                 ex.getBindingResult().getFieldErrors().stream()
                         .map(
                                 error ->
-                                        ApiError.FieldError.builder()
-                                                .field(error.getField())
-                                                .message(error.getDefaultMessage())
-                                                .rejectedValue(error.getRejectedValue())
-                                                .build())
+                                        new ApiError.FieldError(
+                                                error.getField(),
+                                                error.getDefaultMessage(),
+                                                error.getRejectedValue()))
                         .toList();
 
         ApiError error =
-                ApiError.builder()
-                        .type("https://api.vetclinic.com/errors/validation")
-                        .title("Validation Error")
-                        .status(HttpStatus.BAD_REQUEST.value())
-                        .detail("One or more fields failed validation")
-                        .instance(request.getRequestURI())
-                        .timestamp(Instant.now())
-                        .errors(fieldErrors)
-                        .build();
+                new ApiError(
+                        "https://api.vetclinic.com/errors/validation",
+                        "Validation Error",
+                        HttpStatus.BAD_REQUEST.value(),
+                        "One or more fields failed validation",
+                        request.getRequestURI(),
+                        Instant.now(),
+                        fieldErrors);
 
         return ResponseEntity.badRequest().contentType(PROBLEM_JSON).body(error);
     }
@@ -181,14 +179,14 @@ public class GlobalExceptionHandler {
     private ResponseEntity<ApiError> buildErrorResponse(
             HttpStatus status, String title, String detail, String instance) {
         ApiError error =
-                ApiError.builder()
-                        .type("https://api.vetclinic.com/errors/" + status.name().toLowerCase())
-                        .title(title)
-                        .status(status.value())
-                        .detail(detail)
-                        .instance(instance)
-                        .timestamp(Instant.now())
-                        .build();
+                new ApiError(
+                        "https://api.vetclinic.com/errors/" + status.name().toLowerCase(),
+                        title,
+                        status.value(),
+                        detail,
+                        instance,
+                        Instant.now(),
+                        null);
 
         return ResponseEntity.status(status).contentType(PROBLEM_JSON).body(error);
     }

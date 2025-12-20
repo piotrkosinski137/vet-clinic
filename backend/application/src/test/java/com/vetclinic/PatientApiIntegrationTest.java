@@ -13,11 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,20 +21,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.vetclinic.config.TestSecurityConfig;
-
 /**
- * Integration tests for Patient API. Uses TestSecurityConfig to disable OAuth2/Keycloak
- * authentication, allowing tests to focus on business logic.
+ * Integration tests for Patient API. Extends AbstractIntegrationTest to use a real PostgreSQL
+ * database via Testcontainers, and TestSecurityConfig to disable OAuth2/Keycloak authentication.
  *
  * <p>Each test runs in a transaction that is rolled back after completion, ensuring test isolation.
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
-@Import(TestSecurityConfig.class)
 @Transactional
-class PatientApiIntegrationTest {
+class PatientApiIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired private MockMvc mockMvc;
 

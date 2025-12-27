@@ -8,7 +8,6 @@ import {
   PatientResponse,
   VisitResponse,
   GdprConsentResponse,
-  Species,
   PatientLabel,
   api,
 } from '../api';
@@ -39,13 +38,7 @@ import {
   PAGINATION,
   UI,
 } from '../constants';
-import { formatDateTime, formatDate, formatTime } from '../utils';
-
-// Type guard for Species
-const isSpecies = (value: string): value is Species => {
-  const validSpecies: Species[] = ['DOG', 'CAT', 'BIRD', 'RABBIT', 'HAMSTER', 'FISH', 'REPTILE', 'OTHER'];
-  return validSpecies.includes(value as Species);
-};
+import { formatDateTime, formatDate, formatTime, isSpecies } from '../utils';
 
 export function ClientsPage() {
   const navigate = useNavigate();

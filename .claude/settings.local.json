@@ -101,7 +101,9 @@
       "Bash(git commit:*)",
       "Bash(bash test-endpoints.sh:*)",
       "Bash(timeout 90 ./mvnw spring-boot:run:*)",
-      "Bash(timeout 120 ./mvnw spring-boot:run:*)"
+      "Bash(timeout 120 ./mvnw spring-boot:run:*)",
+      "Bash(bash:*)",
+      "Bash(./mvnw clean compile:*)"
     ]
   }
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePatients } from '../hooks';
-import { PatientRequest, PatientResponse, Species, PatientLabel, Gender } from '../api';
+import { PatientRequest, PatientResponse, PatientLabel } from '../api';
 import {
   Button,
   Card,
@@ -30,17 +30,7 @@ import {
   PAGINATION,
   getBreedsForSpecies,
 } from '../constants';
-
-// Type guards for form values
-const isSpecies = (value: string): value is Species => {
-  const validSpecies: Species[] = ['DOG', 'CAT', 'BIRD', 'RABBIT', 'HAMSTER', 'FISH', 'REPTILE', 'OTHER'];
-  return validSpecies.includes(value as Species);
-};
-
-const isGender = (value: string): value is Gender => {
-  const validGenders: Gender[] = ['MALE', 'FEMALE', 'UNKNOWN'];
-  return validGenders.includes(value as Gender);
-};
+import { isSpecies, isGender } from '../utils';
 
 export function PatientsPage() {
   const navigate = useNavigate();

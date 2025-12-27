@@ -41,6 +41,10 @@ public class ClientService {
         return clientRepository.findAll();
     }
 
+    public long countClients() {
+        return clientRepository.count();
+    }
+
     @Transactional
     public Client updateClient(UUID id, Client updated) {
         var existing = getClient(id);

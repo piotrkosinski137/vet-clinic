@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api/client';
 import type { PriceListItemResponse, PriceListFilters, ItemCategory } from '../api/types';
+import { CURRENCY } from '../constants/locale';
 
 interface UsePriceListResult {
   items: PriceListItemResponse[];
@@ -95,9 +96,9 @@ export const CATEGORY_LABELS: Record<ItemCategory, { label: string; icon: string
 };
 
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('pl-PL', {
+  return new Intl.NumberFormat(CURRENCY.LOCALE, {
     style: 'currency',
-    currency: 'PLN',
+    currency: CURRENCY.CODE,
   }).format(amount);
 }
 

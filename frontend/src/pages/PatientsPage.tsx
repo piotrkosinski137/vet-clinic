@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePatients } from '../hooks';
 import { PatientRequest, PatientResponse, Species, PatientLabel, Gender } from '../api';
@@ -73,21 +73,24 @@ export function PatientsPage() {
     setAvailableBreeds(getBreedsForSpecies(formData.species));
   }, [formData.species]);
 
-  // Filter patients by search
-  const filteredPatients = patients.filter((patient) => {
+  // Filter patients by search - memoized to avoid recalculating on every render
+  const filteredPatients = useMemo(() => {
     const query = searchQuery.toLowerCase();
-    return (
+    return patients.filter((patient) =>
       patient.name.toLowerCase().includes(query) ||
       patient.species.toLowerCase().includes(query) ||
       patient.breed?.toLowerCase().includes(query) ||
       patient.notes?.toLowerCase().includes(query)
     );
-  });
+  }, [patients, searchQuery]);
 
-  // Paginated patients
-  const paginatedPatients = filteredPatients.slice(
-    currentPage * PAGINATION.DEFAULT_PAGE_SIZE,
-    (currentPage + 1) * PAGINATION.DEFAULT_PAGE_SIZE
+  // Paginated patients - memoized for performance
+  const paginatedPatients = useMemo(() =>
+    filteredPatients.slice(
+      currentPage * PAGINATION.DEFAULT_PAGE_SIZE,
+      (currentPage + 1) * PAGINATION.DEFAULT_PAGE_SIZE
+    ),
+    [filteredPatients, currentPage]
   );
 
   // Reset page when search changes

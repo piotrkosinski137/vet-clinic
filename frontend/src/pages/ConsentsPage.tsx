@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { api } from '../api';
 import { useI18n } from '../i18n';
+import { getLocaleForLanguage } from '../constants/locale';
 import type { GdprConsentResponse, ConsentType, ConsentStatus, ClientResponse } from '../api/types';
 import {
   PageHeader,
@@ -38,7 +39,7 @@ const statusColors: Record<ConsentStatus, BadgeVariant> = {
 
 function formatDate(dateStr?: string, language?: string): string {
   if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US');
+  return new Date(dateStr).toLocaleDateString(getLocaleForLanguage(language || 'en'));
 }
 
 export function ConsentsPage() {

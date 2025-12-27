@@ -2,9 +2,11 @@ package com.vetclinic.patient.domain;
 
 import java.util.UUID;
 
-public class PatientNotFoundException extends RuntimeException {
+import com.vetclinic.common.exception.ResourceNotFoundException;
+
+public class PatientNotFoundException extends ResourceNotFoundException {
 
     public PatientNotFoundException(UUID id) {
-        super("Patient not found with id: " + id);
+        super("Patient", id);
     }
 }

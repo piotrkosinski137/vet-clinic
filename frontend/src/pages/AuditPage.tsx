@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useAuditLogs } from '../hooks';
 import { useI18n } from '../i18n';
+import { getLocaleForLanguage } from '../constants/locale';
 import {
   PageHeader,
   Card,
@@ -35,7 +36,7 @@ const actionColors: Record<AuditAction, BadgeVariant> = {
 
 function formatTimestamp(timestamp: string, language: string): string {
   const date = new Date(timestamp);
-  return date.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US', {
+  return date.toLocaleString(getLocaleForLanguage(language), {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

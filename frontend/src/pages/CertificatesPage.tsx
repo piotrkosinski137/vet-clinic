@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { api } from '../api';
 import { useI18n } from '../i18n';
+import { getLocaleForLanguage } from '../constants/locale';
 import type { VaccinationCertificateResponse, VaccinationCertificateRequest, CertificateType, PatientResponse, VeterinarianResponse, ClientResponse } from '../api/types';
 import {
   PageHeader,
@@ -30,7 +31,7 @@ const ITEMS_PER_PAGE = 15;
 
 function formatDate(dateStr?: string, language?: string): string {
   if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US');
+  return new Date(dateStr).toLocaleDateString(getLocaleForLanguage(language || 'en'));
 }
 
 function isExpiringSoon(dateStr?: string): boolean {

@@ -19,6 +19,9 @@ public interface PatientRepository {
 
     List<Patient> findAll();
 
+    /** Count total patients */
+    long count();
+
     List<Patient> findByOwnerId(UUID ownerId);
 
     void deleteById(UUID id);

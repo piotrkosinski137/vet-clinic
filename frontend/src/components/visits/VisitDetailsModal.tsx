@@ -57,7 +57,7 @@ import {
   ConfirmDialog,
 } from '../ui';
 import { MaterialsSelector } from '../materials';
-import { VISIT_TYPE_OPTIONS, getVisitTypeInfo } from '../../constants';
+import { VISIT_TYPE_OPTIONS, getVisitTypeInfo, LOCALE, DATE_FORMAT_OPTIONS } from '../../constants';
 import { getVisitStatusConfig } from '../../constants/visitStatus';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '../../theme';
 import { useI18n } from '../../i18n';
@@ -158,8 +158,8 @@ export function VisitDetailsModal({
   };
 
   const visitDate = new Date(visit.visitDate);
-  const formattedDate = visitDate.toLocaleDateString('pl-PL');
-  const formattedTime = visitDate.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+  const formattedDate = visitDate.toLocaleDateString(LOCALE.PL);
+  const formattedTime = visitDate.toLocaleTimeString(LOCALE.PL, DATE_FORMAT_OPTIONS.TIME_SHORT);
 
   return (
   <>

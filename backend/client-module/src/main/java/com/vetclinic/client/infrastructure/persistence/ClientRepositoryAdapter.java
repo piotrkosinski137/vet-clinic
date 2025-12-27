@@ -53,6 +53,11 @@ class ClientRepositoryAdapter implements ClientRepository {
     }
 
     @Override
+    public long count() {
+        return jpaRepository.count();
+    }
+
+    @Override
     public List<Client> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
             String firstName, String lastName) {
         return jpaRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(

@@ -45,9 +45,9 @@ public class DashboardController {
     public ResponseEntity<DashboardStatsResponse> getDashboardStats() {
         LocalDate today = LocalDate.now(clock);
 
-        // Get counts
-        long totalPatients = patientService.getAllPatients().size();
-        long totalClients = clientService.getAllClients().size();
+        // Get counts efficiently using count queries
+        long totalPatients = patientService.countPatients();
+        long totalClients = clientService.countClients();
 
         // Visits for today
         var visitsToday = visitService.getVisitsForDate(today);

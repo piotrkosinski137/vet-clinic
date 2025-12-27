@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 import org.keycloak.admin.client.Keycloak;
@@ -93,10 +95,17 @@ public class KeycloakAdminService {
         try {
             getUsersResource().get(userId).executeActionsEmail(List.of("UPDATE_PASSWORD"));
             log.info("Password reset email sent to: {}", email);
-        } catch (Exception e) {
+        } catch (WebApplicationException e) {
             log.warn(
-                    "Failed to send password reset email to {}. User may need manual password"
-                            + " reset.",
+                    "Failed to send password reset email to {} (HTTP {}). User may need manual"
+                            + " password reset.",
+                    email,
+                    e.getResponse().getStatus(),
+                    e);
+        } catch (ProcessingException e) {
+            log.warn(
+                    "Connection error sending password reset email to {}. User may need manual"
+                            + " password reset.",
                     email,
                     e);
         }
@@ -159,8 +168,16 @@ public class KeycloakAdminService {
                     return UUID.fromString(clinicIds.get(0));
                 }
             }
-        } catch (Exception e) {
-            log.warn("Failed to get clinic ID for user: {}", userId, e);
+        } catch (WebApplicationException e) {
+            log.warn(
+                    "Failed to get clinic ID for user {} (HTTP {})",
+                    userId,
+                    e.getResponse().getStatus(),
+                    e);
+        } catch (ProcessingException e) {
+            log.warn("Connection error getting clinic ID for user: {}", userId, e);
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid clinic ID format for user: {}", userId, e);
         }
         return null;
     }

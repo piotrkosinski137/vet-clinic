@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { api } from '../api';
 import { useI18n } from '../i18n';
+import { getLocaleForLanguage, CURRENCY } from '../constants/locale';
 import type { InvoiceResponse, InvoiceStatus, PaymentMethod, ClientResponse } from '../api/types';
 import {
   PageHeader,
@@ -39,11 +40,11 @@ const statusColors: Record<InvoiceStatus, BadgeVariant> = {
 
 function formatDate(dateStr?: string, language?: string): string {
   if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US');
+  return new Date(dateStr).toLocaleDateString(getLocaleForLanguage(language || 'en'));
 }
 
 function formatCurrency(amount: number, language?: string): string {
-  return new Intl.NumberFormat(language === 'pl' ? 'pl-PL' : 'en-US', { style: 'currency', currency: 'PLN' }).format(amount);
+  return new Intl.NumberFormat(getLocaleForLanguage(language || 'en'), { style: 'currency', currency: CURRENCY.CODE }).format(amount);
 }
 
 export function PaymentsPage() {

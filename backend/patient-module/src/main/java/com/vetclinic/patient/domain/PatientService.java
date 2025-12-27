@@ -1,6 +1,7 @@
 package com.vetclinic.patient.domain;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -42,6 +43,10 @@ public class PatientService {
 
     public List<Patient> getAllPatients() {
         return patientRepository.findAll();
+    }
+
+    public long countPatients() {
+        return patientRepository.count();
     }
 
     public List<Patient> getPatientsByOwner(UUID ownerId) {
@@ -135,6 +140,7 @@ public class PatientService {
 
     /** Search patients by multiple criteria */
     public List<Patient> searchPatients(PatientSearchCriteria criteria) {
+        Objects.requireNonNull(criteria, "Search criteria must not be null");
         if (!criteria.hasAnyCriteria()) {
             return patientRepository.findAll();
         }

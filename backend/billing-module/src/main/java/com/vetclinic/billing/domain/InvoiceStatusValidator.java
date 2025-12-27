@@ -24,9 +24,12 @@ public final class InvoiceStatusValidator {
      * invoices can receive payments.
      *
      * @param status the current invoice status
-     * @throws InvalidInvoiceStatusException if the status does not allow payment
+     * @throws InvalidInvoiceStatusException if the status is null or does not allow payment
      */
     public static void requirePayable(InvoiceStatus status) {
+        if (status == null) {
+            throw new InvalidInvoiceStatusException("Invoice status must not be null", null);
+        }
         if (!PAYABLE_STATUSES.contains(status)) {
             throw new InvalidInvoiceStatusException(
                     "Cannot record payment on invoice with status: " + status, status);

@@ -1,4 +1,5 @@
 import { DEFAULTS } from '../constants/defaults';
+import { CURRENCY } from '../constants/locale';
 
 /**
  * Truncates text to a maximum length with ellipsis.
@@ -17,9 +18,9 @@ export const truncateText = (
  */
 export const formatCurrency = (amount: number | null | undefined): string => {
   if (amount == null) return '0.00 PLN';
-  return new Intl.NumberFormat('pl-PL', {
+  return new Intl.NumberFormat(CURRENCY.LOCALE, {
     style: 'currency',
-    currency: 'PLN',
+    currency: CURRENCY.CODE,
   }).format(amount);
 };
 

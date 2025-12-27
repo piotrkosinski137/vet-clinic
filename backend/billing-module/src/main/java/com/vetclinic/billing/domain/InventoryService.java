@@ -18,6 +18,7 @@ import com.vetclinic.billing.domain.model.PriceListItem;
 import com.vetclinic.billing.domain.model.SupplierInvoice;
 import com.vetclinic.billing.domain.model.SupplierInvoiceItem;
 import com.vetclinic.billing.domain.model.SupplierInvoiceStatus;
+import com.vetclinic.billing.domain.model.TransactionRequest;
 import com.vetclinic.billing.domain.model.TransactionType;
 import com.vetclinic.billing.domain.model.UsedMaterial;
 import com.vetclinic.billing.domain.port.InventoryTransactionRepository;
@@ -166,17 +167,21 @@ public class InventoryService {
 
                 // Create RECEIPT transaction
                 createTransaction(
-                        priceListItem.getId(),
-                        TransactionType.RECEIPT,
-                        item.getQuantity(),
-                        quantityBefore,
-                        quantityAfter,
-                        invoiceId,
-                        "SUPPLIER_INVOICE",
-                        item.getBatchNumber(),
-                        item.getExpirationDate(),
-                        item.getNetPrice(),
-                        "Receipt from supplier invoice: " + invoice.getInvoiceNumber());
+                        TransactionRequest.builder()
+                                .itemId(priceListItem.getId())
+                                .type(TransactionType.RECEIPT)
+                                .quantity(item.getQuantity())
+                                .quantityBefore(quantityBefore)
+                                .quantityAfter(quantityAfter)
+                                .referenceId(invoiceId)
+                                .referenceType("SUPPLIER_INVOICE")
+                                .batchNumber(item.getBatchNumber())
+                                .expirationDate(item.getExpirationDate())
+                                .unitCost(item.getNetPrice())
+                                .notes(
+                                        "Receipt from supplier invoice: "
+                                                + invoice.getInvoiceNumber())
+                                .build());
             }
 
             // Update invoice status
@@ -246,17 +251,16 @@ public class InventoryService {
 
             // Create USAGE transaction
             createTransaction(
-                    item.getId(),
-                    TransactionType.USAGE,
-                    -material.getQuantity(),
-                    quantityBefore,
-                    quantityAfter,
-                    visitId,
-                    "VISIT",
-                    null,
-                    null,
-                    null,
-                    material.getNotes());
+                    TransactionRequest.builder()
+                            .itemId(item.getId())
+                            .type(TransactionType.USAGE)
+                            .quantity(-material.getQuantity())
+                            .quantityBefore(quantityBefore)
+                            .quantityAfter(quantityAfter)
+                            .referenceId(visitId)
+                            .referenceType("VISIT")
+                            .notes(material.getNotes())
+                            .build());
 
             log.info(
                     "Used {} x {} for visit {}, stock: {} -> {}",
@@ -296,17 +300,15 @@ public class InventoryService {
 
         // Create ADJUSTMENT transaction
         createTransaction(
-                itemId,
-                TransactionType.ADJUSTMENT,
-                newQuantity - quantityBefore,
-                quantityBefore,
-                newQuantity,
-                null,
-                "MANUAL",
-                null,
-                null,
-                null,
-                reason);
+                TransactionRequest.builder()
+                        .itemId(itemId)
+                        .type(TransactionType.ADJUSTMENT)
+                        .quantity(newQuantity - quantityBefore)
+                        .quantityBefore(quantityBefore)
+                        .quantityAfter(newQuantity)
+                        .referenceType("MANUAL")
+                        .notes(reason)
+                        .build());
 
         log.info(
                 "Stock adjusted for item {}: {} -> {}",
@@ -446,37 +448,25 @@ public class InventoryService {
                 .build();
     }
 
-    private void createTransaction(
-            UUID itemId,
-            TransactionType type,
-            int quantity,
-            int quantityBefore,
-            int quantityAfter,
-            UUID referenceId,
-            String referenceType,
-            String batchNumber,
-            java.time.LocalDate expirationDate,
-            java.math.BigDecimal unitCost,
-            String notes) {
-
+    private void createTransaction(TransactionRequest request) {
         PriceListItem item =
                 priceListRepository
-                        .findById(itemId)
-                        .orElseThrow(() -> new PriceListItemNotFoundException(itemId));
+                        .findById(request.itemId())
+                        .orElseThrow(() -> new PriceListItemNotFoundException(request.itemId()));
 
         InventoryTransaction transaction =
                 InventoryTransaction.builder()
-                        .itemId(itemId)
-                        .transactionType(type)
-                        .quantity(quantity)
-                        .quantityBefore(quantityBefore)
-                        .quantityAfter(quantityAfter)
-                        .referenceId(referenceId)
-                        .referenceType(referenceType)
-                        .batchNumber(batchNumber)
-                        .expirationDate(expirationDate)
-                        .unitCost(unitCost)
-                        .notes(notes)
+                        .itemId(request.itemId())
+                        .transactionType(request.type())
+                        .quantity(request.quantity())
+                        .quantityBefore(request.quantityBefore())
+                        .quantityAfter(request.quantityAfter())
+                        .referenceId(request.referenceId())
+                        .referenceType(request.referenceType())
+                        .batchNumber(request.batchNumber())
+                        .expirationDate(request.expirationDate())
+                        .unitCost(request.unitCost())
+                        .notes(request.notes())
                         .build();
 
         transactionRepository.save(transaction);

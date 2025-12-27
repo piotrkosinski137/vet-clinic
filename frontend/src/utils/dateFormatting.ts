@@ -1,9 +1,11 @@
+import { LOCALE, DATE_FORMAT_OPTIONS } from '../constants/locale';
+
 /**
  * Formats a date/time for display.
  */
 export const formatDateTime = (date: string | Date | null | undefined): string => {
   if (!date) return '';
-  return new Date(date).toLocaleString('pl-PL');
+  return new Date(date).toLocaleString(LOCALE.PL);
 };
 
 /**
@@ -11,7 +13,7 @@ export const formatDateTime = (date: string | Date | null | undefined): string =
  */
 export const formatDate = (date: string | Date | null | undefined): string => {
   if (!date) return '';
-  return new Date(date).toLocaleDateString('pl-PL');
+  return new Date(date).toLocaleDateString(LOCALE.PL);
 };
 
 /**
@@ -19,10 +21,7 @@ export const formatDate = (date: string | Date | null | undefined): string => {
  */
 export const formatTime = (date: string | Date | null | undefined): string => {
   if (!date) return '';
-  return new Date(date).toLocaleTimeString('pl-PL', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return new Date(date).toLocaleTimeString(LOCALE.PL, DATE_FORMAT_OPTIONS.TIME_SHORT);
 };
 
 /**

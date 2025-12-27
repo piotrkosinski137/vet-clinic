@@ -17,6 +17,9 @@ public interface ClientRepository {
 
     List<Client> findAll();
 
+    /** Count total clients */
+    long count();
+
     void deleteById(UUID id);
 
     boolean existsById(UUID id);

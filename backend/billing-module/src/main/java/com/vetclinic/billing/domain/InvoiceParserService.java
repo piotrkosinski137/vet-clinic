@@ -132,8 +132,14 @@ public class InvoiceParserService {
     private Optional<ParsedInvoiceItem> parseItemLineSafe(String line, int lineNumber) {
         try {
             return Optional.of(parseItemLine(line));
-        } catch (Exception e) {
-            log.error("Failed to parse item at line {}: {}", lineNumber, line, e);
+        } catch (NumberFormatException e) {
+            log.error("Invalid number format at line {}: {}", lineNumber, line, e);
+            return Optional.empty();
+        } catch (DateTimeParseException e) {
+            log.error("Invalid date format at line {}: {}", lineNumber, line, e);
+            return Optional.empty();
+        } catch (IndexOutOfBoundsException e) {
+            log.error("Insufficient fields at line {}: {}", lineNumber, line, e);
             return Optional.empty();
         }
     }

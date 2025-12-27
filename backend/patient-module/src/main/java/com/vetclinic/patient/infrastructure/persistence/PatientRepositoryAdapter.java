@@ -50,6 +50,11 @@ class PatientRepositoryAdapter implements PatientRepository {
     }
 
     @Override
+    public long count() {
+        return jpaRepository.count();
+    }
+
+    @Override
     public List<Patient> findByNameContainingIgnoreCase(String name) {
         return jpaRepository.findByNameContainingIgnoreCase(name);
     }

@@ -2,13 +2,15 @@ package com.vetclinic.client.domain;
 
 import java.util.UUID;
 
-public class ClientNotFoundException extends RuntimeException {
+import com.vetclinic.common.exception.ResourceNotFoundException;
+
+public class ClientNotFoundException extends ResourceNotFoundException {
 
     public ClientNotFoundException(UUID id) {
-        super("Client not found with id: " + id);
+        super("Client", id);
     }
 
     public ClientNotFoundException(String field, String value) {
-        super("Client not found with " + field + ": " + value);
+        super("Client", value, "lookup by " + field);
     }
 }

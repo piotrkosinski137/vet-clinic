@@ -5,3 +5,4 @@ export * from './animalConfigs';
 export * from './visitTypes';
 export * from './breeds';
 export * from './ui';
+export * from './locale';

@@ -23,11 +23,23 @@
     "realm": [
       {
         "name": "user",
-        "description": "Regular user role"
+        "description": "Basic user with read-only access"
       },
       {
         "name": "admin",
-        "description": "Administrator role"
+        "description": "Administrator with full system access"
+      },
+      {
+        "name": "vet",
+        "description": "Veterinarian - can manage patients, visits, and medical records"
+      },
+      {
+        "name": "receptionist",
+        "description": "Receptionist - can manage clients, appointments, and basic patient info"
+      },
+      {
+        "name": "accountant",
+        "description": "Accountant - can manage invoices, payments, and financial reports"
       }
     ]
   },
@@ -49,7 +61,23 @@
         "access.token.lifespan": "2592000",
         "client.session.idle.timeout": "2592000",
         "client.session.max.lifespan": "2592000"
-      }
+      },
+      "protocolMappers": [
+        {
+          "name": "clinic_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "clinic_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clinic_id",
+            "jsonType.label": "String"
+          }
+        }
+      ]
     },
     {
       "clientId": "vetclinic-frontend",
@@ -59,15 +87,31 @@
       "directAccessGrantsEnabled": true,
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
-      "redirectUris": ["http://localhost:3000/*"],
-      "webOrigins": ["http://localhost:3000"],
+      "redirectUris": ["http://localhost:3000/*", "http://localhost:3001/*"],
+      "webOrigins": ["http://localhost:3000", "http://localhost:3001"],
       "protocol": "openid-connect",
       "attributes": {
         "access.token.lifespan": "2592000",
         "client.session.idle.timeout": "2592000",
         "client.session.max.lifespan": "2592000",
         "pkce.code.challenge.method": "S256"
-      }
+      },
+      "protocolMappers": [
+        {
+          "name": "clinic_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "clinic_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clinic_id",
+            "jsonType.label": "String"
+          }
+        }
+      ]
     }
   ],
   "users": [
@@ -85,7 +129,10 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["user"]
+      "realmRoles": ["user"],
+      "attributes": {
+        "clinic_id": ["00000000-0000-0000-0000-000000000001"]
+      }
     },
     {
       "username": "admin",
@@ -101,7 +148,67 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["admin", "user"]
+      "realmRoles": ["admin", "vet", "receptionist", "accountant", "user"],
+      "attributes": {
+        "clinic_id": ["00000000-0000-0000-0000-000000000001"]
+      }
+    },
+    {
+      "username": "vet",
+      "email": "vet@vetclinic.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Doctor",
+      "lastName": "Smith",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "vet",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["vet", "user"],
+      "attributes": {
+        "clinic_id": ["00000000-0000-0000-0000-000000000001"]
+      }
+    },
+    {
+      "username": "receptionist",
+      "email": "receptionist@vetclinic.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "receptionist",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["receptionist", "user"],
+      "attributes": {
+        "clinic_id": ["00000000-0000-0000-0000-000000000001"]
+      }
+    },
+    {
+      "username": "accountant",
+      "email": "accountant@vetclinic.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Bob",
+      "lastName": "Numbers",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "accountant",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["accountant", "user"],
+      "attributes": {
+        "clinic_id": ["00000000-0000-0000-0000-000000000001"]
+      }
     }
   ]
 }

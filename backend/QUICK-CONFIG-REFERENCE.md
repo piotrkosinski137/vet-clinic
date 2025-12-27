@@ -38,14 +38,13 @@ SPRING_DATASOURCE_PASSWORD=your_password
 
 ## Run with Different Configurations
 
-### Development (default H2)
+### Development (Docker PostgreSQL)
 ```bash
-java -jar app.jar
-```
+# Start Docker containers first
+docker-compose up -d
 
-### Development with PostgreSQL
-```bash
-java -jar app.jar --spring.profiles.active=postgres
+# Run the application
+java -jar app.jar
 ```
 
 ### Docker Environment
@@ -101,7 +100,6 @@ cors:
 - [ ] Store `SPRING_DATASOURCE_PASSWORD` in secure vault
 - [ ] Set `CORS_ALLOWED_ORIGINS` to specific domain(s), not wildcards
 - [ ] Use HTTPS URLs for Keycloak
-- [ ] Disable H2 console (use `docker` or `postgres` profile)
 - [ ] Review all environment variables before deployment
 
 ## Documentation

@@ -7,4 +7,8 @@ public class ClientNotFoundException extends RuntimeException {
     public ClientNotFoundException(UUID id) {
         super("Client not found with id: " + id);
     }
+
+    public ClientNotFoundException(String field, String value) {
+        super("Client not found with " + field + ": " + value);
+    }
 }

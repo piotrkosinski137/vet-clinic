@@ -100,9 +100,8 @@ keycloak:
 ```
 
 **Extended All Profiles**:
-- Default (H2)
-- Docker (PostgreSQL + Keycloak)
-- Postgres (Local PostgreSQL)
+- Default (Docker PostgreSQL + Keycloak)
+- Docker (for running inside Docker network)
 
 ### 3. Updated Java Classes
 
@@ -191,14 +190,13 @@ java -jar app.jar --cors.allowed-origins=https://app.example.com
 
 ## Usage Examples
 
-### Development (Default H2 In-Memory)
+### Development (Docker PostgreSQL)
 ```bash
-java -jar vet-clinic.jar
-```
+# Start Docker containers first
+docker-compose up -d
 
-### Development with PostgreSQL
-```bash
-java -jar vet-clinic.jar --spring.profiles.active=postgres
+# Run the application
+java -jar vet-clinic.jar
 ```
 
 ### Docker Environment (Production-like)
@@ -263,9 +261,9 @@ spec:
    - Specific allowed origins (no wildcards in production)
    - Support for multiple domains
 
-4. **H2 Console**
-   - Enabled only in default profile (development)
-   - Disabled in docker and postgres profiles
+4. **Database**
+   - Always use PostgreSQL
+   - Tests use Testcontainers PostgreSQL for consistency
 
 ### Recommendations
 
@@ -279,7 +277,7 @@ spec:
    - Use separate Keycloak realm for staging
 
 3. **For Development**:
-   - Use H2 in-memory database for local testing
+   - Use Docker PostgreSQL for local development
    - Override configuration as needed with environment variables
 
 ---

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import lombok.RequiredArgsConstructor;
@@ -61,8 +62,8 @@ public class AuthController {
             @SuppressWarnings("unchecked")
             Map<String, Object> response = restTemplate.postForObject(tokenUrl, entity, Map.class);
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Failed to get token from Keycloak", e);
+        } catch (RestClientException e) {
+            log.error("Failed to get token from Keycloak: {}", e.getMessage());
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "authentication_failed", "message", e.getMessage()));
         }

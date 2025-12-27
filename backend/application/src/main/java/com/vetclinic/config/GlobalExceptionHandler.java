@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -23,7 +24,11 @@ import com.vetclinic.client.domain.ClientNotFoundException;
 import com.vetclinic.client.domain.EmailAlreadyExistsException;
 import com.vetclinic.common.api.ApiError;
 import com.vetclinic.common.exception.BusinessException;
+import com.vetclinic.common.tenant.TenantAccessDeniedException;
+import com.vetclinic.config.KeycloakAdminService.KeycloakUserCreationException;
 import com.vetclinic.patient.domain.PatientNotFoundException;
+import com.vetclinic.veterinarian.domain.VeterinarianEmailAlreadyExistsException;
+import com.vetclinic.visit.domain.AppointmentConflictException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -81,6 +86,63 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT,
                 "Email Already Exists",
                 ex.getMessage(),
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(AppointmentConflictException.class)
+    public ResponseEntity<ApiError> handleAppointmentConflict(
+            AppointmentConflictException ex, HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                "Appointment Conflict",
+                ex.getMessage(),
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(KeycloakUserCreationException.class)
+    public ResponseEntity<ApiError> handleKeycloakUserCreation(
+            KeycloakUserCreationException ex, HttpServletRequest request) {
+        log.warn("Keycloak user creation failed: {}", ex.getMessage());
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                "User Creation Failed",
+                ex.getMessage(),
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(VeterinarianEmailAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleVeterinarianEmailExists(
+            VeterinarianEmailAlreadyExistsException ex, HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                "Veterinarian Email Already Exists",
+                ex.getMessage(),
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(TenantAccessDeniedException.class)
+    public ResponseEntity<ApiError> handleTenantAccessDenied(
+            TenantAccessDeniedException ex, HttpServletRequest request) {
+        log.warn(
+                "Tenant access denied: {} attempted to access {} in clinic {}",
+                ex.getUserClinicId(),
+                ex.getResourceType(),
+                ex.getRequestedClinicId());
+        return buildErrorResponse(
+                HttpStatus.FORBIDDEN,
+                "Access Denied",
+                "You do not have permission to access this resource",
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(
+            AccessDeniedException ex, HttpServletRequest request) {
+        log.warn("Access denied: {}", ex.getMessage());
+        return buildErrorResponse(
+                HttpStatus.FORBIDDEN,
+                "Access Denied",
+                "You do not have the required role to perform this action",
                 request.getRequestURI());
     }
 

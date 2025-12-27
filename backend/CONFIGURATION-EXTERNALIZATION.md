@@ -113,25 +113,25 @@ SPRING_DATASOURCE_DRIVER=org.postgresql.Driver
 ### Server Configuration
 ```bash
 SERVER_PORT=8080
-H2_CONSOLE_ENABLED=false
 ```
 
 ## Profiles
 
-### Default Profile (H2 In-Memory)
-Used for local development with H2 in-memory database.
+### Default Profile (Docker PostgreSQL)
+Used for local development with Docker PostgreSQL database.
 
 ```yaml
 spring:
   datasource:
-    url: jdbc:h2:mem:vetclinic
-    driver-class-name: org.h2.Driver
-  h2:
-    console:
-      enabled: true
+    url: jdbc:postgresql://localhost:5436/vetclinic
+    username: vetclinic
+    password: vetclinic
+    driver-class-name: org.postgresql.Driver
 ```
 
-**Usage**: `java -jar app.jar`
+**Usage**:
+1. Start Docker PostgreSQL: `docker-compose up -d`
+2. Run: `java -jar app.jar`
 
 ### Docker Profile
 Used for Docker Compose environment with PostgreSQL and Keycloak services.
@@ -143,19 +143,6 @@ java -jar app.jar --spring.profiles.active=docker
 **Configuration**:
 - PostgreSQL: `postgres:5432/vetclinic`
 - Keycloak: `http://keycloak:8180`
-- H2 console: disabled
-
-### Postgres Profile
-Used for local development with Docker PostgreSQL but local Keycloak.
-
-```bash
-java -jar app.jar --spring.profiles.active=postgres
-```
-
-**Configuration**:
-- PostgreSQL: `localhost:5432/vetclinic`
-- Keycloak: `http://localhost:8180`
-- H2 console: disabled
 
 ## Application Configuration Files
 
@@ -204,8 +191,8 @@ cors:
 
 1. **Client Secrets**: Always use environment variables for secrets in production
 2. **CORS Origins**: Restrict to specific domains in production, never use wildcards
-3. **H2 Console**: Disabled by default in non-dev profiles
-4. **Keycloak**: Uses environment-specific URLs
+3. **Keycloak**: Uses environment-specific URLs
+4. **Database**: Always use PostgreSQL with proper credentials
 
 ## Configuration Priority (Spring Boot)
 

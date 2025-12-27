@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.vetclinic.common.event.DomainEventPublisher;
 import com.vetclinic.common.exception.ResourceNotFoundException;
 import com.vetclinic.patient.domain.model.Patient;
 import com.vetclinic.patient.domain.model.Species;
@@ -26,12 +27,13 @@ import com.vetclinic.patient.domain.port.PatientRepository;
 class PatientServiceTest {
 
     @Mock private PatientRepository patientRepository;
+    @Mock private DomainEventPublisher eventPublisher;
 
     private PatientService patientService;
 
     @BeforeEach
     void setUp() {
-        patientService = new PatientService(patientRepository);
+        patientService = new PatientService(patientRepository, eventPublisher);
     }
 
     @Test
@@ -108,7 +110,8 @@ class PatientServiceTest {
     void shouldDeletePatient() {
         // given
         UUID id = UUID.randomUUID();
-        given(patientRepository.existsById(id)).willReturn(true);
+        Patient patient = createPatient("Buddy", Species.DOG);
+        given(patientRepository.findById(id)).willReturn(Optional.of(patient));
 
         // when
         patientService.deletePatient(id);
@@ -121,7 +124,7 @@ class PatientServiceTest {
     void shouldThrowWhenDeletingNonExistentPatient() {
         // given
         UUID id = UUID.randomUUID();
-        given(patientRepository.existsById(id)).willReturn(false);
+        given(patientRepository.findById(id)).willReturn(Optional.empty());
 
         // when/then
         assertThatThrownBy(() -> patientService.deletePatient(id))

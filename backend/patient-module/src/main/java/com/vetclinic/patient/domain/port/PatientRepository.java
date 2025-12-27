@@ -5,6 +5,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.vetclinic.patient.domain.model.Patient;
+import com.vetclinic.patient.domain.model.PatientLabel;
+import com.vetclinic.patient.domain.model.Species;
 
 /**
  * Port for patient persistence operations. This interface is implemented by infrastructure layer.
@@ -22,4 +24,22 @@ public interface PatientRepository {
     void deleteById(UUID id);
 
     boolean existsById(UUID id);
+
+    // Search methods
+
+    /** Find patients by name (case-insensitive partial match) */
+    List<Patient> findByNameContainingIgnoreCase(String name);
+
+    /** Find patients by microchip number (exact match) */
+    Optional<Patient> findByMicrochipNumber(String microchipNumber);
+
+    /** Find patients by species */
+    List<Patient> findBySpecies(Species species);
+
+    /** Find patients that have any of the specified labels */
+    List<Patient> findByLabelsIn(Iterable<PatientLabel> labels);
+
+    /** Search patients by multiple criteria */
+    List<Patient> search(
+            String name, Species species, String breed, UUID ownerId, String microchipNumber);
 }

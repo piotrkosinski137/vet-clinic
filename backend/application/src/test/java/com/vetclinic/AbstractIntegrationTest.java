@@ -7,8 +7,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.vetclinic.config.TestSecurityConfig;
 
@@ -17,8 +15,8 @@ import com.vetclinic.config.TestSecurityConfig;
  * that all integration tests run against a real PostgreSQL database, making them more reliable and
  * closer to production.
  *
- * <p>The PostgreSQL container is started once and shared across all test classes that extend this
- * base class, improving test execution speed.
+ * <p>Uses the Singleton Container Pattern to share a single PostgreSQL container across all test
+ * classes. The container is started once and kept running for the entire test suite.
  *
  * <p>Features: - Uses Testcontainers to provide a real PostgreSQL database - Automatically
  * configures Spring datasource properties - Disables OAuth2/Keycloak authentication via
@@ -28,20 +26,22 @@ import com.vetclinic.config.TestSecurityConfig;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Import(TestSecurityConfig.class)
-@Testcontainers
 public abstract class AbstractIntegrationTest {
 
     /**
-     * PostgreSQL container shared across all tests. Using 'postgres:16-alpine' for a lightweight
-     * image that matches common production versions.
+     * PostgreSQL container shared across all tests using the Singleton Container Pattern. Started
+     * once in a static block and kept running for all test classes.
      */
-    @Container
-    protected static final PostgreSQLContainer<?> postgresContainer =
-            new PostgreSQLContainer<>("postgres:16-alpine")
-                    .withDatabaseName("testdb")
-                    .withUsername("test")
-                    .withPassword("test")
-                    .withReuse(true);
+    protected static final PostgreSQLContainer<?> postgresContainer;
+
+    static {
+        postgresContainer =
+                new PostgreSQLContainer<>("postgres:16-alpine")
+                        .withDatabaseName("testdb")
+                        .withUsername("test")
+                        .withPassword("test");
+        postgresContainer.start();
+    }
 
     /**
      * Dynamically configures Spring Boot properties to connect to the Testcontainers PostgreSQL

@@ -22,4 +22,19 @@ public interface ClientRepository {
     boolean existsById(UUID id);
 
     boolean existsByEmail(String email);
+
+    // Search methods
+
+    /** Search by name (first or last, case-insensitive partial match) */
+    List<Client> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
+            String firstName, String lastName);
+
+    /** Search by phone number (partial match) */
+    List<Client> findByPhoneContaining(String phone);
+
+    /** Search by city (case-insensitive partial match) */
+    List<Client> findByCityContainingIgnoreCase(String city);
+
+    /** Search clients by multiple criteria */
+    List<Client> search(String firstName, String lastName, String email, String phone, String city);
 }

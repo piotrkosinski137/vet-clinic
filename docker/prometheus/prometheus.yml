@@ -1,0 +1,27 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # VetClinic Backend (when running locally via mvnw)
+  - job_name: 'vetclinic-backend-local'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+        labels:
+          environment: 'local'
+          application: 'vet-clinic'
+
+  # VetClinic Backend (when running in Docker)
+  - job_name: 'vetclinic-backend-docker'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['backend:8080']
+        labels:
+          environment: 'docker'
+          application: 'vet-clinic'

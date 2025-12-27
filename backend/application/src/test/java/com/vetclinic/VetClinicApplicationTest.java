@@ -1,10 +1,12 @@
 package com.vetclinic;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class VetClinicApplicationTest {
+/**
+ * Basic smoke test that verifies the Spring context loads successfully with Testcontainers
+ * PostgreSQL.
+ */
+class VetClinicApplicationTest extends AbstractIntegrationTest {
 
     @Test
     void contextLoads() {

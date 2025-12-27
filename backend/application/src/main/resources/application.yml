@@ -2,11 +2,12 @@ spring:
   application:
     name: vet-clinic
 
+  # Default: PostgreSQL (Docker for local dev)
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:vetclinic}
-    username: ${SPRING_DATASOURCE_USERNAME:sa}
-    password: ${SPRING_DATASOURCE_PASSWORD:}
-    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.h2.Driver}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5436/vetclinic}
+    username: ${SPRING_DATASOURCE_USERNAME:vetclinic}
+    password: ${SPRING_DATASOURCE_PASSWORD:vetclinic}
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
@@ -20,11 +21,6 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-
-  h2:
-    console:
-      enabled: ${H2_CONSOLE_ENABLED:true}
-      path: /h2-console
 
   security:
     oauth2:
@@ -41,13 +37,15 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
       base-path: /actuator
   endpoint:
     health:
       show-details: always
       probes:
         enabled: true
+    prometheus:
+      enabled: true
   health:
     livenessState:
       enabled: true
@@ -60,6 +58,18 @@ management:
       enabled: true
     os:
       enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms, 100ms, 200ms, 500ms, 1s
 
 info:
   app:
@@ -89,6 +99,8 @@ keycloak:
   realm: ${KEYCLOAK_REALM:vetclinic}
   client-id: ${KEYCLOAK_CLIENT_ID:vetclinic-app}
   client-secret: ${KEYCLOAK_CLIENT_SECRET:vetclinic-secret}
+  admin-username: ${KEYCLOAK_ADMIN_USERNAME:admin}
+  admin-password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
 
 logging:
   level:
@@ -97,7 +109,7 @@ logging:
     org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
 
 ---
-# Docker profile
+# Docker profile (for running inside Docker network)
 spring:
   config:
     activate:
@@ -107,15 +119,6 @@ spring:
     url: jdbc:postgresql://postgres:5432/vetclinic
     username: vetclinic
     password: ${DB_PASSWORD:vetclinic}
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-
-  h2:
-    console:
-      enabled: false
 
   security:
     oauth2:
@@ -126,30 +129,3 @@ spring:
 
 keycloak:
   auth-server-url: http://keycloak:8180
-  realm: ${KEYCLOAK_REALM:vetclinic}
-  client-id: ${KEYCLOAK_CLIENT_ID:vetclinic-app}
-  client-secret: ${KEYCLOAK_CLIENT_SECRET:vetclinic-secret}
-
-cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
-
----
-# PostgreSQL profile (for local dev with Docker DB)
-spring:
-  config:
-    activate:
-      on-profile: postgres
-
-  datasource:
-    url: jdbc:postgresql://localhost:5432/vetclinic
-    username: vetclinic
-    password: ${DB_PASSWORD:vetclinic}
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-
-  h2:
-    console:
-      enabled: false

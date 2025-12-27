@@ -1,54 +1,42 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo } from 'react';
 import { api, ClientResponse, ClientRequest } from '../api';
+import { useCrud, UseCrudResult } from './useCrud';
 
-interface UseClients {
+/**
+ * Hook for managing clients with CRUD operations.
+ * Built on the generic useCrud hook for consistency.
+ */
+export interface UseClients {
   clients: ClientResponse[];
   loading: boolean;
   error: string | null;
   refresh: () => void;
   createClient: (client: ClientRequest) => Promise<ClientResponse>;
+  updateClient: (id: string, client: ClientRequest) => Promise<ClientResponse>;
   deleteClient: (id: string) => Promise<void>;
 }
 
 export function useClients(): UseClients {
-  const [clients, setClients] = useState<ClientResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const config = useMemo(
+    () => ({
+      fetchAll: () => api.getClients(),
+      create: (data: ClientRequest) => api.createClient(data),
+      update: (id: string, data: ClientRequest) => api.updateClient(id, data),
+      remove: (id: string) => api.deleteClient(id),
+      fetchErrorMessage: 'Failed to fetch clients',
+    }),
+    []
+  );
 
-  const fetchClients = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await api.getClients();
-      setClients(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch clients');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
-
-  const createClient = async (client: ClientRequest): Promise<ClientResponse> => {
-    const created = await api.createClient(client);
-    setClients((prev) => [...prev, created]);
-    return created;
-  };
-
-  const deleteClient = async (id: string): Promise<void> => {
-    await api.deleteClient(id);
-    setClients((prev) => prev.filter((c) => c.id !== id));
-  };
+  const crud: UseCrudResult<ClientResponse, ClientRequest> = useCrud(config);
 
   return {
-    clients,
-    loading,
-    error,
-    refresh: fetchClients,
-    createClient,
-    deleteClient,
+    clients: crud.items,
+    loading: crud.loading,
+    error: crud.error,
+    refresh: crud.refresh,
+    createClient: crud.create,
+    updateClient: crud.update,
+    deleteClient: crud.remove,
   };
 }

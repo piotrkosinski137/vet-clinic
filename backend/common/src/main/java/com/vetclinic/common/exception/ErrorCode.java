@@ -32,7 +32,10 @@ public enum ErrorCode {
     UNAUTHORIZED,
 
     /** Access forbidden */
-    FORBIDDEN;
+    FORBIDDEN,
+
+    /** Insufficient stock for operation */
+    INSUFFICIENT_STOCK;
 
     /**
      * Returns the error code in lowercase with underscores replaced by hyphens.

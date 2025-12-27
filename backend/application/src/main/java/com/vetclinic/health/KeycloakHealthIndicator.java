@@ -56,8 +56,8 @@ public class KeycloakHealthIndicator implements HealthIndicator {
                         .withDetail("reason", "Unexpected response code from Keycloak")
                         .build();
             }
-        } catch (Exception e) {
-            // Graceful degradation - Keycloak might not be running in development
+        } catch (java.io.IOException e) {
+            // Network errors - Keycloak might not be running in development
             return Health.down()
                     .withDetail("keycloakUrl", keycloakAuthServerUrl)
                     .withDetail("realm", keycloakRealm)

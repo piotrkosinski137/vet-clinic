@@ -1,0 +1,1 @@
+export { ClientDebtBadge } from './ClientDebtBadge';

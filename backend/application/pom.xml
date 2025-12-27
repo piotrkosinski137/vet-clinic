@@ -24,6 +24,36 @@
             <groupId>com.vetclinic</groupId>
             <artifactId>client-module</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.vetclinic</groupId>
+            <artifactId>veterinarian-module</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.vetclinic</groupId>
+            <artifactId>visit-module</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.vetclinic</groupId>
+            <artifactId>billing-module</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.vetclinic</groupId>
+            <artifactId>compliance-module</artifactId>
+        </dependency>
+
+        <!-- Monitoring -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Logging to Logstash/ELK -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.4</version>
+        </dependency>
 
         <!-- Spring Boot starters -->
         <dependency>
@@ -62,17 +92,17 @@
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
 
+        <!-- Keycloak Admin Client for user management -->
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-admin-client</artifactId>
+            <version>25.0.0</version>
+        </dependency>
+
         <!-- Database -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- H2 for local development -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
 

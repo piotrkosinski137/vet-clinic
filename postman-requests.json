@@ -1,0 +1,3834 @@
+{
+  "info": {
+    "_postman_id": "vetclinic-api-collection",
+    "name": "VetClinic API",
+    "description": "API collection for Veterinary Clinic Management System.\n\n## Authentication\nAll endpoints except `/auth/token` require a Bearer token. Use the \"Get Token\" request first to obtain an access token, then set it as a collection variable or use the \"Bearer Token\" auth type.\n\n## Multi-tenancy\nThe JWT token contains a `clinic_id` claim that automatically scopes all data operations to the authenticated user's clinic.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints",
+      "item": [
+        {
+          "name": "Get Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "    pm.collectionVariables.set('accessToken', jsonData.access_token);",
+                  "    console.log('Token saved to collection variable');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"user\",\n    \"password\": \"user\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "token"
+              ]
+            },
+            "description": "Get access token from Keycloak using password grant.\n\n**Default credentials:**\n- Username: `user`\n- Password: `user`\n\nThe response includes `access_token` which is automatically saved to the collection variable for use in other requests."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"username\": \"user\",\n    \"password\": \"user\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/token",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "token"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n    \"access_token\": \"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    \"expires_in\": 2592000,\n    \"refresh_expires_in\": 2592000,\n    \"refresh_token\": \"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9...\",\n    \"token_type\": \"Bearer\",\n    \"not-before-policy\": 0,\n    \"session_state\": \"uuid\",\n    \"scope\": \"profile email\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Patients",
+      "description": "Patient management endpoints",
+      "item": [
+        {
+          "name": "Create Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Max\",\n    \"species\": \"DOG\",\n    \"breed\": \"Labrador Retriever\",\n    \"dateOfBirth\": \"2020-03-15\",\n    \"weight\": 32.5,\n    \"ownerId\": null,\n    \"notes\": \"Friendly, loves to play fetch\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients"
+              ]
+            },
+            "description": "Create a new patient.\n\n**Species options:**\n- `DOG`\n- `CAT`\n- `BIRD`\n- `RABBIT`\n- `HAMSTER`\n- `GUINEA_PIG`\n- `REPTILE`\n- `OTHER`"
+          },
+          "response": [
+            {
+              "name": "Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Max\",\n    \"species\": \"DOG\",\n    \"breed\": \"Labrador Retriever\",\n    \"dateOfBirth\": \"2020-03-15\",\n    \"weight\": 32.5,\n    \"ownerId\": null,\n    \"notes\": \"Friendly, loves to play fetch\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/patients",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "patients"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n    \"id\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n    \"name\": \"Max\",\n    \"species\": \"DOG\",\n    \"breed\": \"Labrador Retriever\",\n    \"dateOfBirth\": \"2020-03-15\",\n    \"weight\": 32.5,\n    \"ownerId\": null,\n    \"notes\": \"Friendly, loves to play fetch\",\n    \"createdAt\": \"2025-12-21T15:47:17.165Z\",\n    \"updatedAt\": \"2025-12-21T15:47:17.165Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Patients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients"
+              ]
+            },
+            "description": "Get all patients for the current clinic."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/patients",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "patients"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n    {\n        \"id\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n        \"name\": \"Max\",\n        \"species\": \"DOG\",\n        \"breed\": \"Labrador Retriever\",\n        \"dateOfBirth\": \"2020-03-15\",\n        \"weight\": 32.5,\n        \"ownerId\": null,\n        \"notes\": \"Friendly, loves to play fetch\",\n        \"createdAt\": \"2025-12-21T15:47:17.165Z\",\n        \"updatedAt\": \"2025-12-21T15:47:17.165Z\"\n    }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Patients by Owner",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients?ownerId={{ownerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients"
+              ],
+              "query": [
+                {
+                  "key": "ownerId",
+                  "value": "{{ownerId}}",
+                  "description": "UUID of the client/owner"
+                }
+              ]
+            },
+            "description": "Get all patients owned by a specific client."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Patient by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221",
+                  "description": "Patient UUID"
+                }
+              ]
+            },
+            "description": "Get a specific patient by ID."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/patients/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "patients",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n    \"id\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n    \"name\": \"Max\",\n    \"species\": \"DOG\",\n    \"breed\": \"Labrador Retriever\",\n    \"dateOfBirth\": \"2020-03-15\",\n    \"weight\": 32.5,\n    \"ownerId\": null,\n    \"notes\": \"Friendly, loves to play fetch\",\n    \"createdAt\": \"2025-12-21T15:47:17.165Z\",\n    \"updatedAt\": \"2025-12-21T15:47:17.165Z\"\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/patients/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "patients",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "body": "{\n    \"type\": \"https://api.vetclinic.com/errors/not_found\",\n    \"title\": \"Resource Not Found\",\n    \"status\": 404,\n    \"detail\": \"Patient not found with id: 00000000-0000-0000-0000-000000000000\",\n    \"instance\": \"/api/v1/patients/00000000-0000-0000-0000-000000000000\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Patient",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Max\",\n    \"species\": \"DOG\",\n    \"breed\": \"Labrador Retriever\",\n    \"dateOfBirth\": \"2020-03-15\",\n    \"weight\": 34.0,\n    \"ownerId\": null,\n    \"notes\": \"Friendly, loves to play fetch. Weight updated after checkup.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221",
+                  "description": "Patient UUID"
+                }
+              ]
+            },
+            "description": "Update an existing patient."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Patient",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221",
+                  "description": "Patient UUID"
+                }
+              ]
+            },
+            "description": "Delete a patient by ID."
+          },
+          "response": [
+            {
+              "name": "No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/patients/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "patients",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Search Patients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients?name=Max&species=DOG",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "Max",
+                  "description": "Search by name (partial, case-insensitive)"
+                },
+                {
+                  "key": "species",
+                  "value": "DOG",
+                  "description": "Filter by species"
+                },
+                {
+                  "key": "breed",
+                  "value": "Labrador",
+                  "description": "Search by breed",
+                  "disabled": true
+                },
+                {
+                  "key": "microchipNumber",
+                  "value": "123456789012345",
+                  "description": "Search by microchip",
+                  "disabled": true
+                },
+                {
+                  "key": "labels",
+                  "value": "VIP,AGGRESSIVE",
+                  "description": "Filter by labels",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Search patients with multiple filter criteria."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Patient by Microchip",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/microchip/:microchipNumber",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "microchip",
+                ":microchipNumber"
+              ],
+              "variable": [
+                {
+                  "key": "microchipNumber",
+                  "value": "123456789012345",
+                  "description": "Microchip number (9-15 digits)"
+                }
+              ]
+            },
+            "description": "Find a patient by microchip number."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Label to Patient",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/:id/labels/:label",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                ":id",
+                "labels",
+                ":label"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221",
+                  "description": "Patient UUID"
+                },
+                {
+                  "key": "label",
+                  "value": "VIP",
+                  "description": "Label: AGGRESSIVE, ALLERGIC, VIP, CHRONIC, SENIOR, SPECIAL_DIET, UNDER_TREATMENT, FLIGHT_RISK"
+                }
+              ]
+            },
+            "description": "Add a label/tag to a patient."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Label from Patient",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/:id/labels/:label",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                ":id",
+                "labels",
+                ":label"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221",
+                  "description": "Patient UUID"
+                },
+                {
+                  "key": "label",
+                  "value": "VIP",
+                  "description": "Label to remove"
+                }
+              ]
+            },
+            "description": "Remove a label/tag from a patient."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Clients",
+      "description": "Client (pet owner) management endpoints",
+      "item": [
+        {
+          "name": "Create Client",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Jan\",\n    \"lastName\": \"Kowalski\",\n    \"email\": \"jan.kowalski@example.com\",\n    \"phone\": \"+48 123 456 789\",\n    \"address\": \"ul. Kwiatowa 15/3\",\n    \"city\": \"Warszawa\",\n    \"postalCode\": \"00-001\",\n    \"notes\": \"Preferred contact: phone in the afternoon\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clients"
+              ]
+            },
+            "description": "Create a new client (pet owner).\n\n**Required fields:**\n- `firstName`\n- `lastName`\n- `email` (must be unique within the clinic)"
+          },
+          "response": [
+            {
+              "name": "Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstName\": \"Jan\",\n    \"lastName\": \"Kowalski\",\n    \"email\": \"jan.kowalski@example.com\",\n    \"phone\": \"+48 123 456 789\",\n    \"address\": \"ul. Kwiatowa 15/3\",\n    \"city\": \"Warszawa\",\n    \"postalCode\": \"00-001\",\n    \"notes\": \"Preferred contact: phone in the afternoon\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/clients",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "clients"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n    \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"firstName\": \"Jan\",\n    \"lastName\": \"Kowalski\",\n    \"email\": \"jan.kowalski@example.com\",\n    \"phone\": \"+48 123 456 789\",\n    \"address\": \"ul. Kwiatowa 15/3\",\n    \"city\": \"Warszawa\",\n    \"postalCode\": \"00-001\",\n    \"notes\": \"Preferred contact: phone in the afternoon\",\n    \"createdAt\": \"2025-12-21T16:00:00.000Z\",\n    \"updatedAt\": \"2025-12-21T16:00:00.000Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Clients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clients"
+              ]
+            },
+            "description": "Get all clients for the current clinic."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/clients",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "clients"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n    {\n        \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n        \"firstName\": \"Jan\",\n        \"lastName\": \"Kowalski\",\n        \"email\": \"jan.kowalski@example.com\",\n        \"phone\": \"+48 123 456 789\",\n        \"address\": \"ul. Kwiatowa 15/3\",\n        \"city\": \"Warszawa\",\n        \"postalCode\": \"00-001\",\n        \"notes\": \"Preferred contact: phone in the afternoon\",\n        \"createdAt\": \"2025-12-21T16:00:00.000Z\",\n        \"updatedAt\": \"2025-12-21T16:00:00.000Z\"\n    }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Client by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clients/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clients",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "description": "Client UUID"
+                }
+              ]
+            },
+            "description": "Get a specific client by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Client",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Jan\",\n    \"lastName\": \"Kowalski\",\n    \"email\": \"jan.kowalski@example.com\",\n    \"phone\": \"+48 987 654 321\",\n    \"address\": \"ul. Nowa 10/5\",\n    \"city\": \"Warszawa\",\n    \"postalCode\": \"00-002\",\n    \"notes\": \"New address, prefers morning calls\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clients/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clients",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "description": "Client UUID"
+                }
+              ]
+            },
+            "description": "Update an existing client."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Client",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clients/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clients",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "description": "Client UUID"
+                }
+              ]
+            },
+            "description": "Delete a client by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Clients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clients?firstName=Jan&city=Warszawa",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clients"
+              ],
+              "query": [
+                {
+                  "key": "firstName",
+                  "value": "Jan",
+                  "description": "Search by first name (partial, case-insensitive)"
+                },
+                {
+                  "key": "lastName",
+                  "value": "Kowalski",
+                  "description": "Search by last name",
+                  "disabled": true
+                },
+                {
+                  "key": "email",
+                  "value": "jan@example.com",
+                  "description": "Search by email",
+                  "disabled": true
+                },
+                {
+                  "key": "phone",
+                  "value": "123",
+                  "description": "Search by phone number",
+                  "disabled": true
+                },
+                {
+                  "key": "city",
+                  "value": "Warszawa",
+                  "description": "Search by city"
+                }
+              ]
+            },
+            "description": "Search clients with multiple filter criteria."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Client by Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clients/email/:email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clients",
+                "email",
+                ":email"
+              ],
+              "variable": [
+                {
+                  "key": "email",
+                  "value": "jan.kowalski@example.com",
+                  "description": "Client email"
+                }
+              ]
+            },
+            "description": "Find a client by email address."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Visits",
+      "description": "Visit management endpoints for veterinary appointments",
+      "item": [
+        {
+          "name": "Create Visit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n  \"clientId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"visitDate\": \"2025-12-21T10:00:00\",\n  \"status\": \"SCHEDULED\",\n  \"reason\": \"Annual checkup\",\n  \"interview\": \"Owner reports no issues, eating and drinking normally\",\n  \"examination\": \"Normal vitals, healthy coat, no abnormalities detected\",\n  \"diagnosis\": \"Healthy patient, no concerns\",\n  \"treatment\": \"None required\",\n  \"recommendations\": \"Continue current diet, schedule next annual checkup\",\n  \"medications\": [\n    {\n      \"name\": \"Frontline Plus\",\n      \"dosage\": \"1 pipette\",\n      \"frequency\": \"Monthly\",\n      \"duration\": \"Ongoing\",\n      \"notes\": \"Apply between shoulder blades\"\n    }\n  ],\n  \"notes\": \"Good visit, patient cooperative\",\n  \"weight\": 32.5,\n  \"temperature\": 38.5,\n  \"nextVisitDate\": \"2026-12-21\",\n  \"veterinarianId\": \"{{veterinarianId}}\",\n  \"veterinarianName\": \"Dr. Smith\",\n  \"durationMinutes\": 30\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/visits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visits"
+              ]
+            },
+            "description": "Create a new veterinary visit.\n\n**Status options:**\n- `SCHEDULED`\n- `IN_PROGRESS`\n- `COMPLETED`\n- `CANCELLED`"
+          },
+          "response": [
+            {
+              "name": "Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"patientId\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n    \"visitDate\": \"2025-12-21T10:00:00\",\n    \"status\": \"SCHEDULED\",\n    \"reason\": \"Annual checkup\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/visits",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "visits"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n    \"id\": \"b2c3d4e5-f6a7-8901-bcde-f23456789012\",\n    \"patientId\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n    \"visitDate\": \"2025-12-21T10:00:00\",\n    \"status\": \"SCHEDULED\",\n    \"reason\": \"Annual checkup\",\n    \"createdAt\": \"2025-12-21T09:00:00.000Z\",\n    \"updatedAt\": \"2025-12-21T09:00:00.000Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Visits",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/visits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visits"
+              ]
+            },
+            "description": "Get all visits for the current clinic. Supports optional query parameters for filtering."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/visits",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "visits"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n    {\n        \"id\": \"b2c3d4e5-f6a7-8901-bcde-f23456789012\",\n        \"patientId\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n        \"visitDate\": \"2025-12-21T10:00:00\",\n        \"status\": \"SCHEDULED\",\n        \"reason\": \"Annual checkup\",\n        \"createdAt\": \"2025-12-21T09:00:00.000Z\",\n        \"updatedAt\": \"2025-12-21T09:00:00.000Z\"\n    }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Visits with Filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/visits?status=SCHEDULED&dateFrom=2025-12-01&dateTo=2025-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visits"
+              ],
+              "query": [
+                {
+                  "key": "patientId",
+                  "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221",
+                  "description": "Filter by patient UUID",
+                  "disabled": true
+                },
+                {
+                  "key": "clientId",
+                  "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "description": "Filter by client UUID",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "SCHEDULED",
+                  "description": "Filter by status (SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED)"
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "2025-12-01",
+                  "description": "Filter visits from this date (ISO format)"
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2025-12-31",
+                  "description": "Filter visits to this date (ISO format)"
+                }
+              ]
+            },
+            "description": "Get visits with optional filters."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Visit by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/visits/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visits",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+                  "description": "Visit UUID"
+                }
+              ]
+            },
+            "description": "Get a specific visit by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Patient Visit History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/visits/patient/:patientId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visits",
+                "patient",
+                ":patientId"
+              ],
+              "variable": [
+                {
+                  "key": "patientId",
+                  "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221",
+                  "description": "Patient UUID"
+                }
+              ]
+            },
+            "description": "Get all visits for a specific patient, ordered by date (most recent first)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Visits by Date",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/visits/date/:date",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visits",
+                "date",
+                ":date"
+              ],
+              "variable": [
+                {
+                  "key": "date",
+                  "value": "2025-12-21",
+                  "description": "Date in ISO format (YYYY-MM-DD)"
+                }
+              ]
+            },
+            "description": "Get all visits scheduled for a specific date."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Visit",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"patientId\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n    \"clientId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"visitDate\": \"2025-12-21T10:00:00\",\n    \"status\": \"COMPLETED\",\n    \"reason\": \"Annual checkup\",\n    \"interview\": \"Owner reports no issues, eating and drinking normally\",\n    \"examination\": \"Normal vitals, healthy coat, no abnormalities detected\",\n    \"diagnosis\": \"Healthy patient, no concerns\",\n    \"treatment\": \"Administered annual vaccinations\",\n    \"recommendations\": \"Continue current diet, schedule next annual checkup in 12 months\",\n    \"medications\": [\n        {\n            \"name\": \"Frontline Plus\",\n            \"dosage\": \"1 pipette\",\n            \"frequency\": \"Monthly\",\n            \"duration\": \"Ongoing\",\n            \"notes\": \"Apply between shoulder blades\"\n        }\n    ],\n    \"notes\": \"Visit completed successfully, all vaccinations up to date\",\n    \"weight\": 32.5,\n    \"temperature\": 38.5,\n    \"nextVisitDate\": \"2026-12-21\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/visits/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visits",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+                  "description": "Visit UUID"
+                }
+              ]
+            },
+            "description": "Update an existing visit with full data."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Visit Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"IN_PROGRESS\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/visits/:id/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visits",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+                  "description": "Visit UUID"
+                }
+              ]
+            },
+            "description": "Update only the status of a visit.\n\n**Status options:**\n- `SCHEDULED`\n- `IN_PROGRESS`\n- `COMPLETED`\n- `CANCELLED`"
+          },
+          "response": []
+        },
+        {
+          "name": "Reassign Visit (Drag & Drop)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"veterinarianId\": \"{{veterinarianId}}\",\n    \"veterinarianName\": \"Dr. Johnson\",\n    \"visitDate\": \"2025-12-21T14:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/visits/:id/reassign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visits",
+                ":id",
+                "reassign"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+                  "description": "Visit UUID"
+                }
+              ]
+            },
+            "description": "Reassign a visit to a different veterinarian and/or time slot. Used by the calendar drag-and-drop feature.\n\n**Parameters:**\n- `veterinarianId` - UUID of the new veterinarian (optional, can be null)\n- `veterinarianName` - Name of the new veterinarian\n- `visitDate` - New date and time for the visit (ISO 8601 format)\n\n**Note:** This endpoint validates for scheduling conflicts before reassigning."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Visit Summary (Printable)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/visits/:id/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visits",
+                ":id",
+                "summary"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+                  "description": "Visit UUID"
+                }
+              ]
+            },
+            "description": "Get a printable visit summary for client handout."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/visits/:id/summary",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "visits",
+                    ":id",
+                    "summary"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n    \"visitId\": \"b2c3d4e5-f6a7-8901-bcde-f23456789012\",\n    \"patientId\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n    \"visitDate\": \"2025-12-21T10:00:00\",\n    \"status\": \"COMPLETED\",\n    \"reason\": \"Annual checkup\",\n    \"examination\": \"Normal vitals, healthy coat, no abnormalities detected\",\n    \"diagnosis\": \"Healthy patient, no concerns\",\n    \"treatment\": \"Administered annual vaccinations\",\n    \"recommendations\": \"Continue current diet, schedule next annual checkup in 12 months\",\n    \"medications\": [\n        {\n            \"name\": \"Frontline Plus\",\n            \"dosage\": \"1 pipette\",\n            \"frequency\": \"Monthly\",\n            \"duration\": \"Ongoing\",\n            \"notes\": \"Apply between shoulder blades\"\n        }\n    ],\n    \"weight\": 32.5,\n    \"temperature\": 38.5,\n    \"nextVisitDate\": \"2026-12-21\",\n    \"generatedAt\": \"2025-12-21 11:30:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Visit",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/visits/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visits",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+                  "description": "Visit UUID"
+                }
+              ]
+            },
+            "description": "Delete a visit by ID."
+          },
+          "response": [
+            {
+              "name": "No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/visits/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "visits",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Get Visits for Veterinarian on Date",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/visits/veterinarian/{{veterinarianId}}/date/{{date}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "visits",
+                "veterinarian",
+                "{{veterinarianId}}",
+                "date",
+                "{{date}}"
+              ]
+            },
+            "description": "Get all visits for a specific veterinarian on a specific date (calendar day view)"
+          }
+        },
+        {
+          "name": "Get Visits for Veterinarian",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/visits/veterinarian/{{veterinarianId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "visits",
+                "veterinarian",
+                "{{veterinarianId}}"
+              ]
+            },
+            "description": "Get all visits for a specific veterinarian"
+          }
+        },
+        {
+          "name": "Get Visits with Veterinarian Filter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/visits?veterinarianId={{veterinarianId}}&dateFrom={{dateFrom}}&dateTo={{dateTo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "visits"
+              ],
+              "query": [
+                {
+                  "key": "veterinarianId",
+                  "value": "{{veterinarianId}}"
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "{{dateFrom}}"
+                },
+                {
+                  "key": "dateTo",
+                  "value": "{{dateTo}}"
+                }
+              ]
+            },
+            "description": "Get visits filtered by veterinarian and date range (for calendar week view)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Price List",
+      "description": "Price list management for services and products",
+      "item": [
+        {
+          "name": "Create Price List Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"General Consultation\",\n    \"description\": \"Standard veterinary consultation\",\n    \"category\": \"CONSULTATION\",\n    \"costPrice\": 10.00,\n    \"sellPrice\": 50.00,\n    \"unit\": \"visit\",\n    \"active\": true,\n    \"code\": \"CONS-001\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/price-list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "price-list"
+              ]
+            },
+            "description": "Create a new price list item.\n\n**Category options:**\n- `SERVICE`\n- `MEDICATION`\n- `PRODUCT`\n- `PROCEDURE`\n- `CONSULTATION`\n- `LAB_TEST`\n- `VACCINATION`\n- `OTHER`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Price List Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/price-list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "price-list"
+              ]
+            },
+            "description": "Get all price list items for the current clinic."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Price List Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/price-list?active=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "price-list"
+              ],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "true",
+                  "description": "Filter by active status"
+                }
+              ]
+            },
+            "description": "Get only active price list items."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Price List Items by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/price-list?category=CONSULTATION",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "price-list"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "CONSULTATION",
+                  "description": "Filter by category"
+                }
+              ]
+            },
+            "description": "Get price list items by category."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Price List Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/price-list?name=Consultation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "price-list"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "Consultation",
+                  "description": "Search by name (partial, case-insensitive)"
+                }
+              ]
+            },
+            "description": "Search price list items by name."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Price List Item by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/price-list/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "price-list",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "c3d4e5f6-a7b8-9012-cdef-345678901234",
+                  "description": "Price list item UUID"
+                }
+              ]
+            },
+            "description": "Get a specific price list item by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Price List Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"General Consultation\",\n    \"description\": \"Standard veterinary consultation (updated price)\",\n    \"category\": \"CONSULTATION\",\n    \"costPrice\": 12.00,\n    \"sellPrice\": 60.00,\n    \"unit\": \"visit\",\n    \"active\": true,\n    \"code\": \"CONS-001\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/price-list/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "price-list",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "c3d4e5f6-a7b8-9012-cdef-345678901234",
+                  "description": "Price list item UUID"
+                }
+              ]
+            },
+            "description": "Update an existing price list item."
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Price List Item Active",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/price-list/:id/active?active=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "price-list",
+                ":id",
+                "active"
+              ],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "false",
+                  "description": "Set active status"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "c3d4e5f6-a7b8-9012-cdef-345678901234",
+                  "description": "Price list item UUID"
+                }
+              ]
+            },
+            "description": "Enable or disable a price list item."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Price List Item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/price-list/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "price-list",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "c3d4e5f6-a7b8-9012-cdef-345678901234",
+                  "description": "Price list item UUID"
+                }
+              ]
+            },
+            "description": "Delete a price list item by ID."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Veterinarians",
+      "description": "Veterinarian (staff) management endpoints",
+      "item": [
+        {
+          "name": "Create Veterinarian",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Anna\",\n    \"lastName\": \"Kowalska\",\n    \"email\": \"anna.kowalska@vetclinic.com\",\n    \"phone\": \"+48 123 456 789\",\n    \"specialization\": \"General Practice\",\n    \"licenseNumber\": \"VET-2020-001\",\n    \"colorCode\": \"#4CAF50\",\n    \"active\": true,\n    \"notes\": \"Senior veterinarian\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/veterinarians",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "veterinarians"
+              ]
+            },
+            "description": "Create a new veterinarian."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Veterinarians",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/veterinarians",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "veterinarians"
+              ]
+            },
+            "description": "Get all veterinarians.\n\n**Query Parameters:**\n- `active` (optional): Filter by active status (true/false)\n- `specialization` (optional): Filter by specialization\n- `name` (optional): Search by name"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Veterinarians",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/veterinarians?active=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "veterinarians"
+              ],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Get only active veterinarians."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Veterinarian by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/veterinarians/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "veterinarians",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "description": "Veterinarian UUID"
+                }
+              ]
+            },
+            "description": "Get a single veterinarian by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Veterinarian",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Anna\",\n    \"lastName\": \"Kowalska\",\n    \"email\": \"anna.kowalska@vetclinic.com\",\n    \"phone\": \"+48 123 456 789\",\n    \"specialization\": \"Surgery\",\n    \"licenseNumber\": \"VET-2020-001\",\n    \"colorCode\": \"#2196F3\",\n    \"active\": true,\n    \"notes\": \"Now specializing in surgery\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/veterinarians/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "veterinarians",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "description": "Veterinarian UUID"
+                }
+              ]
+            },
+            "description": "Update a veterinarian by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Veterinarian Active Status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/veterinarians/:id/active?active=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "veterinarians",
+                ":id",
+                "active"
+              ],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "false"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "description": "Veterinarian UUID"
+                }
+              ]
+            },
+            "description": "Enable or disable a veterinarian."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Veterinarian",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/veterinarians/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "veterinarians",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "description": "Veterinarian UUID"
+                }
+              ]
+            },
+            "description": "Delete a veterinarian by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Invite Doctor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"newdoctor@vetclinic.com\",\n    \"firstName\": \"Anna\",\n    \"lastName\": \"Kowalska\",\n    \"phone\": \"+48123456789\",\n    \"specialization\": \"Surgery\",\n    \"licenseNumber\": \"VET-2024-001\",\n    \"notes\": \"Specializes in orthopedic surgery\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/invite",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "doctors",
+                "invite"
+              ]
+            },
+            "description": "Invite a new doctor to the clinic by email. The doctor will receive a password reset link to set up their account. The new doctor is automatically assigned to the same veterinary clinic as the inviting doctor.\n\n**Required fields:**\n- `email`: The doctor's email address (must be unique)\n- `firstName`: Doctor's first name\n- `lastName`: Doctor's last name\n\n**Optional fields:**\n- `phone`: Contact phone number\n- `specialization`: Area of specialization\n- `licenseNumber`: Professional license number\n- `notes`: Additional notes about the doctor"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Invoices",
+      "description": "Invoice and payment management endpoints",
+      "item": [
+        {
+          "name": "Create Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"clientId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"patientId\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n    \"visitId\": \"b2c3d4e5-f6a7-8901-bcde-f23456789012\",\n    \"dueDate\": \"2026-01-21\",\n    \"items\": [\n        {\n            \"name\": \"General Consultation\",\n            \"description\": \"Annual checkup\",\n            \"quantity\": 1,\n            \"unitPrice\": 150.00\n        },\n        {\n            \"name\": \"Rabies Vaccination\",\n            \"description\": \"Annual rabies vaccine\",\n            \"quantity\": 1,\n            \"unitPrice\": 75.00\n        }\n    ],\n    \"taxRate\": 23.00,\n    \"notes\": \"Payment due within 30 days\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices"
+              ]
+            },
+            "description": "Create a new invoice.\n\n**Status options:**\n- `DRAFT`\n- `ISSUED`\n- `PAID`\n- `PARTIALLY_PAID`\n- `CANCELLED`\n- `OVERDUE`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Invoices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices"
+              ]
+            },
+            "description": "Get all invoices for the current clinic."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoices with Filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices?status=ISSUED&dateFrom=2025-12-01&dateTo=2025-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices"
+              ],
+              "query": [
+                {
+                  "key": "clientId",
+                  "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "description": "Filter by client UUID",
+                  "disabled": true
+                },
+                {
+                  "key": "patientId",
+                  "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221",
+                  "description": "Filter by patient UUID",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "ISSUED",
+                  "description": "Filter by status"
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "2025-12-01",
+                  "description": "Filter invoices from this date"
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2025-12-31",
+                  "description": "Filter invoices to this date"
+                }
+              ]
+            },
+            "description": "Get invoices with optional filters."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoice by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "d4e5f6a7-b8c9-0123-defg-456789012345",
+                  "description": "Invoice UUID"
+                }
+              ]
+            },
+            "description": "Get a specific invoice by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoice by Number",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/number/:invoiceNumber",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                "number",
+                ":invoiceNumber"
+              ],
+              "variable": [
+                {
+                  "key": "invoiceNumber",
+                  "value": "INV-2025-00001",
+                  "description": "Invoice number"
+                }
+              ]
+            },
+            "description": "Get an invoice by its number."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Client Invoices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/client/:clientId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                "client",
+                ":clientId"
+              ],
+              "variable": [
+                {
+                  "key": "clientId",
+                  "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "description": "Client UUID"
+                }
+              ]
+            },
+            "description": "Get all invoices for a specific client."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Client Debt",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/client/:clientId/debt",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                "client",
+                ":clientId",
+                "debt"
+              ],
+              "variable": [
+                {
+                  "key": "clientId",
+                  "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "description": "Client UUID"
+                }
+              ]
+            },
+            "description": "Get aggregated debt summary for a client including total outstanding, total invoiced, total paid, unpaid invoice count, and overdue invoice count."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/invoices/client/:clientId/debt",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "invoices",
+                    "client",
+                    ":clientId",
+                    "debt"
+                  ],
+                  "variable": [
+                    {
+                      "key": "clientId",
+                      "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"clientId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"totalOutstanding\": 250.00,\n    \"totalInvoiced\": 500.00,\n    \"totalPaid\": 250.00,\n    \"unpaidInvoiceCount\": 2,\n    \"overdueInvoiceCount\": 1\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Visit Invoices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/visit/:visitId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                "visit",
+                ":visitId"
+              ],
+              "variable": [
+                {
+                  "key": "visitId",
+                  "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+                  "description": "Visit UUID"
+                }
+              ]
+            },
+            "description": "Get all invoices for a specific visit."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Invoice",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"clientId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"patientId\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n    \"visitId\": \"b2c3d4e5-f6a7-8901-bcde-f23456789012\",\n    \"dueDate\": \"2026-01-21\",\n    \"items\": [\n        {\n            \"name\": \"General Consultation\",\n            \"description\": \"Annual checkup\",\n            \"quantity\": 1,\n            \"unitPrice\": 150.00\n        },\n        {\n            \"name\": \"Rabies Vaccination\",\n            \"description\": \"Annual rabies vaccine\",\n            \"quantity\": 1,\n            \"unitPrice\": 75.00\n        },\n        {\n            \"name\": \"Flea Treatment\",\n            \"description\": \"Frontline Plus\",\n            \"quantity\": 1,\n            \"unitPrice\": 45.00\n        }\n    ],\n    \"taxRate\": 23.00,\n    \"notes\": \"Updated invoice with additional item\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "d4e5f6a7-b8c9-0123-defg-456789012345",
+                  "description": "Invoice UUID"
+                }
+              ]
+            },
+            "description": "Update an existing invoice. Cannot update paid invoices."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Item to Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Blood Test\",\n    \"description\": \"Complete blood count\",\n    \"quantity\": 1,\n    \"unitPrice\": 85.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/:id/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                ":id",
+                "items"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "d4e5f6a7-b8c9-0123-defg-456789012345",
+                  "description": "Invoice UUID"
+                }
+              ]
+            },
+            "description": "Add a single item to an existing invoice."
+          },
+          "response": []
+        },
+        {
+          "name": "Issue Invoice",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/:id/issue",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                ":id",
+                "issue"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "d4e5f6a7-b8c9-0123-defg-456789012345",
+                  "description": "Invoice UUID"
+                }
+              ]
+            },
+            "description": "Issue a draft invoice (changes status from DRAFT to ISSUED)."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Invoice",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/:id/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                ":id",
+                "cancel"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "d4e5f6a7-b8c9-0123-defg-456789012345",
+                  "description": "Invoice UUID"
+                }
+              ]
+            },
+            "description": "Cancel an invoice. Cannot cancel paid invoices."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoice Print",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/:id/print",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                ":id",
+                "print"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "d4e5f6a7-b8c9-0123-defg-456789012345",
+                  "description": "Invoice UUID"
+                }
+              ]
+            },
+            "description": "Get a printable invoice format."
+          },
+          "response": []
+        },
+        {
+          "name": "Record Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"amount\": 225.00,\n    \"paymentMethod\": \"CARD\",\n    \"transactionReference\": \"TXN-123456\",\n    \"notes\": \"Full payment by credit card\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/:id/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                ":id",
+                "payments"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "d4e5f6a7-b8c9-0123-defg-456789012345",
+                  "description": "Invoice UUID"
+                }
+              ]
+            },
+            "description": "Record a payment for an invoice.\n\n**Payment method options:**\n- `CASH`\n- `CARD`\n- `BANK_TRANSFER`\n- `OTHER`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoice Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/:id/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                ":id",
+                "payments"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "d4e5f6a7-b8c9-0123-defg-456789012345",
+                  "description": "Invoice UUID"
+                }
+              ]
+            },
+            "description": "Get all payments for a specific invoice."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Payment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/payments/:paymentId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                "payments",
+                ":paymentId"
+              ],
+              "variable": [
+                {
+                  "key": "paymentId",
+                  "value": "e5f6a7b8-c9d0-1234-efgh-567890123456",
+                  "description": "Payment UUID"
+                }
+              ]
+            },
+            "description": "Delete a payment and update the invoice paid amount."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Invoice",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "d4e5f6a7-b8c9-0123-defg-456789012345",
+                  "description": "Invoice UUID"
+                }
+              ]
+            },
+            "description": "Delete an invoice. Only draft invoices can be deleted."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Audit Logs",
+      "description": "Audit logging for compliance tracking",
+      "item": [
+        {
+          "name": "Create Audit Log",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"entityType\": \"Patient\",\n    \"entityId\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n    \"action\": \"UPDATE\",\n    \"userId\": \"44c1d1fe-2af1-473b-b710-d4910807bd88\",\n    \"userName\": \"Dr. Smith\",\n    \"oldValue\": \"{\\\"weight\\\": 32.0}\",\n    \"newValue\": \"{\\\"weight\\\": 34.5}\",\n    \"changedFields\": \"weight\",\n    \"ipAddress\": \"192.168.1.100\",\n    \"userAgent\": \"VetClinic App/1.0\",\n    \"description\": \"Updated patient weight during checkup\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit-logs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit-logs"
+              ]
+            },
+            "description": "Create a new audit log entry.\n\n**Action options:**\n- `CREATE`\n- `UPDATE`\n- `DELETE`\n- `VIEW`\n- `EXPORT`\n- `PRINT`\n- `LOGIN`\n- `LOGOUT`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit-logs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit-logs"
+              ]
+            },
+            "description": "Get all audit logs for the current clinic."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Audit Log by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit-logs/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit-logs",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+                  "description": "Audit log UUID"
+                }
+              ]
+            },
+            "description": "Get a specific audit log entry by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Audit Logs for Entity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit-logs/entity/:entityType/:entityId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit-logs",
+                "entity",
+                ":entityType",
+                ":entityId"
+              ],
+              "variable": [
+                {
+                  "key": "entityType",
+                  "value": "Patient",
+                  "description": "Entity type (e.g., Patient, Client, Visit)"
+                },
+                {
+                  "key": "entityId",
+                  "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221",
+                  "description": "Entity UUID"
+                }
+              ]
+            },
+            "description": "Get all audit logs for a specific entity."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Audit Logs by User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit-logs/user/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit-logs",
+                "user",
+                ":userId"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "44c1d1fe-2af1-473b-b710-d4910807bd88",
+                  "description": "User UUID"
+                }
+              ]
+            },
+            "description": "Get all audit logs for a specific user."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Audit Logs by Action",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit-logs/action/:action",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit-logs",
+                "action",
+                ":action"
+              ],
+              "variable": [
+                {
+                  "key": "action",
+                  "value": "UPDATE",
+                  "description": "Action type"
+                }
+              ]
+            },
+            "description": "Get all audit logs with a specific action."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Audit Logs by Date Range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit-logs/date-range?start=2025-12-01T00:00:00Z&end=2025-12-31T23:59:59Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit-logs",
+                "date-range"
+              ],
+              "query": [
+                {
+                  "key": "start",
+                  "value": "2025-12-01T00:00:00Z",
+                  "description": "Start date/time (ISO format)"
+                },
+                {
+                  "key": "end",
+                  "value": "2025-12-31T23:59:59Z",
+                  "description": "End date/time (ISO format)"
+                }
+              ]
+            },
+            "description": "Get audit logs within a date range."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Document Versions",
+      "description": "Document versioning for compliance (no deletion, only corrections)",
+      "item": [
+        {
+          "name": "Create Document Version",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"documentType\": \"MedicalRecord\",\n    \"documentId\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n    \"content\": \"Patient examination notes: Weight 34.5kg, temperature 38.5C, healthy appearance...\",\n    \"userId\": \"44c1d1fe-2af1-473b-b710-d4910807bd88\",\n    \"userName\": \"Dr. Smith\",\n    \"changeReason\": \"Initial medical record entry\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/document-versions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "document-versions"
+              ]
+            },
+            "description": "Create a new version of a document. Previous versions are preserved."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Document Versions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/document-versions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "document-versions"
+              ]
+            },
+            "description": "Get all document versions for the current clinic."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Document Version by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/document-versions/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "document-versions",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "description": "Document version UUID"
+                }
+              ]
+            },
+            "description": "Get a specific document version by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Version History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/document-versions/document/:documentType/:documentId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "document-versions",
+                "document",
+                ":documentType",
+                ":documentId"
+              ],
+              "variable": [
+                {
+                  "key": "documentType",
+                  "value": "MedicalRecord",
+                  "description": "Document type"
+                },
+                {
+                  "key": "documentId",
+                  "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221",
+                  "description": "Document UUID"
+                }
+              ]
+            },
+            "description": "Get all versions of a specific document."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Specific Version",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/document-versions/document/:documentType/:documentId/version/:versionNumber",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "document-versions",
+                "document",
+                ":documentType",
+                ":documentId",
+                "version",
+                ":versionNumber"
+              ],
+              "variable": [
+                {
+                  "key": "documentType",
+                  "value": "MedicalRecord",
+                  "description": "Document type"
+                },
+                {
+                  "key": "documentId",
+                  "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221",
+                  "description": "Document UUID"
+                },
+                {
+                  "key": "versionNumber",
+                  "value": "1",
+                  "description": "Version number"
+                }
+              ]
+            },
+            "description": "Get a specific version of a document."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current Version",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/document-versions/document/:documentType/:documentId/current",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "document-versions",
+                "document",
+                ":documentType",
+                ":documentId",
+                "current"
+              ],
+              "variable": [
+                {
+                  "key": "documentType",
+                  "value": "MedicalRecord",
+                  "description": "Document type"
+                },
+                {
+                  "key": "documentId",
+                  "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221",
+                  "description": "Document UUID"
+                }
+              ]
+            },
+            "description": "Get the current (latest) version of a document."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "GDPR Consents",
+      "description": "GDPR consent management",
+      "item": [
+        {
+          "name": "Create Consent Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"clientId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"consentType\": \"DATA_PROCESSING\",\n    \"consentText\": \"I consent to the processing of my personal data and my pets' medical data for veterinary care purposes.\",\n    \"consentVersion\": \"1.0\",\n    \"expiresAt\": \"2026-12-21\",\n    \"ipAddress\": \"192.168.1.100\",\n    \"notes\": \"Consent obtained during first visit\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/consents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "consents"
+              ]
+            },
+            "description": "Create a new GDPR consent request.\n\n**Consent type options:**\n- `DATA_PROCESSING`\n- `MARKETING`\n- `PHOTO_VIDEO`\n- `MEDICAL_PROCEDURES`\n- `ANESTHESIA`\n- `EUTHANASIA`\n- `DATA_SHARING`\n- `RESEARCH`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Consents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/consents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "consents"
+              ]
+            },
+            "description": "Get all GDPR consents for the current clinic."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Consent by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/consents/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "consents",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+                  "description": "Consent UUID"
+                }
+              ]
+            },
+            "description": "Get a specific consent by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Consents by Client",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/consents/client/:clientId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "consents",
+                "client",
+                ":clientId"
+              ],
+              "variable": [
+                {
+                  "key": "clientId",
+                  "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "description": "Client UUID"
+                }
+              ]
+            },
+            "description": "Get all consents for a specific client."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Consents by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/consents/status/:status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "consents",
+                "status",
+                ":status"
+              ],
+              "variable": [
+                {
+                  "key": "status",
+                  "value": "GRANTED",
+                  "description": "Status: PENDING, GRANTED, REVOKED, EXPIRED"
+                }
+              ]
+            },
+            "description": "Get consents by status."
+          },
+          "response": []
+        },
+        {
+          "name": "Check Active Consent",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/consents/client/:clientId/type/:consentType/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "consents",
+                "client",
+                ":clientId",
+                "type",
+                ":consentType",
+                "active"
+              ],
+              "variable": [
+                {
+                  "key": "clientId",
+                  "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "description": "Client UUID"
+                },
+                {
+                  "key": "consentType",
+                  "value": "DATA_PROCESSING",
+                  "description": "Consent type"
+                }
+              ]
+            },
+            "description": "Check if a client has an active consent of a specific type."
+          },
+          "response": []
+        },
+        {
+          "name": "Grant Consent",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/consents/:id/grant?signatureReference=SIG-2025-00001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "consents",
+                ":id",
+                "grant"
+              ],
+              "query": [
+                {
+                  "key": "signatureReference",
+                  "value": "SIG-2025-00001",
+                  "description": "Reference to digital or physical signature"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+                  "description": "Consent UUID"
+                }
+              ]
+            },
+            "description": "Grant a pending consent."
+          },
+          "response": []
+        },
+        {
+          "name": "Revoke Consent",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/consents/:id/revoke?reason=Client requested revocation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "consents",
+                ":id",
+                "revoke"
+              ],
+              "query": [
+                {
+                  "key": "reason",
+                  "value": "Client requested revocation",
+                  "description": "Reason for revocation"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+                  "description": "Consent UUID"
+                }
+              ]
+            },
+            "description": "Revoke an active consent."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Consent",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/consents/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "consents",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+                  "description": "Consent UUID"
+                }
+              ]
+            },
+            "description": "Delete a consent record."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Vaccination Certificates",
+      "description": "Vaccination and health certificate management",
+      "item": [
+        {
+          "name": "Create Certificate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"certificateType\": \"RABIES\",\n    \"patientId\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n    \"patientName\": \"Max\",\n    \"patientSpecies\": \"Dog\",\n    \"patientBreed\": \"Labrador Retriever\",\n    \"microchipNumber\": \"123456789012345\",\n    \"clientId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"clientName\": \"Jan Kowalski\",\n    \"visitId\": \"b2c3d4e5-f6a7-8901-bcde-f23456789012\",\n    \"vaccineName\": \"Nobivac Rabies\",\n    \"vaccineManufacturer\": \"MSD Animal Health\",\n    \"batchNumber\": \"A123456\",\n    \"administrationDate\": \"2025-12-21\",\n    \"expirationDate\": \"2026-12-21\",\n    \"nextDueDate\": \"2026-12-21\",\n    \"veterinarianId\": \"44c1d1fe-2af1-473b-b710-d4910807bd88\",\n    \"veterinarianName\": \"Dr. Smith\",\n    \"veterinarianLicenseNumber\": \"VET-12345\",\n    \"notes\": \"Annual rabies vaccination\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/certificates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "certificates"
+              ]
+            },
+            "description": "Create a new vaccination certificate.\n\n**Certificate type options:**\n- `VACCINATION`\n- `HEALTH`\n- `TRAVEL`\n- `MICROCHIP`\n- `RABIES`\n- `DEWORMING`\n- `NEUTERING`\n- `OTHER`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Certificates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/certificates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "certificates"
+              ]
+            },
+            "description": "Get all certificates for the current clinic."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Certificate by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/certificates/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "certificates",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "c3d4e5f6-a7b8-9012-cdef-345678901234",
+                  "description": "Certificate UUID"
+                }
+              ]
+            },
+            "description": "Get a specific certificate by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Certificate by Number",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/certificates/number/:certificateNumber",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "certificates",
+                "number",
+                ":certificateNumber"
+              ],
+              "variable": [
+                {
+                  "key": "certificateNumber",
+                  "value": "RAB-20251221-00001",
+                  "description": "Certificate number"
+                }
+              ]
+            },
+            "description": "Get a certificate by its number."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Certificates by Patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/certificates/patient/:patientId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "certificates",
+                "patient",
+                ":patientId"
+              ],
+              "variable": [
+                {
+                  "key": "patientId",
+                  "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221",
+                  "description": "Patient UUID"
+                }
+              ]
+            },
+            "description": "Get all certificates for a specific patient."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Valid Certificates by Patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/certificates/patient/:patientId/valid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "certificates",
+                "patient",
+                ":patientId",
+                "valid"
+              ],
+              "variable": [
+                {
+                  "key": "patientId",
+                  "value": "6a66b00e-94f2-4abc-adcf-c62cc4e72221",
+                  "description": "Patient UUID"
+                }
+              ]
+            },
+            "description": "Get only valid (non-invalidated) certificates for a patient."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Certificates by Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/certificates/type/:certificateType",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "certificates",
+                "type",
+                ":certificateType"
+              ],
+              "variable": [
+                {
+                  "key": "certificateType",
+                  "value": "RABIES",
+                  "description": "Certificate type"
+                }
+              ]
+            },
+            "description": "Get all certificates of a specific type."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Certificate",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"certificateType\": \"RABIES\",\n    \"patientId\": \"6a66b00e-94f2-4abc-adcf-c62cc4e72221\",\n    \"patientName\": \"Max\",\n    \"clientId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"clientName\": \"Jan Kowalski\",\n    \"vaccineName\": \"Nobivac Rabies\",\n    \"vaccineManufacturer\": \"MSD Animal Health\",\n    \"batchNumber\": \"A123456-Updated\",\n    \"expirationDate\": \"2027-12-21\",\n    \"nextDueDate\": \"2027-12-21\",\n    \"veterinarianName\": \"Dr. Smith\",\n    \"notes\": \"Extended validity per manufacturer guidelines\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/certificates/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "certificates",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "c3d4e5f6-a7b8-9012-cdef-345678901234",
+                  "description": "Certificate UUID"
+                }
+              ]
+            },
+            "description": "Update an existing certificate."
+          },
+          "response": []
+        },
+        {
+          "name": "Invalidate Certificate",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/certificates/:id/invalidate?reason=Certificate issued in error",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "certificates",
+                ":id",
+                "invalidate"
+              ],
+              "query": [
+                {
+                  "key": "reason",
+                  "value": "Certificate issued in error",
+                  "description": "Reason for invalidation"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "c3d4e5f6-a7b8-9012-cdef-345678901234",
+                  "description": "Certificate UUID"
+                }
+              ]
+            },
+            "description": "Invalidate a certificate (mark as no longer valid)."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Certificate",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/certificates/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "certificates",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "c3d4e5f6-a7b8-9012-cdef-345678901234",
+                  "description": "Certificate UUID"
+                }
+              ]
+            },
+            "description": "Delete a certificate."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "description": "Inventory management for supplier invoices and stock tracking",
+      "item": [
+        {
+          "name": "Upload Supplier Invoice",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/invoices/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "invoices",
+                "upload"
+              ]
+            },
+            "description": "Upload and parse a supplier invoice file. The invoice will be created with PENDING status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Supplier Invoices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/invoices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "invoices"
+              ]
+            },
+            "description": "Get all supplier invoices for the current clinic."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Supplier Invoice by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/invoices/{{invoiceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "invoices",
+                "{{invoiceId}}"
+              ]
+            },
+            "description": "Get supplier invoice details by ID, including all line items."
+          },
+          "response": []
+        },
+        {
+          "name": "Process Supplier Invoice",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/invoices/{{invoiceId}}/process",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "invoices",
+                "{{invoiceId}}",
+                "process"
+              ]
+            },
+            "description": "Process a supplier invoice. This will:\n1. Match items to existing price list items by barcode/name\n2. Create new price list items for unmatched items\n3. Add quantities to stock\n4. Create RECEIPT inventory transactions\n5. Update invoice status to PROCESSED"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Inventory Stock",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/stock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "stock"
+              ]
+            },
+            "description": "Get all inventory items with stock information."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Low Stock Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/stock?lowStockOnly=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "stock"
+              ],
+              "query": [
+                {
+                  "key": "lowStockOnly",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Get items with stock quantity at or below reorder point."
+          },
+          "response": []
+        },
+        {
+          "name": "Adjust Stock Quantity",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"newQuantity\": 100,\n    \"reason\": \"Manual stock correction\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/stock/{{itemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "stock",
+                "{{itemId}}"
+              ]
+            },
+            "description": "Manually adjust stock quantity for a specific item. Creates an ADJUSTMENT transaction."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Inventory Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "transactions"
+              ]
+            },
+            "description": "Get all inventory transactions (RECEIPT, USAGE, ADJUSTMENT, etc.)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Transactions for Item",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/transactions?itemId={{itemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "itemId",
+                  "value": "{{itemId}}"
+                }
+              ]
+            },
+            "description": "Get all inventory transactions for a specific item, showing full history of stock movements."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "description": "Actuator health endpoints",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Get application health status. No authentication required."
+          },
+          "response": [
+            {
+              "name": "Healthy",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/actuator/health",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "actuator",
+                    "health"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n    \"status\": \"UP\",\n    \"components\": {\n        \"db\": {\n            \"status\": \"UP\",\n            \"details\": {\n                \"database\": \"PostgreSQL\",\n                \"validationQuery\": \"isValid()\"\n            }\n        },\n        \"diskSpace\": {\n            \"status\": \"UP\"\n        },\n        \"ping\": {\n            \"status\": \"UP\"\n        }\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Info",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/info",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "info"
+              ]
+            },
+            "description": "Get application info. No authentication required."
+          },
+          "response": []
+        },
+        {
+          "name": "Metrics",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/metrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "metrics"
+              ]
+            },
+            "description": "Get available metrics. No authentication required."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "description": "Dashboard statistics endpoints",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/dashboard/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "dashboard",
+                "stats"
+              ]
+            },
+            "description": "Get dashboard statistics including total patients, today's visits, pending invoices, and low stock items.\n\n**Response includes:**\n- `totalPatients` - Total number of patients\n- `totalClients` - Total number of clients\n- `visitsToday` - Number of visits scheduled for today\n- `completedVisitsToday` - Visits completed today\n- `scheduledVisitsToday` - Visits still scheduled today\n- `pendingInvoices` - Number of issued but unpaid invoices\n- `lowStockItems` - Number of inventory items with low stock"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/dashboard/stats",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "dashboard",
+                    "stats"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"totalPatients\": 847,\n    \"totalClients\": 312,\n    \"visitsToday\": 12,\n    \"completedVisitsToday\": 5,\n    \"scheduledVisitsToday\": 7,\n    \"pendingInvoices\": 5,\n    \"lowStockItems\": 3\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+package com.vetclinic.visit.api.dto;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import com.vetclinic.visit.domain.model.VisitStatus;
+import com.vetclinic.visit.domain.model.VisitType;
+
+/** Response DTO for visit data. */
+public record VisitResponse(
+        UUID id,
+        UUID patientId,
+        UUID clientId,
+        UUID veterinarianId,
+        String veterinarianName,
+        LocalDateTime visitDate,
+        Integer durationMinutes,
+        VisitStatus status,
+        VisitType visitType,
+        String reason,
+        String interview,
+        String examination,
+        String diagnosis,
+        String treatment,
+        String recommendations,
+        List<MedicationDto> medications,
+        List<UsedMaterialDto> usedMaterials,
+        BigDecimal totalMaterialsCost,
+        BigDecimal totalMaterialsSell,
+        BigDecimal totalMaterialsProfit,
+        String notes,
+        Double weight,
+        Double temperature,
+        LocalDate nextVisitDate,
+        Instant createdAt,
+        Instant updatedAt) {}

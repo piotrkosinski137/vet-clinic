@@ -51,4 +51,27 @@ class ClientRepositoryAdapter implements ClientRepository {
     public boolean existsByEmail(String email) {
         return jpaRepository.existsByEmail(email);
     }
+
+    @Override
+    public List<Client> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
+            String firstName, String lastName) {
+        return jpaRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
+                firstName, lastName);
+    }
+
+    @Override
+    public List<Client> findByPhoneContaining(String phone) {
+        return jpaRepository.findByPhoneContaining(phone);
+    }
+
+    @Override
+    public List<Client> findByCityContainingIgnoreCase(String city) {
+        return jpaRepository.findByCityContainingIgnoreCase(city);
+    }
+
+    @Override
+    public List<Client> search(
+            String firstName, String lastName, String email, String phone, String city) {
+        return jpaRepository.search(firstName, lastName, email, phone, city);
+    }
 }

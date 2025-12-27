@@ -7,6 +7,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Repository;
 
 import com.vetclinic.patient.domain.model.Patient;
+import com.vetclinic.patient.domain.model.PatientLabel;
+import com.vetclinic.patient.domain.model.Species;
 import com.vetclinic.patient.domain.port.PatientRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -45,5 +47,31 @@ class PatientRepositoryAdapter implements PatientRepository {
     @Override
     public boolean existsById(UUID id) {
         return jpaRepository.existsById(id);
+    }
+
+    @Override
+    public List<Patient> findByNameContainingIgnoreCase(String name) {
+        return jpaRepository.findByNameContainingIgnoreCase(name);
+    }
+
+    @Override
+    public Optional<Patient> findByMicrochipNumber(String microchipNumber) {
+        return jpaRepository.findByMicrochipNumber(microchipNumber);
+    }
+
+    @Override
+    public List<Patient> findBySpecies(Species species) {
+        return jpaRepository.findBySpecies(species);
+    }
+
+    @Override
+    public List<Patient> findByLabelsIn(Iterable<PatientLabel> labels) {
+        return jpaRepository.findByLabelsIn(labels);
+    }
+
+    @Override
+    public List<Patient> search(
+            String name, Species species, String breed, UUID ownerId, String microchipNumber) {
+        return jpaRepository.search(name, species, breed, ownerId, microchipNumber);
     }
 }

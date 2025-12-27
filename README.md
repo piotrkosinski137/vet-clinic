@@ -81,24 +81,17 @@ curl -X POST http://localhost:8180/realms/vetclinic/protocol/openid-connect/toke
 
 ## Backend Only
 
-### Option 1: Run with H2 (In-Memory Database)
+### Run with PostgreSQL (Docker)
 
-```bash
-cd backend
-./mvnw spring-boot:run -pl application
-```
-
-### Option 2: Run with PostgreSQL (Docker)
-
-1. Start PostgreSQL:
+1. Start PostgreSQL and Keycloak:
 ```bash
 docker-compose up -d
 ```
 
-2. Run the application with postgres profile:
+2. Run the application:
 ```bash
 cd backend
-./mvnw spring-boot:run -pl application -Dspring-boot.run.profiles=postgres
+./mvnw spring-boot:run -pl application
 ```
 
 ## Available Endpoints
@@ -306,9 +299,8 @@ curl -X POST http://localhost:8080/api/v1/patients \
 
 1. Open the project (File → Open → select `vet-clinic` folder)
 2. Import Maven project when prompted
-3. Use Run Configurations:
-   - **Backend (H2)**: Run `VetClinicApplication` with no extra config
-   - **Backend (PostgreSQL)**: Add VM option `-Dspring.profiles.active=postgres`
+3. Start Docker containers: `docker-compose up -d`
+4. Run `VetClinicApplication` (uses Docker PostgreSQL by default)
 
 ## Troubleshooting
 

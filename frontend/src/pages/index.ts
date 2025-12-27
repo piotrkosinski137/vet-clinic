@@ -1,2 +1,13 @@
 export { PatientsPage } from './PatientsPage';
 export { ClientsPage } from './ClientsPage';
+export { VisitsPage } from './VisitsPage';
+export { StatisticsPage } from './StatisticsPage';
+export { InventoryUsagePage } from './InventoryUsagePage';
+export { InventoryPage } from './InventoryPage';
+export { PriceListPage } from './PriceListPage';
+export { LoginPage } from './LoginPage';
+export { DoctorsPage } from './DoctorsPage';
+export { AuditPage } from './AuditPage';
+export { ConsentsPage } from './ConsentsPage';
+export { CertificatesPage } from './CertificatesPage';
+export { PaymentsPage } from './PaymentsPage';

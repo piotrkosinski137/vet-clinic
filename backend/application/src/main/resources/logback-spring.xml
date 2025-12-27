@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="vet-clinic"/>
+
+    <!-- Console appender (always active) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Logstash appender (for ELK stack) -->
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>${LOGSTASH_HOST:-localhost}:${LOGSTASH_PORT:-5000}</destination>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <customFields>{"application":"${appName}","environment":"${SPRING_PROFILES_ACTIVE:-local}"}</customFields>
+        </encoder>
+        <keepAliveDuration>5 minutes</keepAliveDuration>
+        <reconnectionDelay>1 second</reconnectionDelay>
+        <writeBufferSize>16384</writeBufferSize>
+    </appender>
+
+    <!-- Async wrapper for Logstash to prevent blocking -->
+    <appender name="ASYNC_LOGSTASH" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="LOGSTASH"/>
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <!-- Profile-specific configuration -->
+    <springProfile name="default,local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.vetclinic" level="DEBUG"/>
+    </springProfile>
+
+    <springProfile name="docker">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="ASYNC_LOGSTASH"/>
+        </root>
+        <logger name="com.vetclinic" level="DEBUG"/>
+    </springProfile>
+
+    <!-- Enable logstash logging when LOGSTASH_ENABLED=true -->
+    <springProfile name="logstash">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="ASYNC_LOGSTASH"/>
+        </root>
+        <logger name="com.vetclinic" level="DEBUG"/>
+    </springProfile>
+</configuration>

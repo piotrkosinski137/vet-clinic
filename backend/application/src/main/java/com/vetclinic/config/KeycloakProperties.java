@@ -36,4 +36,16 @@ public class KeycloakProperties {
      * KEYCLOAK_CLIENT_SECRET
      */
     private String clientSecret = "vetclinic-secret";
+
+    /**
+     * Admin username for Keycloak realm management (user creation, etc.) Environment variable:
+     * KEYCLOAK_ADMIN_USERNAME
+     */
+    private String adminUsername = "admin";
+
+    /**
+     * Admin password for Keycloak realm management. WARNING: Store securely in production.
+     * Environment variable: KEYCLOAK_ADMIN_PASSWORD
+     */
+    private String adminPassword = "admin";
 }

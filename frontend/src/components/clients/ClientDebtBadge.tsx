@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api, ClientDebtResponse } from '../../api';
 import { Badge, Text } from '../ui';
 import { colors, spacing, borderRadius, fontWeight, fontSize } from '../../theme';
+import { formatCurrency } from '../../hooks';
 
 interface ClientDebtBadgeProps {
   clientId: string;
@@ -74,7 +75,7 @@ export function ClientDebtBadge({ clientId }: ClientDebtBadgeProps) {
           </Text>
           {debt.totalPaid > 0 && (
             <Text variant="muted" size="sm">
-              ${debt.totalPaid.toFixed(2)} paid to date
+              {formatCurrency(debt.totalPaid)} paid to date
             </Text>
           )}
         </div>
@@ -120,7 +121,7 @@ export function ClientDebtBadge({ clientId }: ClientDebtBadgeProps) {
             color: hasOverdue ? colors.danger.main : colors.warning.main,
           }}
         >
-          ${debt.totalOutstanding.toFixed(2)}
+          {formatCurrency(debt.totalOutstanding)}
         </Text>
       </div>
 
@@ -140,11 +141,11 @@ export function ClientDebtBadge({ clientId }: ClientDebtBadgeProps) {
       <div style={{ marginTop: spacing.sm, paddingTop: spacing.sm, borderTop: `1px solid ${colors.neutral.border}` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <Text variant="muted" size="sm">Total Invoiced</Text>
-          <Text size="sm">${debt.totalInvoiced.toFixed(2)}</Text>
+          <Text size="sm">{formatCurrency(debt.totalInvoiced)}</Text>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <Text variant="muted" size="sm">Total Paid</Text>
-          <Text size="sm" style={{ color: colors.success.main }}>${debt.totalPaid.toFixed(2)}</Text>
+          <Text size="sm" style={{ color: colors.success.main }}>{formatCurrency(debt.totalPaid)}</Text>
         </div>
       </div>
     </div>

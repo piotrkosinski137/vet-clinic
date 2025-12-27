@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useClients } from '../hooks';
 import {
   ClientRequest,
@@ -6,6 +7,7 @@ import {
   PatientRequest,
   PatientResponse,
   VisitResponse,
+  GdprConsentResponse,
   Species,
   PatientLabel,
   api,
@@ -27,6 +29,7 @@ import {
   useToast,
 } from '../components/ui';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '../theme';
+import { useI18n } from '../i18n';
 import {
   SPECIES_OPTIONS,
   PATIENT_LABELS,
@@ -45,6 +48,8 @@ const isSpecies = (value: string): value is Species => {
 };
 
 export function ClientsPage() {
+  const navigate = useNavigate();
+  const { t } = useI18n();
   const { clients, loading, error, createClient, updateClient, deleteClient, refresh } = useClients();
   const { success, error: showError } = useToast();
 
@@ -56,6 +61,7 @@ export function ClientsPage() {
 
   // Data state - all patients for search
   const [allPatients, setAllPatients] = useState<PatientResponse[]>([]);
+  const [allConsents, setAllConsents] = useState<GdprConsentResponse[]>([]);
   const [patients, setPatients] = useState<PatientResponse[]>([]);
   const [visits, setVisits] = useState<VisitResponse[]>([]);
   const [loadingAllPatients, setLoadingAllPatients] = useState(false);
@@ -82,14 +88,32 @@ export function ClientsPage() {
     name: '', species: 'DOG', breed: '', notes: '', labels: [],
   });
 
-  // Load all patients for search functionality
+  // Load all patients and consents for search functionality
   useEffect(() => {
     setLoadingAllPatients(true);
-    api.getPatients()
-      .then(setAllPatients)
-      .catch(() => { /* Silently fail - patients will be empty */ })
+    Promise.all([
+      api.getPatients(),
+      api.getConsents(),
+    ])
+      .then(([patientsData, consentsData]) => {
+        setAllPatients(patientsData);
+        setAllConsents(consentsData);
+      })
+      .catch(() => { /* Silently fail - data will be empty */ })
       .finally(() => setLoadingAllPatients(false));
   }, []);
+
+  // Helper to check if client has RODO consent
+  const getClientConsentStatus = useCallback(
+    (clientId: string): 'granted' | 'pending' | 'none' => {
+      const clientConsents = allConsents.filter(c => c.clientId === clientId && c.consentType === 'DATA_PROCESSING');
+      if (clientConsents.length === 0) return 'none';
+      const hasGranted = clientConsents.some(c => c.status === 'GRANTED');
+      if (hasGranted) return 'granted';
+      return 'pending';
+    },
+    [allConsents]
+  );
 
   // Helper to get pets for a client - memoized
   const getPetsForClient = useCallback(
@@ -136,12 +160,12 @@ export function ClientsPage() {
       setVisits([]);
       api.getPatients(selectedClient.id)
         .then(setPatients)
-        .catch(() => showError('Failed to load patients'))
+        .catch(() => showError(t('clients.failedToLoadPatients')))
         .finally(() => setLoadingPatients(false));
     } else {
       setPatients([]);
     }
-  }, [selectedClient]);
+  }, [selectedClient, t]);
 
   // Load visits when patient selected
   useEffect(() => {
@@ -156,12 +180,12 @@ export function ClientsPage() {
           );
           setVisits(sorted);
         })
-        .catch(() => showError('Failed to load visits'))
+        .catch(() => showError(t('clients.failedToLoadVisits')))
         .finally(() => setLoadingVisits(false));
     } else {
       setVisits([]);
     }
-  }, [selectedPatient]);
+  }, [selectedPatient, t]);
 
   // Client form handlers
   const openCreateClient = () => {
@@ -188,29 +212,29 @@ export function ClientsPage() {
       if (editingClient) {
         const updated = await updateClient(editingClient.id, clientFormData);
         if (selectedClient?.id === editingClient.id) setSelectedClient(updated);
-        success('Client updated');
+        success(t('clients.clientUpdated'));
       } else {
         await createClient(clientFormData);
-        success('Client created');
+        success(t('clients.clientCreated'));
       }
       setShowClientForm(false);
     } catch {
-      showError('Failed to save client');
+      showError(t('clients.failedToSaveClient'));
     } finally {
       setIsSubmittingClient(false);
     }
   };
 
   const handleDeleteClient = async (client: ClientResponse) => {
-    if (window.confirm(`Delete ${client.firstName} ${client.lastName}?`)) {
+    if (window.confirm(t('clients.confirmDeleteClient', { firstName: client.firstName, lastName: client.lastName }))) {
       try {
         await deleteClient(client.id);
         if (selectedClient?.id === client.id) {
           setSelectedClient(null);
         }
-        success('Client deleted');
+        success(t('clients.clientDeleted'));
       } catch {
-        showError('Failed to delete client');
+        showError(t('clients.failedToDeleteClient'));
       }
     }
   };
@@ -242,31 +266,31 @@ export function ClientsPage() {
         setPatients((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
         setAllPatients((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
         if (selectedPatient?.id === editingPatient.id) setSelectedPatient(updated);
-        success('Patient updated');
+        success(t('clients.patientUpdated'));
       } else {
         const created = await api.createPatient({ ...patientFormData, ownerId: selectedClient?.id });
         setPatients((prev) => [...prev, created]);
         setAllPatients((prev) => [...prev, created]);
-        success('Patient added');
+        success(t('clients.patientAdded'));
       }
       setShowPatientForm(false);
     } catch {
-      showError('Failed to save patient');
+      showError(t('clients.failedToSavePatient'));
     } finally {
       setIsSubmittingPatient(false);
     }
   };
 
   const handleDeletePatient = async (patient: PatientResponse) => {
-    if (window.confirm(`Delete ${patient.name}?`)) {
+    if (window.confirm(t('clients.confirmDeletePatient', { name: patient.name }))) {
       try {
         await api.deletePatient(patient.id);
         setPatients((prev) => prev.filter((p) => p.id !== patient.id));
         setAllPatients((prev) => prev.filter((p) => p.id !== patient.id));
         if (selectedPatient?.id === patient.id) setSelectedPatient(null);
-        success('Patient deleted');
+        success(t('clients.patientDeleted'));
       } catch {
-        showError('Failed to delete patient');
+        showError(t('clients.failedToDeletePatient'));
       }
     }
   };
@@ -281,12 +305,12 @@ export function ClientsPage() {
     });
   };
 
-  if (loading) return <Loading text="Loading clients..." />;
-  if (error) return <Card style={{ padding: spacing.xl, textAlign: 'center' }}><Text variant="muted">Error: {error}</Text><Button onClick={refresh}>Retry</Button></Card>;
+  if (loading) return <Loading text={t('clients.loading')} />;
+  if (error) return <Card style={{ padding: spacing.xl, textAlign: 'center' }}><Text variant="muted">{t('errors.failedToLoad')}: {error}</Text><Button onClick={refresh}>{t('errors.retry')}</Button></Card>;
 
   return (
     <div>
-      <PageHeader title="Clients" actions={<Button variant="primary" onClick={openCreateClient}>+ Add Client</Button>} />
+      <PageHeader title={t('clients.title')} actions={<Button variant="primary" onClick={openCreateClient}>{t('clients.addClient')}</Button>} />
 
       <div style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: spacing.md, height: 'calc(100vh - 180px)' }}>
         {/* Left Panel - Clients List */}
@@ -295,13 +319,13 @@ export function ClientsPage() {
           <div style={{ padding: spacing.md, borderBottom: `1px solid ${colors.neutral.border}` }}>
             <Input
               type="text"
-              placeholder="Search clients or pets..."
+              placeholder={t('clients.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ width: '100%' }}
             />
             {loadingAllPatients && (
-              <Text variant="muted" size="sm" style={{ marginTop: spacing.xs }}>Loading pets...</Text>
+              <Text variant="muted" size="sm" style={{ marginTop: spacing.xs }}>{t('clients.loadingPets')}</Text>
             )}
           </div>
 
@@ -309,14 +333,14 @@ export function ClientsPage() {
           <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
             {filteredClients.length === 0 ? (
               <div style={{ padding: spacing.xl, textAlign: 'center' }}>
-                <Text variant="muted">No clients found</Text>
+                <Text variant="muted">{t('clients.noClients')}</Text>
               </div>
             ) : (
               <>
                 {/* Client count */}
                 <div style={{ padding: `${spacing.xs} ${spacing.md}`, backgroundColor: colors.neutral.background, borderBottom: `1px solid ${colors.neutral.border}` }}>
                   <Text variant="muted" size="sm">
-                    Showing {Math.min(filteredClients.length, clientsPage * PAGINATION.PANEL + 1)}-{Math.min(filteredClients.length, (clientsPage + 1) * PAGINATION.PANEL)} of {filteredClients.length} clients
+                    {t('clients.showingClients', { from: Math.min(filteredClients.length, clientsPage * PAGINATION.PANEL + 1), to: Math.min(filteredClients.length, (clientsPage + 1) * PAGINATION.PANEL), total: filteredClients.length })}
                   </Text>
                 </div>
 
@@ -326,6 +350,7 @@ export function ClientsPage() {
                     .slice(clientsPage * PAGINATION.PANEL, (clientsPage + 1) * PAGINATION.PANEL)
                     .map((client) => {
                       const clientPets = getPetsForClient(client.id);
+                      const consentStatus = getClientConsentStatus(client.id);
                       return (
                         <div
                           key={client.id}
@@ -349,7 +374,37 @@ export function ClientsPage() {
                               {client.firstName[0]}{client.lastName[0]}
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <Text style={{ fontWeight: fontWeight.medium }}>{client.firstName} {client.lastName}</Text>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
+                                <Text style={{ fontWeight: fontWeight.medium }}>{client.firstName} {client.lastName}</Text>
+                                {consentStatus === 'granted' ? (
+                                  <span title={t('clients.rodoGranted')} style={{
+                                    fontSize: fontSize.xs,
+                                    backgroundColor: colors.success.light,
+                                    color: colors.success.main,
+                                    padding: '1px 4px',
+                                    borderRadius: borderRadius.sm,
+                                    fontWeight: fontWeight.medium,
+                                  }}>RODO ✓</span>
+                                ) : consentStatus === 'pending' ? (
+                                  <span title={t('clients.rodoPending')} style={{
+                                    fontSize: fontSize.xs,
+                                    backgroundColor: colors.warning.light,
+                                    color: colors.warning.main,
+                                    padding: '1px 4px',
+                                    borderRadius: borderRadius.sm,
+                                    fontWeight: fontWeight.medium,
+                                  }}>RODO ⏳</span>
+                                ) : (
+                                  <span title={t('clients.rodoNone')} style={{
+                                    fontSize: fontSize.xs,
+                                    backgroundColor: colors.danger.light,
+                                    color: colors.danger.main,
+                                    padding: '1px 4px',
+                                    borderRadius: borderRadius.sm,
+                                    fontWeight: fontWeight.medium,
+                                  }}>RODO ✗</span>
+                                )}
+                              </div>
                               <Text variant="muted" size="sm" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {client.phone || client.email}
                               </Text>
@@ -378,7 +433,7 @@ export function ClientsPage() {
                                   })}
                                   {clientPets.length > 3 && (
                                     <span style={{ fontSize: fontSize.xs, color: colors.neutral.textMuted }}>
-                                      +{clientPets.length - 3} more
+                                      {t('clients.moreItems', { count: clientPets.length - 3 })}
                                     </span>
                                   )}
                                 </div>
@@ -432,7 +487,7 @@ export function ClientsPage() {
           {!selectedClient ? (
             <Card style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
               <div style={{ fontSize: '48px', marginBottom: spacing.md }}>👈</div>
-              <Text variant="muted">Select a client to view details</Text>
+              <Text variant="muted">{t('clients.selectClientToView')}</Text>
             </Card>
           ) : (
             <>
@@ -454,8 +509,8 @@ export function ClientsPage() {
                     )}
                   </div>
                   <div style={{ display: 'flex', gap: spacing.xs }}>
-                    <Button variant="ghost" size="sm" onClick={() => openEditClient(selectedClient)}>Edit</Button>
-                    <Button variant="danger" size="sm" onClick={() => handleDeleteClient(selectedClient)}>Delete</Button>
+                    <Button variant="ghost" size="sm" onClick={() => openEditClient(selectedClient)}>{t('common.edit')}</Button>
+                    <Button variant="danger" size="sm" onClick={() => handleDeleteClient(selectedClient)}>{t('common.delete')}</Button>
                   </div>
                 </div>
               </Card>
@@ -465,16 +520,16 @@ export function ClientsPage() {
                 {/* Patients Panel */}
                 <Card style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
-                    <Text style={{ fontWeight: fontWeight.semibold }}>Patients ({patients.length})</Text>
-                    <Button variant="primary" size="sm" onClick={openCreatePatient}>+ Add</Button>
+                    <Text style={{ fontWeight: fontWeight.semibold }}>{t('clients.patientsCount')} ({patients.length})</Text>
+                    <Button variant="primary" size="sm" onClick={openCreatePatient}>{t('clients.add')}</Button>
                   </div>
 
                   <div style={{ flex: 1, overflowY: 'auto' }}>
                     {loadingPatients ? (
-                      <Loading text="Loading patients..." />
+                      <Loading text={t('clients.loadingPatients')} />
                     ) : patients.length === 0 ? (
                       <div style={{ textAlign: 'center', padding: spacing.xl }}>
-                        <Text variant="muted">No patients yet</Text>
+                        <Text variant="muted">{t('clients.noPatients')}</Text>
                       </div>
                     ) : (
                       patients.map((patient) => {
@@ -499,8 +554,9 @@ export function ClientsPage() {
                                 <Text variant="muted" size="sm">{speciesInfo.label}{patient.breed ? ` - ${patient.breed}` : ''}</Text>
                               </div>
                               <div style={{ display: 'flex', gap: spacing.xs }}>
-                                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEditPatient(patient); }}>Edit</Button>
-                                <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); handleDeletePatient(patient); }}>Del</Button>
+                                <Button variant="primary" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/patients/${patient.id}`); }}>{t('common.details')}</Button>
+                                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEditPatient(patient); }}>{t('common.edit')}</Button>
+                                <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); handleDeletePatient(patient); }}>{t('clients.del')}</Button>
                               </div>
                             </div>
                             {patient.labels && patient.labels.length > 0 && (
@@ -522,7 +578,7 @@ export function ClientsPage() {
                 <Card style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
                     <Text style={{ fontWeight: fontWeight.semibold }}>
-                      {selectedPatient ? `Visit History - ${selectedPatient.name}` : 'Visit History'}
+                      {selectedPatient ? `${t('clients.visitHistory')} - ${selectedPatient.name}` : t('clients.visitHistory')}
                       {visits.length > 0 && <span style={{ color: colors.neutral.textMuted, fontWeight: fontWeight.normal }}> ({visits.length})</span>}
                     </Text>
                   </div>
@@ -530,13 +586,13 @@ export function ClientsPage() {
                   <div style={{ flex: 1, overflowY: 'auto' }}>
                     {!selectedPatient ? (
                       <div style={{ textAlign: 'center', padding: spacing.xl }}>
-                        <Text variant="muted">Select a patient to view visits</Text>
+                        <Text variant="muted">{t('clients.selectPatientToViewVisits')}</Text>
                       </div>
                     ) : loadingVisits ? (
-                      <Loading text="Loading visits..." />
+                      <Loading text={t('clients.loadingVisits')} />
                     ) : visits.length === 0 ? (
                       <div style={{ textAlign: 'center', padding: spacing.xl }}>
-                        <Text variant="muted">No visits recorded</Text>
+                        <Text variant="muted">{t('clients.noVisitsRecorded')}</Text>
                       </div>
                     ) : (
                       <>
@@ -572,7 +628,7 @@ export function ClientsPage() {
                                       📅 {formatDate(visit.visitDate)}
                                     </Text>
                                     <Text variant="muted" size="sm">
-                                      🕐 {formatTime(visit.visitDate)} • {visit.veterinarianName ? `Dr. ${visit.veterinarianName}` : 'No vet'}
+                                      🕐 {formatTime(visit.visitDate)} • {visit.veterinarianName ? `Dr. ${visit.veterinarianName}` : t('clients.noVet')}
                                     </Text>
                                   </div>
                                   <Badge variant={visit.status === 'COMPLETED' ? 'success' : visit.status === 'CANCELLED' ? 'secondary' : 'primary'}>
@@ -584,7 +640,7 @@ export function ClientsPage() {
                                 {visit.reason && (
                                   <div style={{ marginBottom: spacing.sm }}>
                                     <Text size="sm" style={{ color: colors.neutral.textLight }}>
-                                      <strong>Reason:</strong> {visit.reason}
+                                      <strong>{t('clients.reasonForVisit')}:</strong> {visit.reason}
                                     </Text>
                                   </div>
                                 )}
@@ -608,12 +664,12 @@ export function ClientsPage() {
                                   <div style={{ marginBottom: spacing.sm }}>
                                     {visit.diagnosis && (
                                       <Text size="sm" style={{ marginBottom: spacing.xs }}>
-                                        <strong>🔍 Diagnosis:</strong> {visit.diagnosis.length > UI.TRUNCATE.SHORT ? `${visit.diagnosis.substring(0, UI.TRUNCATE.SHORT)}...` : visit.diagnosis}
+                                        <strong>🔍 {t('clients.diagnosis')}:</strong> {visit.diagnosis.length > UI.TRUNCATE.SHORT ? `${visit.diagnosis.substring(0, UI.TRUNCATE.SHORT)}...` : visit.diagnosis}
                                       </Text>
                                     )}
                                     {visit.treatment && (
                                       <Text size="sm">
-                                        <strong>💊 Treatment:</strong> {visit.treatment.length > UI.TRUNCATE.SHORT ? `${visit.treatment.substring(0, UI.TRUNCATE.SHORT)}...` : visit.treatment}
+                                        <strong>💊 {t('clients.treatment')}:</strong> {visit.treatment.length > UI.TRUNCATE.SHORT ? `${visit.treatment.substring(0, UI.TRUNCATE.SHORT)}...` : visit.treatment}
                                       </Text>
                                     )}
                                   </div>
@@ -628,7 +684,7 @@ export function ClientsPage() {
                                     borderLeft: `3px solid ${colors.success.main}`,
                                   }}>
                                     <Text size="sm" style={{ fontWeight: fontWeight.medium, marginBottom: spacing.xs }}>
-                                      🏥 Procedures & Materials ({materials.length}):
+                                      🏥 {t('clients.proceduresAndMaterials')} ({materials.length}):
                                     </Text>
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                                       {materials.slice(0, UI.PREVIEW.MATERIALS).map((m, idx) => (
@@ -655,7 +711,7 @@ export function ClientsPage() {
                                             borderRadius: borderRadius.sm,
                                           }}
                                         >
-                                          +{materials.length - UI.PREVIEW.MATERIALS} more
+                                          +{materials.length - UI.PREVIEW.MATERIALS} {t('clients.more')}
                                         </span>
                                       )}
                                     </div>
@@ -709,37 +765,37 @@ export function ClientsPage() {
 
       {/* Client Form Modal */}
       <Modal open={showClientForm} onClose={() => setShowClientForm(false)}>
-        <ModalTitle>{editingClient ? 'Edit Client' : 'New Client'}</ModalTitle>
+        <ModalTitle>{editingClient ? t('clients.editClient') : t('clients.newClient')}</ModalTitle>
         <form onSubmit={handleClientSubmit}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.md }}>
-            <FormField label="First Name" required>
+            <FormField label={t('clients.firstName')} required>
               <Input value={clientFormData.firstName} onChange={(e) => setClientFormData({ ...clientFormData, firstName: e.target.value })} required />
             </FormField>
-            <FormField label="Last Name" required>
+            <FormField label={t('clients.lastName')} required>
               <Input value={clientFormData.lastName} onChange={(e) => setClientFormData({ ...clientFormData, lastName: e.target.value })} required />
             </FormField>
           </div>
-          <FormField label="Email" required>
+          <FormField label={t('clients.email')} required>
             <Input type="email" value={clientFormData.email} onChange={(e) => setClientFormData({ ...clientFormData, email: e.target.value })} required />
           </FormField>
-          <FormField label="Phone">
+          <FormField label={t('clients.phone')}>
             <Input value={clientFormData.phone || ''} onChange={(e) => setClientFormData({ ...clientFormData, phone: e.target.value })} />
           </FormField>
-          <FormField label="Address">
+          <FormField label={t('clients.address')}>
             <Input value={clientFormData.address || ''} onChange={(e) => setClientFormData({ ...clientFormData, address: e.target.value })} />
           </FormField>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: spacing.md }}>
-            <FormField label="City">
+            <FormField label={t('clients.city')}>
               <Input value={clientFormData.city || ''} onChange={(e) => setClientFormData({ ...clientFormData, city: e.target.value })} />
             </FormField>
-            <FormField label="Postal Code">
+            <FormField label={t('clients.postalCode')}>
               <Input value={clientFormData.postalCode || ''} onChange={(e) => setClientFormData({ ...clientFormData, postalCode: e.target.value })} />
             </FormField>
           </div>
           <ModalActions>
-            <Button type="button" variant="ghost" onClick={() => setShowClientForm(false)} disabled={isSubmittingClient}>Cancel</Button>
+            <Button type="button" variant="ghost" onClick={() => setShowClientForm(false)} disabled={isSubmittingClient}>{t('common.cancel')}</Button>
             <Button type="submit" variant="primary" disabled={isSubmittingClient}>
-              {isSubmittingClient ? 'Saving...' : editingClient ? 'Save' : 'Create'}
+              {isSubmittingClient ? t('common.saving') : editingClient ? t('common.save') : t('common.create')}
             </Button>
           </ModalActions>
         </form>
@@ -747,13 +803,13 @@ export function ClientsPage() {
 
       {/* Patient Form Modal */}
       <Modal open={showPatientForm} onClose={() => setShowPatientForm(false)}>
-        <ModalTitle>{editingPatient ? 'Edit Patient' : 'Add Patient'}</ModalTitle>
+        <ModalTitle>{editingPatient ? t('patients.editPatient') : t('patients.addPatient')}</ModalTitle>
         <form onSubmit={handlePatientSubmit}>
-          <FormField label="Name" required>
+          <FormField label={t('patients.name')} required>
             <Input value={patientFormData.name} onChange={(e) => setPatientFormData({ ...patientFormData, name: e.target.value })} required />
           </FormField>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.md }}>
-            <FormField label="Species" required>
+            <FormField label={t('patients.species')} required>
               <Select
                 value={patientFormData.species}
                 onChange={(e) => {
@@ -766,12 +822,12 @@ export function ClientsPage() {
                 {SPECIES_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.emoji} {s.label}</option>)}
               </Select>
             </FormField>
-            <FormField label="Breed">
+            <FormField label={t('patients.breed')}>
               <Input value={patientFormData.breed || ''} onChange={(e) => setPatientFormData({ ...patientFormData, breed: e.target.value })} />
             </FormField>
           </div>
           <div style={{ marginBottom: spacing.md }}>
-            <Text size="sm" style={{ fontWeight: fontWeight.medium, marginBottom: spacing.xs }}>Labels</Text>
+            <Text size="sm" style={{ fontWeight: fontWeight.medium, marginBottom: spacing.xs }}>{t('patients.labels')}</Text>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xs }}>
               {PATIENT_LABELS.map(({ label, display, icon }) => {
                 const isSelected = patientFormData.labels?.includes(label);
@@ -795,13 +851,13 @@ export function ClientsPage() {
               })}
             </div>
           </div>
-          <FormField label="Notes">
+          <FormField label={t('patients.notes')}>
             <TextArea value={patientFormData.notes || ''} onChange={(e) => setPatientFormData({ ...patientFormData, notes: e.target.value })} rows={2} />
           </FormField>
           <ModalActions>
-            <Button type="button" variant="ghost" onClick={() => setShowPatientForm(false)} disabled={isSubmittingPatient}>Cancel</Button>
+            <Button type="button" variant="ghost" onClick={() => setShowPatientForm(false)} disabled={isSubmittingPatient}>{t('common.cancel')}</Button>
             <Button type="submit" variant="primary" disabled={isSubmittingPatient}>
-              {isSubmittingPatient ? 'Saving...' : editingPatient ? 'Save' : 'Add'}
+              {isSubmittingPatient ? t('common.saving') : editingPatient ? t('common.save') : t('common.add')}
             </Button>
           </ModalActions>
         </form>
@@ -811,59 +867,59 @@ export function ClientsPage() {
       <Modal open={!!selectedVisit} onClose={() => setSelectedVisit(null)}>
         {selectedVisit && (
           <>
-            <ModalTitle>Visit Details</ModalTitle>
+            <ModalTitle>{t('visits.visitDetails')}</ModalTitle>
             <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.md }}>
                 <div style={{ backgroundColor: colors.neutral.background, padding: spacing.sm, borderRadius: borderRadius.sm }}>
-                  <Text variant="muted" size="sm">Date & Time</Text>
+                  <Text variant="muted" size="sm">{t('clients.dateTime')}</Text>
                   <Text style={{ fontWeight: fontWeight.medium }}>{formatDateTime(selectedVisit.visitDate)}</Text>
                 </div>
                 <div style={{ backgroundColor: colors.neutral.background, padding: spacing.sm, borderRadius: borderRadius.sm }}>
-                  <Text variant="muted" size="sm">Duration</Text>
-                  <Text style={{ fontWeight: fontWeight.medium }}>{selectedVisit.durationMinutes || 30} minutes</Text>
+                  <Text variant="muted" size="sm">{t('clients.duration')}</Text>
+                  <Text style={{ fontWeight: fontWeight.medium }}>{t('clients.minutes', { count: selectedVisit.durationMinutes || 30 })}</Text>
                 </div>
               </div>
 
               <div style={{ backgroundColor: colors.neutral.background, padding: spacing.sm, borderRadius: borderRadius.sm }}>
-                <Text variant="muted" size="sm">Veterinarian</Text>
-                <Text style={{ fontWeight: fontWeight.medium }}>{selectedVisit.veterinarianName ? `Dr. ${selectedVisit.veterinarianName}` : 'Not assigned'}</Text>
+                <Text variant="muted" size="sm">{t('visits.veterinarian')}</Text>
+                <Text style={{ fontWeight: fontWeight.medium }}>{selectedVisit.veterinarianName ? `Dr. ${selectedVisit.veterinarianName}` : t('clients.notAssigned')}</Text>
               </div>
 
               <div style={{ backgroundColor: VISIT_STATUS_CONFIG[selectedVisit.status]?.bg || colors.neutral.background, padding: spacing.sm, borderRadius: borderRadius.sm }}>
-                <Text variant="muted" size="sm">Status</Text>
+                <Text variant="muted" size="sm">{t('common.status')}</Text>
                 <Text style={{ fontWeight: fontWeight.medium, color: VISIT_STATUS_CONFIG[selectedVisit.status]?.color }}>{VISIT_STATUS_CONFIG[selectedVisit.status]?.label}</Text>
               </div>
 
               {selectedVisit.reason && (
                 <div style={{ backgroundColor: colors.warning.light, padding: spacing.sm, borderRadius: borderRadius.sm, borderLeft: `3px solid ${colors.warning.main}` }}>
-                  <Text variant="muted" size="sm">Reason for Visit</Text>
+                  <Text variant="muted" size="sm">{t('clients.reasonForVisit')}</Text>
                   <Text>{selectedVisit.reason}</Text>
                 </div>
               )}
 
               {selectedVisit.diagnosis && (
                 <div style={{ backgroundColor: colors.neutral.background, padding: spacing.sm, borderRadius: borderRadius.sm }}>
-                  <Text variant="muted" size="sm">Diagnosis</Text>
+                  <Text variant="muted" size="sm">{t('clients.diagnosis')}</Text>
                   <Text>{selectedVisit.diagnosis}</Text>
                 </div>
               )}
 
               {selectedVisit.treatment && (
                 <div style={{ backgroundColor: colors.neutral.background, padding: spacing.sm, borderRadius: borderRadius.sm }}>
-                  <Text variant="muted" size="sm">Treatment</Text>
+                  <Text variant="muted" size="sm">{t('clients.treatment')}</Text>
                   <Text>{selectedVisit.treatment}</Text>
                 </div>
               )}
 
               {selectedVisit.notes && (
                 <div style={{ backgroundColor: colors.neutral.background, padding: spacing.sm, borderRadius: borderRadius.sm }}>
-                  <Text variant="muted" size="sm">Notes</Text>
+                  <Text variant="muted" size="sm">{t('common.notes')}</Text>
                   <Text>{selectedVisit.notes}</Text>
                 </div>
               )}
             </div>
             <ModalActions>
-              <Button variant="ghost" onClick={() => setSelectedVisit(null)}>Close</Button>
+              <Button variant="ghost" onClick={() => setSelectedVisit(null)}>{t('common.close')}</Button>
             </ModalActions>
           </>
         )}

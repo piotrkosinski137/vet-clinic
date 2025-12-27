@@ -37,6 +37,7 @@ import com.vetclinic.patient.domain.model.Patient;
 import com.vetclinic.patient.domain.model.PatientLabel;
 import com.vetclinic.patient.domain.model.Species;
 import com.vetclinic.veterinarian.domain.model.Veterinarian;
+import com.vetclinic.visit.domain.model.UsedMaterial;
 import com.vetclinic.visit.domain.model.Visit;
 import com.vetclinic.visit.domain.model.VisitStatus;
 import com.vetclinic.visit.domain.model.VisitType;
@@ -68,6 +69,7 @@ public class DataInitializer implements ApplicationRunner {
     private final List<String> veterinarianNames = new ArrayList<>();
     private final List<Visit> completedVisits = new ArrayList<>();
     private final List<Client> clients = new ArrayList<>();
+    private final List<PriceListItem> priceListItems = new ArrayList<>();
 
     @Override
     @Transactional
@@ -908,14 +910,14 @@ public class DataInitializer implements ApplicationRunner {
         Integer reorderPt = null;
         if (!isService) {
             reorderPt = 10 + random.nextInt(15); // 10-25
-            // Mix of stock levels: some good, some low, some out
+            // Mix of stock levels: mostly good stock, some low (but never 0 for low stock)
             var stockLevel = random.nextDouble();
-            if (stockLevel < 0.1) {
-                stockQty = 0; // Out of stock (10%)
-            } else if (stockLevel < 0.25) {
-                stockQty = random.nextInt(reorderPt); // Low stock (15%)
+            if (stockLevel < 0.05) {
+                stockQty = 0; // Out of stock (5% - reduced to ensure most items available)
+            } else if (stockLevel < 0.15) {
+                stockQty = 1 + random.nextInt(reorderPt); // Low stock (10%) - always at least 1
             } else {
-                stockQty = reorderPt + 10 + random.nextInt(100); // In stock (75%)
+                stockQty = reorderPt + 10 + random.nextInt(100); // In stock (85%)
             }
         }
 
@@ -934,6 +936,7 @@ public class DataInitializer implements ApplicationRunner {
                         .build();
         item.setClinicId(clinicId);
         entityManager.persist(item);
+        priceListItems.add(item);
     }
 
     private void initializeVisits() {
@@ -971,16 +974,16 @@ public class DataInitializer implements ApplicationRunner {
             }
         }
 
-        // Today's visits - mix of statuses
+        // Today's visits - always create some completed visits for stats demo
+        // Create 3-5 completed visits for today (regardless of current time/day)
+        for (int i = 0; i < 3 + random.nextInt(3); i++) {
+            int hour = 8 + i;
+            createVisit(today, hour, VisitStatus.COMPLETED, visitReasons);
+        }
+
+        // Additional visits based on current time (if weekday)
         if (today.getDayOfWeek().getValue() <= 5) {
             int currentHour = LocalTime.now().getHour();
-
-            // Earlier today - completed
-            for (int hour = 8; hour < Math.min(currentHour, 12); hour++) {
-                if (random.nextDouble() > 0.3) {
-                    createVisit(today, hour, VisitStatus.COMPLETED, visitReasons);
-                }
-            }
 
             // Current time slot - in progress
             if (currentHour >= 8 && currentHour <= 17) {
@@ -988,7 +991,7 @@ public class DataInitializer implements ApplicationRunner {
             }
 
             // Rest of today - scheduled
-            for (int hour = Math.max(currentHour + 1, 8); hour <= 17; hour++) {
+            for (int hour = Math.max(currentHour + 1, 13); hour <= 17; hour++) {
                 if (random.nextDouble() > 0.4) {
                     createVisit(today, hour, VisitStatus.SCHEDULED, visitReasons);
                 }
@@ -1098,6 +1101,9 @@ public class DataInitializer implements ApplicationRunner {
             if (random.nextDouble() > 0.7) {
                 visit.setNextVisitDate(date.plusDays(7 + random.nextInt(21)));
             }
+
+            // Add used materials for income/profit tracking
+            addUsedMaterialsToVisit(visit);
         }
 
         visit.setClinicId(clinicId);
@@ -1160,6 +1166,59 @@ public class DataInitializer implements ApplicationRunner {
             "Annual vaccination due in 12 months."
         };
         return recs[random.nextInt(recs.length)];
+    }
+
+    private void addUsedMaterialsToVisit(Visit visit) {
+        if (priceListItems.isEmpty()) {
+            return;
+        }
+
+        // Add 1-4 used materials per completed visit
+        int numMaterials = 1 + random.nextInt(4);
+
+        // Filter to items that have stock (for non-service items) or are services
+        var availableItems =
+                priceListItems.stream()
+                        .filter(
+                                item -> {
+                                    var isService =
+                                            item.getCategory() == ItemCategory.CONSULTATION
+                                                    || item.getCategory() == ItemCategory.PROCEDURE
+                                                    || item.getCategory() == ItemCategory.LAB_TEST;
+                                    return isService
+                                            || (item.getStockQuantity() != null
+                                                    && item.getStockQuantity() > 0);
+                                })
+                        .toList();
+
+        if (availableItems.isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < numMaterials && i < availableItems.size(); i++) {
+            var item = availableItems.get(random.nextInt(availableItems.size()));
+
+            // Determine quantity (1 for services/procedures, 1-3 for products)
+            int quantity = 1;
+            var isProduct =
+                    item.getCategory() == ItemCategory.MEDICATION
+                            || item.getCategory() == ItemCategory.PRODUCT;
+            if (isProduct) {
+                quantity = 1 + random.nextInt(3);
+            }
+
+            var usedMaterial =
+                    UsedMaterial.builder()
+                            .materialId(item.getId())
+                            .name(item.getName())
+                            .quantity(quantity)
+                            .costPrice(item.getCostPrice())
+                            .sellPrice(item.getSellPrice())
+                            .unit(item.getUnit())
+                            .build();
+
+            visit.addUsedMaterial(usedMaterial);
+        }
     }
 
     private String getVaccinationReason() {
@@ -1268,15 +1327,19 @@ public class DataInitializer implements ApplicationRunner {
         var invoiceNumber = 1;
         var paymentMethods = PaymentMethod.values();
 
-        // Create invoices for ~60% of completed visits
+        // Create invoices for completed visits
+        // Today's visits always get invoices, others ~60%
+        LocalDate today = LocalDate.now();
         for (var visit : completedVisits) {
-            if (random.nextDouble() > 0.4) {
+            var visitDate = visit.getVisitDate().toLocalDate();
+            boolean isToday = visitDate.equals(today);
+
+            // Skip ~40% of non-today visits
+            if (!isToday && random.nextDouble() > 0.6) {
                 continue;
             }
 
-            var invoiceNum =
-                    String.format("INV-%d-%04d", LocalDate.now().getYear(), invoiceNumber++);
-            var visitDate = visit.getVisitDate().toLocalDate();
+            var invoiceNum = String.format("INV-%d-%04d", today.getYear(), invoiceNumber++);
 
             // Generate random items for the invoice
             var items = new ArrayList<InvoiceItem>();
@@ -1317,28 +1380,36 @@ public class DataInitializer implements ApplicationRunner {
             var totalAmount = subtotal.add(taxAmount);
 
             // Determine status based on payment
+            // Today's invoices are always fully paid for demo purposes
             InvoiceStatus status;
             var paidAmount = BigDecimal.ZERO;
 
-            var paymentChance = random.nextDouble();
-            if (paymentChance < 0.6) {
-                // Fully paid
+            if (isToday) {
+                // Today's visits - always fully paid
                 status = InvoiceStatus.PAID;
                 paidAmount = totalAmount;
-            } else if (paymentChance < 0.75) {
-                // Partially paid
-                status = InvoiceStatus.PARTIALLY_PAID;
-                paidAmount =
-                        totalAmount.multiply(BigDecimal.valueOf(0.3 + random.nextDouble() * 0.4));
-            } else if (paymentChance < 0.9) {
-                // Issued but not paid
-                status = InvoiceStatus.ISSUED;
             } else {
-                // Overdue (older invoices)
-                status =
-                        visitDate.isBefore(LocalDate.now().minusDays(30))
-                                ? InvoiceStatus.OVERDUE
-                                : InvoiceStatus.ISSUED;
+                var paymentChance = random.nextDouble();
+                if (paymentChance < 0.6) {
+                    // Fully paid
+                    status = InvoiceStatus.PAID;
+                    paidAmount = totalAmount;
+                } else if (paymentChance < 0.75) {
+                    // Partially paid
+                    status = InvoiceStatus.PARTIALLY_PAID;
+                    paidAmount =
+                            totalAmount.multiply(
+                                    BigDecimal.valueOf(0.3 + random.nextDouble() * 0.4));
+                } else if (paymentChance < 0.9) {
+                    // Issued but not paid
+                    status = InvoiceStatus.ISSUED;
+                } else {
+                    // Overdue (older invoices)
+                    status =
+                            visitDate.isBefore(today.minusDays(30))
+                                    ? InvoiceStatus.OVERDUE
+                                    : InvoiceStatus.ISSUED;
+                }
             }
 
             var invoice =
@@ -1362,15 +1433,18 @@ public class DataInitializer implements ApplicationRunner {
 
             // Create payments for paid/partially paid invoices
             if (paidAmount.compareTo(BigDecimal.ZERO) > 0) {
+                // For today's payments, use current time to avoid @PastOrPresent validation failure
+                LocalDateTime paymentDateTime =
+                        isToday
+                                ? LocalDateTime.now().minusMinutes(random.nextInt(60))
+                                : visitDate.atTime(10 + random.nextInt(8), random.nextInt(60));
                 var payment =
                         Payment.builder()
                                 .invoiceId(invoice.getId())
                                 .amount(paidAmount)
                                 .paymentMethod(
                                         paymentMethods[random.nextInt(paymentMethods.length)])
-                                .paymentDate(
-                                        visitDate.atTime(
-                                                10 + random.nextInt(8), random.nextInt(60)))
+                                .paymentDate(paymentDateTime)
                                 .transactionReference(
                                         paymentMethods[random.nextInt(paymentMethods.length)]
                                                         == PaymentMethod.CARD

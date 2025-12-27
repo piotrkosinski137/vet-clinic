@@ -55,3 +55,4 @@ export { SearchFilter, type SearchFilterProps } from './SearchFilter';
 export { InfoCard, type InfoCardProps } from './InfoCard';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { Tabs, TabList, Tab, TabPanel } from './Tabs';
+export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';

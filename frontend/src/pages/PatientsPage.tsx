@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePatients } from '../hooks';
 import { PatientRequest, PatientResponse, Species, PatientLabel, Gender } from '../api';
 import {
@@ -20,6 +21,7 @@ import {
   SearchFilter,
 } from '../components/ui';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '../theme';
+import { useI18n } from '../i18n';
 import {
   SPECIES_OPTIONS,
   PATIENT_LABELS,
@@ -41,6 +43,8 @@ const isGender = (value: string): value is Gender => {
 };
 
 export function PatientsPage() {
+  const navigate = useNavigate();
+  const { t } = useI18n();
   const { patients, loading, error, createPatient, updatePatient, deletePatient, refresh } = usePatients();
   const { success, error: showError } = useToast();
   const [showForm, setShowForm] = useState(false);
@@ -141,14 +145,14 @@ export function PatientsPage() {
 
       if (editingPatient) {
         await updatePatient(editingPatient.id, dataToSubmit);
-        success('Patient updated successfully');
+        success(t('patients.patientUpdated'));
       } else {
         await createPatient(dataToSubmit);
-        success('Patient created successfully');
+        success(t('patients.patientCreated'));
       }
       closeForm();
     } catch (err) {
-      showError(editingPatient ? 'Failed to update patient' : 'Failed to create patient');
+      showError(editingPatient ? t('patients.failedToUpdate') : t('patients.failedToCreate'));
     } finally {
       setIsSubmitting(false);
     }
@@ -165,26 +169,26 @@ export function PatientsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this patient?')) {
+    if (window.confirm(t('patients.confirmDelete'))) {
       try {
         await deletePatient(id);
-        success('Patient deleted successfully');
+        success(t('patients.patientDeleted'));
       } catch (err) {
-        showError('Failed to delete patient');
+        showError(t('patients.failedToDelete'));
       }
     }
   };
 
   if (loading) {
-    return <Loading text="Loading patients..." />;
+    return <Loading text={t('patients.loading')} />;
   }
 
   if (error) {
     return (
       <Card style={{ textAlign: 'center', padding: spacing.xl }}>
-        <Text variant="muted" style={{ marginBottom: spacing.md }}>Error: {error}</Text>
+        <Text variant="muted" style={{ marginBottom: spacing.md }}>{t('errors.failedToLoad')}: {error}</Text>
         <Button variant="primary" onClick={refresh}>
-          Retry
+          {t('errors.retry')}
         </Button>
       </Card>
     );
@@ -193,10 +197,10 @@ export function PatientsPage() {
   return (
     <div>
       <PageHeader
-        title="Patients"
+        title={t('patients.title')}
         actions={
           <Button variant="primary" onClick={openCreateForm}>
-            + Add Patient
+            {t('patients.addPatient')}
           </Button>
         }
       />
@@ -206,13 +210,13 @@ export function PatientsPage() {
         <SearchFilter
           value={searchQuery}
           onChange={handleSearchChange}
-          placeholder="Search patients by name, species, breed, or notes..."
+          placeholder={t('patients.searchPlaceholder')}
           resultCount={searchQuery ? filteredPatients.length : undefined}
         />
       )}
 
       <Modal open={showForm} onClose={closeForm}>
-        <ModalTitle>{editingPatient ? 'Edit Patient' : 'New Patient'}</ModalTitle>
+        <ModalTitle>{editingPatient ? t('patients.editPatient') : t('patients.newPatient')}</ModalTitle>
         <form onSubmit={handleSubmit}>
           {/* Basic Info Section */}
           <div style={{
@@ -222,19 +226,19 @@ export function PatientsPage() {
             marginBottom: spacing.md
           }}>
             <Text size="sm" style={{ fontWeight: fontWeight.semibold, marginBottom: spacing.sm, color: colors.primary.hover }}>
-              Basic Information
+              {t('patients.basicInfo')}
             </Text>
-            <FormField label="Name" required>
+            <FormField label={t('patients.name')} required>
               <Input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter patient name"
+                placeholder={t('patients.enterName')}
                 required
               />
             </FormField>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.md }}>
-              <FormField label="Species" required>
+              <FormField label={t('patients.species')} required>
                 <Select
                   value={formData.species}
                   onChange={(e) => {
@@ -251,33 +255,33 @@ export function PatientsPage() {
                   ))}
                 </Select>
               </FormField>
-              <FormField label="Breed">
+              <FormField label={t('patients.breed')}>
                 <Select
                   value={formData.breed || ''}
                   onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
                 >
-                  <option value="">Select breed...</option>
+                  <option value="">{t('patients.selectBreed')}</option>
                   {availableBreeds.map((breed) => (
                     <option key={breed} value={breed}>
                       {breed}
                     </option>
                   ))}
-                  <option value="__custom__">Other (custom)</option>
+                  <option value="__custom__">{t('patients.otherCustom')}</option>
                 </Select>
               </FormField>
             </div>
             {formData.breed === '__custom__' && (
-              <FormField label="Custom Breed">
+              <FormField label={t('patients.customBreed')}>
                 <Input
                   type="text"
                   value={customBreed}
                   onChange={(e) => setCustomBreed(e.target.value)}
-                  placeholder="Enter breed name"
+                  placeholder={t('patients.enterBreedName')}
                 />
               </FormField>
             )}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.md }}>
-              <FormField label="Gender">
+              <FormField label={t('patients.gender')}>
                 <Select
                   value={formData.gender || 'UNKNOWN'}
                   onChange={(e) => {
@@ -287,12 +291,12 @@ export function PatientsPage() {
                     }
                   }}
                 >
-                  <option value="UNKNOWN">Unknown</option>
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
+                  <option value="UNKNOWN">{t('common.unknown')}</option>
+                  <option value="MALE">{t('common.male')}</option>
+                  <option value="FEMALE">{t('common.female')}</option>
                 </Select>
               </FormField>
-              <FormField label="Neutered/Spayed">
+              <FormField label={t('patients.neutered')}>
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -310,7 +314,7 @@ export function PatientsPage() {
                       marginRight: spacing.xs
                     }}
                   />
-                  <Text size="sm">Yes</Text>
+                  <Text size="sm">{t('common.yes')}</Text>
                 </div>
               </FormField>
             </div>
@@ -319,10 +323,10 @@ export function PatientsPage() {
           {/* Labels Section */}
           <div style={{ marginBottom: spacing.md }}>
             <Text size="sm" style={{ fontWeight: fontWeight.semibold, marginBottom: spacing.sm }}>
-              Labels & Tags
+              {t('patients.labelsTags')}
             </Text>
             <Text variant="muted" size="sm" style={{ marginBottom: spacing.sm }}>
-              Click to select relevant labels for this patient
+              {t('patients.clickToSelectLabels')}
             </Text>
             <div style={{
               display: 'grid',
@@ -364,21 +368,21 @@ export function PatientsPage() {
           </div>
 
           {/* Notes Section */}
-          <FormField label="Notes">
+          <FormField label={t('patients.notes')}>
             <TextArea
               value={formData.notes || ''}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
-              placeholder="Any additional notes about this patient..."
+              placeholder={t('patients.anyNotes')}
             />
           </FormField>
 
           <ModalActions>
             <Button type="button" variant="ghost" onClick={closeForm} disabled={isSubmitting}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : editingPatient ? 'Save Changes' : 'Create Patient'}
+              {isSubmitting ? t('common.saving') : editingPatient ? t('patients.saveChanges') : t('patients.createPatient')}
             </Button>
           </ModalActions>
         </form>
@@ -387,17 +391,17 @@ export function PatientsPage() {
       {patients.length === 0 ? (
         <Card style={{ textAlign: 'center', padding: spacing.xxl }}>
           <div style={{ fontSize: '48px', marginBottom: spacing.md }}>🐾</div>
-          <Text style={{ fontSize: fontSize.lg, marginBottom: spacing.sm }}>No patients yet</Text>
+          <Text style={{ fontSize: fontSize.lg, marginBottom: spacing.sm }}>{t('patients.noPatients')}</Text>
           <Text variant="muted" style={{ marginBottom: spacing.lg }}>
-            Add your first patient to get started
+            {t('patients.addFirstPatient')}
           </Text>
           <Button variant="primary" onClick={openCreateForm}>
-            + Add Your First Patient
+            {t('patients.addYourFirstPatient')}
           </Button>
         </Card>
       ) : filteredPatients.length === 0 ? (
         <Card style={{ textAlign: 'center', padding: spacing.xl }}>
-          <Text variant="muted">No patients match your search</Text>
+          <Text variant="muted">{t('patients.noMatch')}</Text>
         </Card>
       ) : (
         <>
@@ -423,56 +427,56 @@ export function PatientsPage() {
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
                     color: colors.neutral.textLight,
-                  }}>Name</th>
+                  }}>{t('patients.name')}</th>
                   <th style={{
                     textAlign: 'left',
                     padding: spacing.md,
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
                     color: colors.neutral.textLight,
-                  }}>Species</th>
+                  }}>{t('patients.species')}</th>
                   <th style={{
                     textAlign: 'left',
                     padding: spacing.md,
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
                     color: colors.neutral.textLight,
-                  }}>Breed</th>
+                  }}>{t('patients.breed')}</th>
                   <th style={{
                     textAlign: 'left',
                     padding: spacing.md,
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
                     color: colors.neutral.textLight,
-                  }}>Labels</th>
+                  }}>{t('patients.labels')}</th>
                   <th style={{
                     textAlign: 'left',
                     padding: spacing.md,
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
                     color: colors.neutral.textLight,
-                  }}>Weight</th>
+                  }}>{t('patients.weight')}</th>
                   <th style={{
                     textAlign: 'left',
                     padding: spacing.md,
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
                     color: colors.neutral.textLight,
-                  }}>Notes</th>
+                  }}>{t('patients.notes')}</th>
                   <th style={{
                     textAlign: 'left',
                     padding: spacing.md,
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
                     color: colors.neutral.textLight,
-                  }}>Date Added</th>
+                  }}>{t('patients.dateAdded')}</th>
                   <th style={{
                     textAlign: 'right',
                     padding: spacing.md,
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
                     color: colors.neutral.textLight,
-                  }}>Actions</th>
+                  }}>{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -481,7 +485,7 @@ export function PatientsPage() {
                   return (
                     <tr
                       key={patient.id}
-                      onClick={() => openEditForm(patient)}
+                      onClick={() => navigate(`/patients/${patient.id}`)}
                       style={{
                         borderBottom: `1px solid ${colors.neutral.border}`,
                         cursor: 'pointer',
@@ -578,7 +582,7 @@ export function PatientsPage() {
                               openEditForm(patient);
                             }}
                           >
-                            Edit
+                            {t('common.edit')}
                           </Button>
                           <Button
                             variant="danger"
@@ -588,7 +592,7 @@ export function PatientsPage() {
                               handleDelete(patient.id);
                             }}
                           >
-                            Delete
+                            {t('common.delete')}
                           </Button>
                         </div>
                       </td>

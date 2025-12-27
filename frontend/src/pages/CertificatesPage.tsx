@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { api } from '../api';
-import type { VaccinationCertificateResponse, VaccinationCertificateRequest, CertificateType, PatientResponse, VeterinarianResponse } from '../api/types';
+import { useI18n } from '../i18n';
+import type { VaccinationCertificateResponse, VaccinationCertificateRequest, CertificateType, PatientResponse, VeterinarianResponse, ClientResponse } from '../api/types';
 import {
   PageHeader,
   Card,
@@ -19,6 +20,7 @@ import {
   TextArea,
   Pagination,
   useToast,
+  ConfirmDialog,
 } from '../components/ui';
 import { colors, spacing } from '../theme';
 import type { BadgeVariant } from '../components/ui/Badge';
@@ -26,21 +28,9 @@ import type { BadgeVariant } from '../components/ui/Badge';
 const CERTIFICATE_TYPES: CertificateType[] = ['RABIES', 'DISTEMPER', 'PARVOVIRUS', 'HEPATITIS', 'LEPTOSPIROSIS', 'BORDETELLA', 'FELINE_LEUKEMIA', 'FELINE_CALICIVIRUS', 'OTHER'];
 const ITEMS_PER_PAGE = 15;
 
-const typeLabels: Record<CertificateType, string> = {
-  RABIES: 'Rabies',
-  DISTEMPER: 'Distemper',
-  PARVOVIRUS: 'Parvovirus',
-  HEPATITIS: 'Hepatitis',
-  LEPTOSPIROSIS: 'Leptospirosis',
-  BORDETELLA: 'Bordetella',
-  FELINE_LEUKEMIA: 'Feline Leukemia',
-  FELINE_CALICIVIRUS: 'Feline Calicivirus',
-  OTHER: 'Other',
-};
-
-function formatDate(dateStr?: string): string {
+function formatDate(dateStr?: string, language?: string): string {
   if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString('pl-PL');
+  return new Date(dateStr).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US');
 }
 
 function isExpiringSoon(dateStr?: string): boolean {
@@ -57,8 +47,10 @@ function isExpired(dateStr?: string): boolean {
 }
 
 export function CertificatesPage() {
+  const { t, language } = useI18n();
   const [certificates, setCertificates] = useState<VaccinationCertificateResponse[]>([]);
   const [patients, setPatients] = useState<PatientResponse[]>([]);
+  const [clients, setClients] = useState<ClientResponse[]>([]);
   const [veterinarians, setVeterinarians] = useState<VeterinarianResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +59,11 @@ export function CertificatesPage() {
   const [page, setPage] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    type: 'invalidate' | 'delete';
+    certificate: VaccinationCertificateResponse | null;
+  }>({ open: false, type: 'delete', certificate: null });
   const { success, error: showError } = useToast();
 
   const [formData, setFormData] = useState<Partial<VaccinationCertificateRequest>>({
@@ -80,16 +77,18 @@ export function CertificatesPage() {
     setLoading(true);
     setError(null);
     try {
-      const [certsData, patientsData, vetsData] = await Promise.all([
+      const [certsData, patientsData, clientsData, vetsData] = await Promise.all([
         api.getCertificates(),
         api.getPatients(),
+        api.getClients(),
         api.getVeterinarians({ active: true }),
       ]);
       setCertificates(certsData);
       setPatients(patientsData);
+      setClients(clientsData);
       setVeterinarians(vetsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data');
+      setError(err instanceof Error ? err.message : t('errors.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -123,14 +122,41 @@ export function CertificatesPage() {
   };
 
   const handleCreate = async () => {
-    if (!formData.patientId || !formData.vaccineName || !formData.administrationDate) {
-      showError('Please fill all required fields');
+    if (!formData.patientId || !formData.vaccineName || !formData.veterinarianId) {
+      showError(t('errors.somethingWentWrong'));
       return;
     }
+
+    const patient = patients.find(p => p.id === formData.patientId);
+    const client = patient ? clients.find(c => c.id === patient.ownerId) : null;
+    const vet = veterinarians.find(v => v.id === formData.veterinarianId);
+
+    if (!patient || !client || !vet) {
+      showError(t('errors.somethingWentWrong'));
+      return;
+    }
+
     setActionLoading(true);
     try {
-      await api.createCertificate(formData as VaccinationCertificateRequest);
-      success('Certificate created');
+      await api.createCertificate({
+        certificateType: formData.certificateType || 'RABIES',
+        patientId: patient.id,
+        patientName: patient.name,
+        patientSpecies: patient.species,
+        patientBreed: patient.breed,
+        clientId: client.id,
+        clientName: `${client.firstName} ${client.lastName}`,
+        vaccineName: formData.vaccineName || '',
+        vaccineManufacturer: formData.vaccineManufacturer,
+        batchNumber: formData.batchNumber,
+        administrationDate: formData.administrationDate,
+        expirationDate: formData.expirationDate,
+        nextDueDate: formData.nextDueDate,
+        veterinarianId: vet.id,
+        veterinarianName: vet.fullName,
+        notes: formData.notes,
+      });
+      success(t('success.saved'));
       setShowCreateModal(false);
       setFormData({
         patientId: '',
@@ -140,55 +166,63 @@ export function CertificatesPage() {
       });
       fetchData();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to create certificate');
+      showError(err instanceof Error ? err.message : t('errors.failedToSave'));
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handleInvalidate = async (cert: VaccinationCertificateResponse) => {
-    const reason = window.prompt('Reason for invalidation:');
-    if (!reason) return;
-    setActionLoading(true);
-    try {
-      await api.invalidateCertificate(cert.id, reason);
-      success('Certificate invalidated');
-      fetchData();
-    } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to invalidate certificate');
-    } finally {
-      setActionLoading(false);
-    }
+  const openInvalidateDialog = (cert: VaccinationCertificateResponse) => {
+    setConfirmDialog({ open: true, type: 'invalidate', certificate: cert });
   };
 
-  const handleDelete = async (cert: VaccinationCertificateResponse) => {
-    if (!window.confirm('Are you sure you want to delete this certificate?')) return;
+  const openDeleteDialog = (cert: VaccinationCertificateResponse) => {
+    setConfirmDialog({ open: true, type: 'delete', certificate: cert });
+  };
+
+  const closeConfirmDialog = () => {
+    setConfirmDialog({ open: false, type: 'delete', certificate: null });
+  };
+
+  const handleConfirmAction = async (inputValue?: string) => {
+    if (!confirmDialog.certificate) return;
     setActionLoading(true);
     try {
-      await api.deleteCertificate(cert.id);
-      success('Certificate deleted');
+      if (confirmDialog.type === 'invalidate') {
+        if (!inputValue) {
+          showError(t('errors.somethingWentWrong'));
+          setActionLoading(false);
+          return;
+        }
+        await api.invalidateCertificate(confirmDialog.certificate.id, inputValue);
+        success(t('success.statusUpdated'));
+      } else {
+        await api.deleteCertificate(confirmDialog.certificate.id);
+        success(t('success.deleted'));
+      }
+      closeConfirmDialog();
       fetchData();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to delete certificate');
+      showError(err instanceof Error ? err.message : t('errors.failedToSave'));
     } finally {
       setActionLoading(false);
     }
   };
 
   const getStatusBadge = (cert: VaccinationCertificateResponse): { variant: BadgeVariant; text: string } => {
-    if (!cert.isValid) return { variant: 'danger', text: 'Invalid' };
-    if (isExpired(cert.expirationDate)) return { variant: 'danger', text: 'Expired' };
-    if (isExpiringSoon(cert.expirationDate)) return { variant: 'warning', text: 'Expiring Soon' };
-    return { variant: 'success', text: 'Valid' };
+    if (!cert.isValid) return { variant: 'danger', text: t('certificates.invalid') };
+    if (isExpired(cert.expirationDate)) return { variant: 'danger', text: t('certificates.expired') };
+    if (isExpiringSoon(cert.expirationDate)) return { variant: 'warning', text: t('certificates.expiringSoon') };
+    return { variant: 'success', text: t('certificates.valid') };
   };
 
   return (
     <div>
       <PageHeader
-        title="Vaccination Certificates"
+        title={t('certificates.title')}
         actions={
           <Button variant="primary" onClick={() => setShowCreateModal(true)}>
-            + New Certificate
+            + {t('certificates.newCertificate')}
           </Button>
         }
       />
@@ -198,30 +232,30 @@ export function CertificatesPage() {
         <CardContent>
           <div style={{ display: 'flex', gap: spacing.md, alignItems: 'flex-end', flexWrap: 'wrap' }}>
             <div style={{ minWidth: '180px' }}>
-              <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '14px' }}>Type</label>
+              <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '14px' }}>{t('common.type')}</label>
               <Select
                 value={typeFilter}
                 onChange={(e) => { setTypeFilter(e.target.value as CertificateType | ''); setPage(1); }}
               >
-                <option value="">All Types</option>
-                {CERTIFICATE_TYPES.map(t => (
-                  <option key={t} value={t}>{typeLabels[t]}</option>
+                <option value="">{t('certificates.allTypes')}</option>
+                {CERTIFICATE_TYPES.map(type => (
+                  <option key={type} value={type}>{t(`certificates.types.${type}`)}</option>
                 ))}
               </Select>
             </div>
             <div style={{ minWidth: '150px' }}>
-              <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '14px' }}>Validity</label>
+              <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '14px' }}>{t('certificates.validity')}</label>
               <Select
                 value={validityFilter}
                 onChange={(e) => { setValidityFilter(e.target.value as 'all' | 'valid' | 'invalid'); setPage(1); }}
               >
-                <option value="all">All</option>
-                <option value="valid">Valid Only</option>
-                <option value="invalid">Invalid Only</option>
+                <option value="all">{t('common.all')}</option>
+                <option value="valid">{t('certificates.validOnly')}</option>
+                <option value="invalid">{t('certificates.invalidOnly')}</option>
               </Select>
             </div>
             <Button variant="ghost" onClick={() => { setTypeFilter(''); setValidityFilter('all'); setPage(1); }}>
-              Clear
+              {t('common.clear')}
             </Button>
           </div>
         </CardContent>
@@ -231,22 +265,22 @@ export function CertificatesPage() {
       <Card variant="default">
         {loading && (
           <div style={{ padding: spacing.xl, textAlign: 'center' }}>
-            <Loading text="Loading certificates..." />
+            <Loading text={t('certificates.loading')} />
           </div>
         )}
 
         {error && (
           <div style={{ padding: spacing.xl, textAlign: 'center', color: colors.danger.main }}>
             <Text>{error}</Text>
-            <Button variant="ghost" onClick={fetchData} style={{ marginTop: spacing.md }}>Retry</Button>
+            <Button variant="ghost" onClick={fetchData} style={{ marginTop: spacing.md }}>{t('errors.retry')}</Button>
           </div>
         )}
 
         {!loading && !error && filteredCertificates.length === 0 && (
           <EmptyState
             icon="💉"
-            title="No certificates found"
-            description="Create a vaccination certificate to get started."
+            title={t('certificates.noCertificates')}
+            description={t('certificates.noCertificatesHint')}
           />
         )}
 
@@ -256,15 +290,15 @@ export function CertificatesPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                 <thead>
                   <tr style={{ backgroundColor: colors.neutral.background, borderBottom: `1px solid ${colors.neutral.border}` }}>
-                    <th style={{ padding: spacing.md, textAlign: 'left' }}>Certificate #</th>
-                    <th style={{ padding: spacing.md, textAlign: 'left' }}>Patient</th>
-                    <th style={{ padding: spacing.md, textAlign: 'left' }}>Type</th>
-                    <th style={{ padding: spacing.md, textAlign: 'left' }}>Vaccine</th>
-                    <th style={{ padding: spacing.md, textAlign: 'left' }}>Administered</th>
-                    <th style={{ padding: spacing.md, textAlign: 'left' }}>Expires</th>
-                    <th style={{ padding: spacing.md, textAlign: 'left' }}>Next Due</th>
-                    <th style={{ padding: spacing.md, textAlign: 'left' }}>Status</th>
-                    <th style={{ padding: spacing.md, textAlign: 'right' }}>Actions</th>
+                    <th style={{ padding: spacing.md, textAlign: 'left' }}>{t('certificates.certificateNumber')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'left' }}>{t('certificates.patient')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'left' }}>{t('common.type')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'left' }}>{t('certificates.vaccine')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'left' }}>{t('certificates.administeredDate')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'left' }}>{t('certificates.expires')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'left' }}>{t('certificates.nextDueDate')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'left' }}>{t('common.status')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'right' }}>{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -277,24 +311,24 @@ export function CertificatesPage() {
                         </td>
                         <td style={{ padding: spacing.md }}>{getPatientName(cert.patientId)}</td>
                         <td style={{ padding: spacing.md }}>
-                          <Badge variant="secondary">{typeLabels[cert.certificateType]}</Badge>
+                          <Badge variant="secondary">{t(`certificates.types.${cert.certificateType}`)}</Badge>
                         </td>
                         <td style={{ padding: spacing.md }}>{cert.vaccineName}</td>
-                        <td style={{ padding: spacing.md }}>{formatDate(cert.administrationDate)}</td>
-                        <td style={{ padding: spacing.md }}>{formatDate(cert.expirationDate)}</td>
-                        <td style={{ padding: spacing.md }}>{formatDate(cert.nextDueDate)}</td>
+                        <td style={{ padding: spacing.md }}>{formatDate(cert.administrationDate, language)}</td>
+                        <td style={{ padding: spacing.md }}>{formatDate(cert.expirationDate, language)}</td>
+                        <td style={{ padding: spacing.md }}>{formatDate(cert.nextDueDate, language)}</td>
                         <td style={{ padding: spacing.md }}>
                           <Badge variant={status.variant}>{status.text}</Badge>
                         </td>
                         <td style={{ padding: spacing.md, textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: spacing.xs, justifyContent: 'flex-end' }}>
                             {cert.isValid && (
-                              <Button size="sm" variant="secondary" onClick={() => handleInvalidate(cert)} disabled={actionLoading}>
-                                Invalidate
+                              <Button size="sm" variant="secondary" onClick={() => openInvalidateDialog(cert)} disabled={actionLoading}>
+                                {t('certificates.invalidate')}
                               </Button>
                             )}
-                            <Button size="sm" variant="danger" onClick={() => handleDelete(cert)} disabled={actionLoading}>
-                              Delete
+                            <Button size="sm" variant="danger" onClick={() => openDeleteDialog(cert)} disabled={actionLoading}>
+                              {t('common.delete')}
                             </Button>
                           </div>
                         </td>
@@ -320,57 +354,57 @@ export function CertificatesPage() {
 
       {/* Create Certificate Modal */}
       <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)}>
-        <ModalTitle>New Vaccination Certificate</ModalTitle>
-        <FormField label="Patient" required>
+        <ModalTitle>{t('certificates.newCertificate')}</ModalTitle>
+        <FormField label={t('certificates.patient')} required>
           <Select
             value={formData.patientId || ''}
             onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
           >
-            <option value="">Select patient...</option>
+            <option value="">{t('certificates.selectPatient')}</option>
             {patients.map(p => (
               <option key={p.id} value={p.id}>{p.name} ({p.species})</option>
             ))}
           </Select>
         </FormField>
-        <FormField label="Certificate Type" required>
+        <FormField label={t('common.type')} required>
           <Select
             value={formData.certificateType || 'RABIES'}
             onChange={(e) => setFormData({ ...formData, certificateType: e.target.value as CertificateType })}
           >
-            {CERTIFICATE_TYPES.map(t => (
-              <option key={t} value={t}>{typeLabels[t]}</option>
+            {CERTIFICATE_TYPES.map(type => (
+              <option key={type} value={type}>{t(`certificates.types.${type}`)}</option>
             ))}
           </Select>
         </FormField>
-        <FormField label="Vaccine Name" required>
+        <FormField label={t('certificates.vaccineName')} required>
           <Input
             value={formData.vaccineName || ''}
             onChange={(e) => setFormData({ ...formData, vaccineName: e.target.value })}
             placeholder="e.g., Nobivac Rabies"
           />
         </FormField>
-        <FormField label="Manufacturer">
+        <FormField label={t('certificates.manufacturer')}>
           <Input
-            value={formData.manufacturer || ''}
-            onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
+            value={formData.vaccineManufacturer || ''}
+            onChange={(e) => setFormData({ ...formData, vaccineManufacturer: e.target.value })}
             placeholder="e.g., MSD Animal Health"
           />
         </FormField>
-        <FormField label="Batch Number">
+        <FormField label={t('certificates.batchNumber')}>
           <Input
             value={formData.batchNumber || ''}
             onChange={(e) => setFormData({ ...formData, batchNumber: e.target.value })}
           />
         </FormField>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.md }}>
-          <FormField label="Administration Date" required>
+          <FormField label={t('certificates.administeredDate')} required>
             <Input
               type="date"
               value={formData.administrationDate || ''}
               onChange={(e) => setFormData({ ...formData, administrationDate: e.target.value })}
             />
           </FormField>
-          <FormField label="Expiration Date">
+          <FormField label={t('certificates.expirationDate')}>
             <Input
               type="date"
               value={formData.expirationDate || ''}
@@ -378,32 +412,25 @@ export function CertificatesPage() {
             />
           </FormField>
         </div>
-        <FormField label="Next Due Date">
+        <FormField label={t('certificates.nextDueDate')}>
           <Input
             type="date"
             value={formData.nextDueDate || ''}
             onChange={(e) => setFormData({ ...formData, nextDueDate: e.target.value })}
           />
         </FormField>
-        <FormField label="Veterinarian">
+        <FormField label={t('visits.veterinarian')} required>
           <Select
             value={formData.veterinarianId || ''}
-            onChange={(e) => {
-              const vet = veterinarians.find(v => v.id === e.target.value);
-              setFormData({
-                ...formData,
-                veterinarianId: e.target.value,
-                veterinarianName: vet ? vet.fullName : '',
-              });
-            }}
+            onChange={(e) => setFormData({ ...formData, veterinarianId: e.target.value })}
           >
-            <option value="">Select veterinarian...</option>
+            <option value="">{t('certificates.selectVeterinarian')}</option>
             {veterinarians.map(v => (
               <option key={v.id} value={v.id}>Dr. {v.fullName}</option>
             ))}
           </Select>
         </FormField>
-        <FormField label="Notes">
+        <FormField label={t('common.notes')}>
           <TextArea
             value={formData.notes || ''}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -411,12 +438,31 @@ export function CertificatesPage() {
           />
         </FormField>
         <ModalActions>
-          <Button variant="ghost" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => setShowCreateModal(false)}>{t('common.cancel')}</Button>
           <Button variant="primary" onClick={handleCreate} disabled={actionLoading}>
-            {actionLoading ? 'Creating...' : 'Create Certificate'}
+            {actionLoading ? t('common.creating') : t('certificates.createCertificate')}
           </Button>
         </ModalActions>
       </Modal>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onClose={closeConfirmDialog}
+        onConfirm={handleConfirmAction}
+        title={confirmDialog.type === 'invalidate' ? t('certificates.invalidate') : t('common.delete')}
+        message={
+          confirmDialog.type === 'invalidate'
+            ? t('certificates.confirmInvalidate')
+            : t('certificates.confirmDelete')
+        }
+        confirmLabel={confirmDialog.type === 'invalidate' ? t('certificates.invalidate') : t('common.delete')}
+        variant="danger"
+        inputLabel={confirmDialog.type === 'invalidate' ? t('certificates.invalidationReason') : undefined}
+        inputPlaceholder={confirmDialog.type === 'invalidate' ? t('certificates.invalidationPlaceholder') : undefined}
+        inputRequired={confirmDialog.type === 'invalidate'}
+        loading={actionLoading}
+      />
     </div>
   );
 }

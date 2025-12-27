@@ -95,9 +95,9 @@ export const CATEGORY_LABELS: Record<ItemCategory, { label: string; icon: string
 };
 
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('pl-PL', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'PLN',
   }).format(amount);
 }
 

@@ -14,12 +14,14 @@ import { Calendar, CalendarView } from "../components/calendar";
 import { BookAppointmentModal, VisitDetailsModal } from "../components/visits";
 import { DoctorsManagementModal } from "../components/doctors";
 import { colors, spacing, borderRadius, fontWeight, fontSize } from "../theme";
+import { useI18n } from "../i18n";
 
 function formatDateForApi(date: Date): string {
   return date.toISOString().split("T")[0];
 }
 
 export function VisitsPage() {
+  const { t } = useI18n();
   const { visits, loading, error, fetchVisits, updateVisitStatus, updateVisit, reassignVisit, deleteVisit, refresh } =
     useVisits();
   const { veterinarians, refetch: refetchVeterinarians } = useVeterinarians({ active: true });
@@ -131,9 +133,9 @@ export function VisitsPage() {
           newVeterinarianName || null,
           localDateTimeStr
         );
-        success("Visit reassigned successfully");
+        success(t('visits.visitReassigned'));
       } catch (err) {
-        showError(err instanceof Error ? err.message : "Failed to reassign visit");
+        showError(err instanceof Error ? err.message : t('visits.failedToReassign'));
       }
     },
     [reassignVisit, success, showError]
@@ -147,9 +149,9 @@ export function VisitsPage() {
         ...data,
       });
       setSelectedVisit({ ...selectedVisit, ...data } as VisitResponse);
-      success("Visit updated successfully");
+      success(t('visits.visitUpdated'));
     } catch (err) {
-      showError("Failed to save changes");
+      showError(t('visits.failedToSave'));
       throw err;
     }
   };
@@ -159,22 +161,22 @@ export function VisitsPage() {
     try {
       const updated = await updateVisitStatus(selectedVisit.id, status);
       setSelectedVisit(updated);
-      success("Status updated successfully");
+      success(t('visits.statusUpdated'));
     } catch (err) {
-      showError("Failed to update status");
+      showError(t('visits.failedToUpdateStatus'));
       throw err;
     }
   };
 
   const handleVisitDelete = async () => {
     if (!selectedVisit) return;
-    if (window.confirm("Are you sure you want to delete this appointment?")) {
+    if (window.confirm(t('visits.confirmDeleteVisit'))) {
       try {
         await deleteVisit(selectedVisit.id);
         setSelectedVisit(null);
-        success("Appointment deleted");
+        success(t('visits.appointmentDeleted'));
       } catch (err) {
-        showError("Failed to delete appointment");
+        showError(t('visits.failedToDelete'));
         throw err;
       }
     }
@@ -186,20 +188,20 @@ export function VisitsPage() {
     setBookingHour(null);
     setBookingVeterinarianId(null);
     refresh();
-    success("Appointment booked successfully");
+    success(t('visits.appointmentBooked'));
   };
 
   if (loading && visits.length === 0) {
-    return <Loading text="Loading appointments..." />;
+    return <Loading text={t('visits.loading')} />;
   }
 
   return (
     <div>
       <PageHeader
-        title="Schedule"
+        title={t('visits.schedule')}
         actions={
           <Button variant="primary" onClick={() => setShowBookModal(true)}>
-            + Book Appointment
+            {t('visits.bookAppointment')}
           </Button>
         }
       />
@@ -218,7 +220,7 @@ export function VisitsPage() {
         }}
       >
         <Text size="sm" style={{ fontWeight: fontWeight.medium, marginRight: spacing.xs }}>
-          Filter by doctor:
+          {t('visits.filterByDoctor')}
         </Text>
         <button
           onClick={() => handleDoctorSelect("")}
@@ -235,7 +237,7 @@ export function VisitsPage() {
             transition: "all 0.2s ease",
           }}
         >
-          All
+          {t('visits.all')}
         </button>
         {veterinarians.map((vet) => (
           <button
@@ -260,7 +262,7 @@ export function VisitsPage() {
         ))}
         <div style={{ marginLeft: "auto" }}>
           <Button variant="ghost" size="sm" onClick={() => setShowDoctorsModal(true)}>
-            Manage Doctors
+            {t('visits.manageDoctors')}
           </Button>
         </div>
       </div>
@@ -279,12 +281,12 @@ export function VisitsPage() {
           <span style={{ fontSize: fontSize.lg }}>⚠️</span>
           <div style={{ flex: 1 }}>
             <Text style={{ color: colors.danger.main, fontWeight: fontWeight.medium }}>
-              Error loading appointments
+              {t('visits.errorLoadingAppointments')}
             </Text>
             <Text variant="muted" size="sm">{error}</Text>
           </div>
           <Button variant="ghost" size="sm" onClick={refresh}>
-            Retry
+            {t('errors.retry')}
           </Button>
         </Card>
       )}

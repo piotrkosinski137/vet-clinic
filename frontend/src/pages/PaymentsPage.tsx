@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { api } from '../api';
+import { useI18n } from '../i18n';
 import type { InvoiceResponse, InvoiceStatus, PaymentMethod, ClientResponse } from '../api/types';
 import {
   PageHeader,
@@ -19,6 +20,7 @@ import {
   Pagination,
   StatCard,
   useToast,
+  ConfirmDialog,
 } from '../components/ui';
 import { colors, spacing, borderRadius } from '../theme';
 import type { BadgeVariant } from '../components/ui/Badge';
@@ -35,16 +37,17 @@ const statusColors: Record<InvoiceStatus, BadgeVariant> = {
   OVERDUE: 'warning',
 };
 
-function formatDate(dateStr?: string): string {
+function formatDate(dateStr?: string, language?: string): string {
   if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString('pl-PL');
+  return new Date(dateStr).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US');
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(amount);
+function formatCurrency(amount: number, language?: string): string {
+  return new Intl.NumberFormat(language === 'pl' ? 'pl-PL' : 'en-US', { style: 'currency', currency: 'PLN' }).format(amount);
 }
 
 export function PaymentsPage() {
+  const { t, language } = useI18n();
   const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
   const [clients, setClients] = useState<ClientResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +57,11 @@ export function PaymentsPage() {
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceResponse | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    type: 'cancel' | 'delete';
+    invoice: InvoiceResponse | null;
+  }>({ open: false, type: 'cancel', invoice: null });
   const { success, error: showError } = useToast();
 
   const [paymentForm, setPaymentForm] = useState({
@@ -73,7 +81,7 @@ export function PaymentsPage() {
       setInvoices(invoicesData);
       setClients(clientsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data');
+      setError(err instanceof Error ? err.message : t('errors.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -114,38 +122,42 @@ export function PaymentsPage() {
     setActionLoading(true);
     try {
       await api.issueInvoice(invoice.id);
-      success('Invoice issued');
+      success(t('success.statusUpdated'));
       fetchData();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to issue invoice');
+      showError(err instanceof Error ? err.message : t('errors.failedToSave'));
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handleCancel = async (invoice: InvoiceResponse) => {
-    if (!window.confirm('Are you sure you want to cancel this invoice?')) return;
-    setActionLoading(true);
-    try {
-      await api.cancelInvoice(invoice.id);
-      success('Invoice cancelled');
-      fetchData();
-    } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to cancel invoice');
-    } finally {
-      setActionLoading(false);
-    }
+  const openCancelDialog = (invoice: InvoiceResponse) => {
+    setConfirmDialog({ open: true, type: 'cancel', invoice });
   };
 
-  const handleDelete = async (invoice: InvoiceResponse) => {
-    if (!window.confirm('Are you sure you want to delete this invoice?')) return;
+  const openDeleteDialog = (invoice: InvoiceResponse) => {
+    setConfirmDialog({ open: true, type: 'delete', invoice });
+  };
+
+  const closeConfirmDialog = () => {
+    setConfirmDialog({ open: false, type: 'cancel', invoice: null });
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmDialog.invoice) return;
     setActionLoading(true);
     try {
-      await api.deleteInvoice(invoice.id);
-      success('Invoice deleted');
+      if (confirmDialog.type === 'cancel') {
+        await api.cancelInvoice(confirmDialog.invoice.id);
+        success(t('success.statusUpdated'));
+      } else {
+        await api.deleteInvoice(confirmDialog.invoice.id);
+        success(t('success.deleted'));
+      }
+      closeConfirmDialog();
       fetchData();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to delete invoice');
+      showError(err instanceof Error ? err.message : t('errors.failedToSave'));
     } finally {
       setActionLoading(false);
     }
@@ -163,7 +175,7 @@ export function PaymentsPage() {
 
   const handleRecordPayment = async () => {
     if (!selectedInvoice || paymentForm.amount <= 0) {
-      showError('Please enter a valid amount');
+      showError(t('errors.somethingWentWrong'));
       return;
     }
     setActionLoading(true);
@@ -173,11 +185,11 @@ export function PaymentsPage() {
         paymentMethod: paymentForm.paymentMethod,
         notes: paymentForm.notes || undefined,
       });
-      success('Payment recorded');
+      success(t('success.saved'));
       setShowPaymentModal(false);
       fetchData();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to record payment');
+      showError(err instanceof Error ? err.message : t('errors.failedToSave'));
     } finally {
       setActionLoading(false);
     }
@@ -185,30 +197,30 @@ export function PaymentsPage() {
 
   return (
     <div>
-      <PageHeader title="Payments & Invoices" />
+      <PageHeader title={t('payments.title')} />
 
       {/* Stats Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: spacing.lg, marginBottom: spacing.xl }}>
         <StatCard
-          label="Total Invoiced"
-          value={formatCurrency(stats.totalInvoiced)}
+          label={t('payments.totalInvoiced')}
+          value={formatCurrency(stats.totalInvoiced, language)}
           icon="📄"
           color="primary"
         />
         <StatCard
-          label="Total Paid"
-          value={formatCurrency(stats.totalPaid)}
+          label={t('payments.totalPaid')}
+          value={formatCurrency(stats.totalPaid, language)}
           icon="✅"
           color="success"
         />
         <StatCard
-          label="Outstanding"
-          value={formatCurrency(stats.totalOutstanding)}
+          label={t('payments.outstanding')}
+          value={formatCurrency(stats.totalOutstanding, language)}
           icon="⏳"
           color="warning"
         />
         <StatCard
-          label="Unpaid Invoices"
+          label={t('payments.unpaidInvoices')}
           value={String(stats.unpaidCount)}
           icon="📋"
           color="info"
@@ -220,19 +232,19 @@ export function PaymentsPage() {
         <CardContent>
           <div style={{ display: 'flex', gap: spacing.md, alignItems: 'flex-end' }}>
             <div style={{ minWidth: '200px' }}>
-              <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '14px' }}>Status</label>
+              <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '14px' }}>{t('common.status')}</label>
               <Select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value as InvoiceStatus | ''); setPage(1); }}
               >
-                <option value="">All Statuses</option>
+                <option value="">{t('common.allStatuses')}</option>
                 {INVOICE_STATUSES.map(s => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>{t(`payments.statuses.${s}`)}</option>
                 ))}
               </Select>
             </div>
             <Button variant="ghost" onClick={() => { setStatusFilter(''); setPage(1); }}>
-              Clear
+              {t('common.clear')}
             </Button>
           </div>
         </CardContent>
@@ -242,22 +254,22 @@ export function PaymentsPage() {
       <Card variant="default">
         {loading && (
           <div style={{ padding: spacing.xl, textAlign: 'center' }}>
-            <Loading text="Loading invoices..." />
+            <Loading text={t('payments.loading')} />
           </div>
         )}
 
         {error && (
           <div style={{ padding: spacing.xl, textAlign: 'center', color: colors.danger.main }}>
             <Text>{error}</Text>
-            <Button variant="ghost" onClick={fetchData} style={{ marginTop: spacing.md }}>Retry</Button>
+            <Button variant="ghost" onClick={fetchData} style={{ marginTop: spacing.md }}>{t('errors.retry')}</Button>
           </div>
         )}
 
         {!loading && !error && filteredInvoices.length === 0 && (
           <EmptyState
             icon="💰"
-            title="No invoices found"
-            description="Invoices will appear here when created from visits."
+            title={t('payments.noInvoices')}
+            description={t('payments.noInvoicesHint')}
           />
         )}
 
@@ -267,15 +279,15 @@ export function PaymentsPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                 <thead>
                   <tr style={{ backgroundColor: colors.neutral.background, borderBottom: `1px solid ${colors.neutral.border}` }}>
-                    <th style={{ padding: spacing.md, textAlign: 'left' }}>Invoice #</th>
-                    <th style={{ padding: spacing.md, textAlign: 'left' }}>Client</th>
-                    <th style={{ padding: spacing.md, textAlign: 'left' }}>Status</th>
-                    <th style={{ padding: spacing.md, textAlign: 'right' }}>Total</th>
-                    <th style={{ padding: spacing.md, textAlign: 'right' }}>Paid</th>
-                    <th style={{ padding: spacing.md, textAlign: 'right' }}>Outstanding</th>
-                    <th style={{ padding: spacing.md, textAlign: 'left' }}>Date</th>
-                    <th style={{ padding: spacing.md, textAlign: 'left' }}>Due</th>
-                    <th style={{ padding: spacing.md, textAlign: 'right' }}>Actions</th>
+                    <th style={{ padding: spacing.md, textAlign: 'left' }}>{t('payments.invoiceNumber')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'left' }}>{t('payments.client')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'left' }}>{t('common.status')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'right' }}>{t('common.total')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'right' }}>{t('payments.paid')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'right' }}>{t('payments.outstanding')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'left' }}>{t('common.date')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'left' }}>{t('payments.dueDate')}</th>
+                    <th style={{ padding: spacing.md, textAlign: 'right' }}>{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -288,39 +300,39 @@ export function PaymentsPage() {
                         </td>
                         <td style={{ padding: spacing.md }}>{getClientName(invoice.clientId)}</td>
                         <td style={{ padding: spacing.md }}>
-                          <Badge variant={statusColors[invoice.status]}>{invoice.status}</Badge>
+                          <Badge variant={statusColors[invoice.status]}>{t(`payments.statuses.${invoice.status}`)}</Badge>
                         </td>
                         <td style={{ padding: spacing.md, textAlign: 'right', fontWeight: 500 }}>
-                          {formatCurrency(invoice.totalAmount)}
+                          {formatCurrency(invoice.totalAmount, language)}
                         </td>
                         <td style={{ padding: spacing.md, textAlign: 'right', color: colors.success.main }}>
-                          {formatCurrency(invoice.paidAmount)}
+                          {formatCurrency(invoice.paidAmount, language)}
                         </td>
                         <td style={{ padding: spacing.md, textAlign: 'right', color: outstanding > 0 ? colors.warning.main : colors.neutral.textMuted }}>
-                          {formatCurrency(outstanding)}
+                          {formatCurrency(outstanding, language)}
                         </td>
-                        <td style={{ padding: spacing.md }}>{formatDate(invoice.createdAt)}</td>
-                        <td style={{ padding: spacing.md }}>{formatDate(invoice.dueDate)}</td>
+                        <td style={{ padding: spacing.md }}>{formatDate(invoice.createdAt, language)}</td>
+                        <td style={{ padding: spacing.md }}>{formatDate(invoice.dueDate, language)}</td>
                         <td style={{ padding: spacing.md, textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: spacing.xs, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                             {invoice.status === 'DRAFT' && (
                               <Button size="sm" variant="primary" onClick={() => handleIssue(invoice)} disabled={actionLoading}>
-                                Issue
+                                {t('common.issue')}
                               </Button>
                             )}
                             {(invoice.status === 'ISSUED' || invoice.status === 'OVERDUE') && outstanding > 0 && (
                               <Button size="sm" variant="success" onClick={() => openPaymentModal(invoice)} disabled={actionLoading}>
-                                Pay
+                                {t('common.pay')}
                               </Button>
                             )}
                             {invoice.status !== 'PAID' && invoice.status !== 'CANCELLED' && (
-                              <Button size="sm" variant="secondary" onClick={() => handleCancel(invoice)} disabled={actionLoading}>
-                                Cancel
+                              <Button size="sm" variant="secondary" onClick={() => openCancelDialog(invoice)} disabled={actionLoading}>
+                                {t('common.cancel')}
                               </Button>
                             )}
                             {invoice.status === 'DRAFT' && (
-                              <Button size="sm" variant="danger" onClick={() => handleDelete(invoice)} disabled={actionLoading}>
-                                Delete
+                              <Button size="sm" variant="danger" onClick={() => openDeleteDialog(invoice)} disabled={actionLoading}>
+                                {t('common.delete')}
                               </Button>
                             )}
                           </div>
@@ -347,17 +359,17 @@ export function PaymentsPage() {
 
       {/* Record Payment Modal */}
       <Modal open={showPaymentModal} onClose={() => setShowPaymentModal(false)}>
-        <ModalTitle>Record Payment</ModalTitle>
+        <ModalTitle>{t('payments.recordPayment')}</ModalTitle>
         {selectedInvoice && (
           <div style={{ marginBottom: spacing.lg, padding: spacing.md, backgroundColor: colors.neutral.background, borderRadius: borderRadius.md }}>
-            <Text variant="caption">Invoice: {selectedInvoice.invoiceNumber}</Text>
+            <Text variant="caption">{t('payments.invoice')}: {selectedInvoice.invoiceNumber}</Text>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: spacing.sm }}>
-              <Text>Total: {formatCurrency(selectedInvoice.totalAmount)}</Text>
-              <Text>Outstanding: {formatCurrency(selectedInvoice.totalAmount - selectedInvoice.paidAmount)}</Text>
+              <Text>{t('common.total')}: {formatCurrency(selectedInvoice.totalAmount, language)}</Text>
+              <Text>{t('payments.outstanding')}: {formatCurrency(selectedInvoice.totalAmount - selectedInvoice.paidAmount, language)}</Text>
             </div>
           </div>
         )}
-        <FormField label="Amount" required>
+        <FormField label={t('common.amount')} required>
           <Input
             type="number"
             step="0.01"
@@ -366,30 +378,46 @@ export function PaymentsPage() {
             onChange={(e) => setPaymentForm({ ...paymentForm, amount: parseFloat(e.target.value) || 0 })}
           />
         </FormField>
-        <FormField label="Payment Method" required>
+        <FormField label={t('payments.paymentMethod')} required>
           <Select
             value={paymentForm.paymentMethod}
             onChange={(e) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value as PaymentMethod })}
           >
             {PAYMENT_METHODS.map(m => (
-              <option key={m} value={m}>{m}</option>
+              <option key={m} value={m}>{t(`payments.methods.${m}`)}</option>
             ))}
           </Select>
         </FormField>
-        <FormField label="Notes">
+        <FormField label={t('common.notes')}>
           <Input
             value={paymentForm.notes}
             onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
-            placeholder="Optional notes..."
+            placeholder={t('payments.optionalNotes')}
           />
         </FormField>
         <ModalActions>
-          <Button variant="ghost" onClick={() => setShowPaymentModal(false)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => setShowPaymentModal(false)}>{t('common.cancel')}</Button>
           <Button variant="primary" onClick={handleRecordPayment} disabled={actionLoading}>
-            {actionLoading ? 'Recording...' : 'Record Payment'}
+            {actionLoading ? t('common.recording') : t('payments.recordPayment')}
           </Button>
         </ModalActions>
       </Modal>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onClose={closeConfirmDialog}
+        onConfirm={handleConfirmAction}
+        title={confirmDialog.type === 'cancel' ? t('common.cancel') : t('common.delete')}
+        message={
+          confirmDialog.type === 'cancel'
+            ? t('payments.confirmCancel')
+            : t('payments.confirmDelete')
+        }
+        confirmLabel={confirmDialog.type === 'cancel' ? t('common.cancel') : t('common.delete')}
+        variant="danger"
+        loading={actionLoading}
+      />
     </div>
   );
 }

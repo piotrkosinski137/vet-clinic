@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useAuditLogs } from '../hooks';
+import { useI18n } from '../i18n';
 import {
   PageHeader,
   Card,
@@ -32,9 +33,9 @@ const actionColors: Record<AuditAction, BadgeVariant> = {
   LOGOUT: 'warning',
 };
 
-function formatTimestamp(timestamp: string): string {
+function formatTimestamp(timestamp: string, language: string): string {
   const date = new Date(timestamp);
-  return date.toLocaleString('pl-PL', {
+  return date.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -44,7 +45,14 @@ function formatTimestamp(timestamp: string): string {
   });
 }
 
-function DiffViewer({ oldValue, newValue, changedFields }: { oldValue?: string; newValue?: string; changedFields?: string }) {
+interface DiffViewerProps {
+  oldValue?: string;
+  newValue?: string;
+  changedFields?: string;
+  t: (key: string, params?: Record<string, string | number>) => string;
+}
+
+function DiffViewer({ oldValue, newValue, changedFields, t }: DiffViewerProps) {
   const [expanded, setExpanded] = useState(false);
 
   if (!oldValue && !newValue) return null;
@@ -56,11 +64,10 @@ function DiffViewer({ oldValue, newValue, changedFields }: { oldValue?: string; 
     if (oldValue) oldObj = JSON.parse(oldValue);
     if (newValue) newObj = JSON.parse(newValue);
   } catch {
-    // If not valid JSON, show as text
     return (
       <div style={{ marginTop: spacing.sm }}>
         <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)}>
-          {expanded ? 'Hide Details' : 'Show Details'}
+          {expanded ? t('audit.hideDetails') : t('audit.showDetails')}
         </Button>
         {expanded && (
           <div style={{ marginTop: spacing.sm, padding: spacing.sm, backgroundColor: colors.neutral.background, borderRadius: borderRadius.md, fontSize: '12px', fontFamily: 'monospace' }}>
@@ -77,16 +84,20 @@ function DiffViewer({ oldValue, newValue, changedFields }: { oldValue?: string; 
   return (
     <div style={{ marginTop: spacing.sm }}>
       <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)}>
-        {expanded ? 'Hide Changes' : `Show Changes (${fields.length} field${fields.length !== 1 ? 's' : ''})`}
+        {expanded
+          ? t('audit.hideChanges')
+          : fields.length === 1
+            ? t('audit.showChanges', { count: fields.length })
+            : t('audit.showChangesPlural', { count: fields.length })}
       </Button>
       {expanded && (
         <div style={{ marginTop: spacing.sm, padding: spacing.sm, backgroundColor: colors.neutral.background, borderRadius: borderRadius.md }}>
           <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${colors.neutral.border}` }}>
-                <th style={{ textAlign: 'left', padding: spacing.xs }}>Field</th>
-                <th style={{ textAlign: 'left', padding: spacing.xs }}>Old Value</th>
-                <th style={{ textAlign: 'left', padding: spacing.xs }}>New Value</th>
+                <th style={{ textAlign: 'left', padding: spacing.xs }}>{t('audit.field')}</th>
+                <th style={{ textAlign: 'left', padding: spacing.xs }}>{t('audit.oldValue')}</th>
+                <th style={{ textAlign: 'left', padding: spacing.xs }}>{t('audit.newValue')}</th>
               </tr>
             </thead>
             <tbody>
@@ -109,49 +120,176 @@ function DiffViewer({ oldValue, newValue, changedFields }: { oldValue?: string; 
   );
 }
 
-function AuditLogRow({ log }: { log: AuditLogResponse }) {
+interface AuditLogRowProps {
+  log: AuditLogResponse;
+  t: (key: string, params?: Record<string, string | number>) => string;
+  language: string;
+}
+
+function AuditLogRow({ log, t, language }: AuditLogRowProps) {
+  const actionLabel = t(`audit.actions.${log.action}`);
+  const entityLabel = t(`audit.entities.${log.entityType}`) || log.entityType;
+
+  const getActionDescription = (): string => {
+    switch (log.action) {
+      case 'CREATE':
+        return t('audit.descriptions.createRecord', { action: actionLabel, entity: entityLabel });
+      case 'UPDATE':
+        return t('audit.descriptions.updateRecord', { action: actionLabel, entity: entityLabel });
+      case 'DELETE':
+        return t('audit.descriptions.deleteRecord', { action: actionLabel, entity: entityLabel });
+      case 'VIEW':
+        return t('audit.descriptions.viewRecord', { action: actionLabel, entity: entityLabel });
+      case 'EXPORT':
+        return t('audit.descriptions.exportRecord', { action: actionLabel, entity: entityLabel });
+      case 'PRINT':
+        return t('audit.descriptions.printRecord', { action: actionLabel, entity: entityLabel });
+      case 'LOGIN':
+        return t('audit.descriptions.loginSystem');
+      case 'LOGOUT':
+        return t('audit.descriptions.logoutSystem');
+      default:
+        return `${log.action} - ${log.entityType}`;
+    }
+  };
+
   return (
     <div style={{
-      padding: spacing.md,
+      padding: spacing.lg,
       borderBottom: `1px solid ${colors.neutral.borderLight}`,
       transition: 'background-color 0.2s',
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.sm }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
-          <Badge variant={actionColors[log.action]}>{log.action}</Badge>
-          <Badge variant="secondary">{log.entityType}</Badge>
-          <Text variant="caption" style={{ color: colors.neutral.textMuted }}>
-            {log.entityId.substring(0, 8)}...
-          </Text>
-        </div>
-        <Text variant="caption" style={{ color: colors.neutral.textMuted }}>
-          {formatTimestamp(log.timestamp)}
+      {/* Main action description - bold and prominent */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: spacing.md,
+        marginBottom: spacing.md,
+      }}>
+        <Badge
+          variant={actionColors[log.action]}
+          style={{
+            fontSize: '14px',
+            fontWeight: 700,
+            padding: '6px 14px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+          }}
+        >
+          {actionLabel}
+        </Badge>
+        <Text variant="body" style={{
+          fontSize: '18px',
+          fontWeight: 700,
+          color: colors.neutral.text,
+        }}>
+          {getActionDescription()}
         </Text>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs }}>
-        <Text variant="body" style={{ fontWeight: 500 }}>{log.userName}</Text>
+
+      {/* User and IP - large and prominent */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: spacing.lg,
+        marginBottom: spacing.md,
+        padding: spacing.md,
+        backgroundColor: colors.neutral.background,
+        borderRadius: borderRadius.md,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+          <span style={{ fontSize: '20px' }}>👤</span>
+          <div>
+            <Text variant="caption" style={{ color: colors.neutral.textMuted, display: 'block', marginBottom: '2px' }}>
+              {t('audit.user')}
+            </Text>
+            <Text variant="body" style={{
+              fontSize: '18px',
+              fontWeight: 700,
+              color: colors.primary.main,
+            }}>
+              {log.userName}
+            </Text>
+          </div>
+        </div>
         {log.ipAddress && (
-          <Text variant="caption" style={{ color: colors.neutral.textMuted }}>
-            from {log.ipAddress}
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+            <span style={{ fontSize: '20px' }}>🌐</span>
+            <div>
+              <Text variant="caption" style={{ color: colors.neutral.textMuted, display: 'block', marginBottom: '2px' }}>
+                {t('audit.ipAddress')}
+              </Text>
+              <Text variant="body" style={{
+                fontSize: '18px',
+                fontWeight: 700,
+                color: colors.warning.main,
+                fontFamily: 'monospace',
+              }}>
+                {log.ipAddress}
+              </Text>
+            </div>
+          </div>
+        )}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+          <span style={{ fontSize: '16px' }}>🕐</span>
+          <div>
+            <Text variant="caption" style={{ color: colors.neutral.textMuted, display: 'block', marginBottom: '2px' }}>
+              {t('audit.dateTime')}
+            </Text>
+            <Text variant="body" style={{ fontWeight: 500 }}>
+              {formatTimestamp(log.timestamp, language)}
+            </Text>
+          </div>
+        </div>
+      </div>
+
+      {/* Entity details */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: spacing.md,
+        marginBottom: spacing.sm,
+      }}>
+        <Badge variant="secondary" style={{ fontSize: '12px' }}>
+          {entityLabel}
+        </Badge>
+        <Text variant="caption" style={{ color: colors.neutral.textMuted, fontFamily: 'monospace' }}>
+          ID: {log.entityId.substring(0, 8)}...
+        </Text>
+        {log.userAgent && (
+          <Text variant="caption" style={{ color: colors.neutral.textMuted, marginLeft: 'auto' }}>
+            {log.userAgent.length > 50 ? `${log.userAgent.substring(0, 50)}...` : log.userAgent}
           </Text>
         )}
       </div>
+
+      {/* Description if available */}
       {log.description && (
-        <Text variant="caption" style={{ color: colors.neutral.textLight }}>
-          {log.description}
-        </Text>
+        <div style={{
+          padding: spacing.sm,
+          backgroundColor: colors.neutral.backgroundAlt,
+          borderRadius: borderRadius.sm,
+          marginBottom: spacing.sm,
+        }}>
+          <Text variant="body" style={{ color: colors.neutral.text, fontStyle: 'italic' }}>
+            {log.description}
+          </Text>
+        </div>
       )}
+
+      {/* Diff viewer for UPDATE and DELETE */}
       {log.action === 'UPDATE' && (
-        <DiffViewer oldValue={log.oldValue} newValue={log.newValue} changedFields={log.changedFields} />
+        <DiffViewer oldValue={log.oldValue} newValue={log.newValue} changedFields={log.changedFields} t={t} />
       )}
       {log.action === 'DELETE' && log.oldValue && (
-        <DiffViewer oldValue={log.oldValue} changedFields="" />
+        <DiffViewer oldValue={log.oldValue} changedFields="" t={t} />
       )}
     </div>
   );
 }
 
 export function AuditPage() {
+  const { t, language } = useI18n();
   const [filters, setFilters] = useState<AuditLogFilters>({});
   const [page, setPage] = useState(1);
 
@@ -186,42 +324,42 @@ export function AuditPage() {
 
   return (
     <div>
-      <PageHeader title="Audit Trail" />
+      <PageHeader title={t('audit.title')} />
 
       <Card variant="default" style={{ marginBottom: spacing.lg }}>
         <CardContent>
           <div style={filterRowStyle}>
             <div style={filterItemStyle}>
               <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '14px', color: colors.neutral.text }}>
-                Entity Type
+                {t('audit.entityType')}
               </label>
               <Select
                 value={filters.entityType || ''}
                 onChange={(e) => handleFilterChange('entityType', e.target.value)}
               >
-                <option value="">All Entities</option>
+                <option value="">{t('audit.allEntities')}</option>
                 {ENTITY_TYPES.map(type => (
-                  <option key={type} value={type}>{type}</option>
+                  <option key={type} value={type}>{t(`audit.entities.${type}`) || type}</option>
                 ))}
               </Select>
             </div>
             <div style={filterItemStyle}>
               <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '14px', color: colors.neutral.text }}>
-                Action
+                {t('audit.action')}
               </label>
               <Select
                 value={filters.action || ''}
                 onChange={(e) => handleFilterChange('action', e.target.value as AuditAction)}
               >
-                <option value="">All Actions</option>
+                <option value="">{t('audit.allActions')}</option>
                 {ACTIONS.map(action => (
-                  <option key={action} value={action}>{action}</option>
+                  <option key={action} value={action}>{t(`audit.actions.${action}`) || action}</option>
                 ))}
               </Select>
             </div>
             <div style={filterItemStyle}>
               <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '14px', color: colors.neutral.text }}>
-                From Date
+                {t('audit.fromDate')}
               </label>
               <Input
                 type="date"
@@ -231,7 +369,7 @@ export function AuditPage() {
             </div>
             <div style={filterItemStyle}>
               <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: '14px', color: colors.neutral.text }}>
-                To Date
+                {t('audit.toDate')}
               </label>
               <Input
                 type="date"
@@ -242,10 +380,10 @@ export function AuditPage() {
           </div>
           <div style={{ display: 'flex', gap: spacing.sm }}>
             <Button variant="primary" onClick={refetch}>
-              Search
+              {t('common.search')}
             </Button>
             <Button variant="ghost" onClick={handleClearFilters}>
-              Clear Filters
+              {t('audit.clearFilters')}
             </Button>
           </div>
         </CardContent>
@@ -254,7 +392,7 @@ export function AuditPage() {
       <Card variant="default">
         {loading && (
           <div style={{ padding: spacing.xl, textAlign: 'center' }}>
-            <Loading text="Loading audit logs..." />
+            <Loading text={t('audit.loading')} />
           </div>
         )}
 
@@ -262,7 +400,7 @@ export function AuditPage() {
           <div style={{ padding: spacing.xl, textAlign: 'center', color: colors.danger.main }}>
             <Text variant="body">{error}</Text>
             <Button variant="ghost" onClick={refetch} style={{ marginTop: spacing.md }}>
-              Retry
+              {t('audit.retry')}
             </Button>
           </div>
         )}
@@ -270,8 +408,8 @@ export function AuditPage() {
         {!loading && !error && logs.length === 0 && (
           <EmptyState
             icon="📋"
-            title="No audit logs found"
-            description="No actions match your current filters. Try adjusting your search criteria."
+            title={t('audit.noLogsTitle')}
+            description={t('audit.noLogsDescription')}
           />
         )}
 
@@ -279,11 +417,11 @@ export function AuditPage() {
           <>
             <div style={{ padding: spacing.md, borderBottom: `1px solid ${colors.neutral.border}`, backgroundColor: colors.neutral.background }}>
               <Text variant="caption" style={{ color: colors.neutral.textMuted }}>
-                Showing {paginatedLogs.length} of {logs.length} entries
+                {t('audit.showingEntries', { current: paginatedLogs.length, total: logs.length })}
               </Text>
             </div>
             {paginatedLogs.map(log => (
-              <AuditLogRow key={log.id} log={log} />
+              <AuditLogRow key={log.id} log={log} t={t} language={language} />
             ))}
             {logs.length > ITEMS_PER_PAGE && (
               <div style={{ padding: spacing.md, display: 'flex', justifyContent: 'center' }}>

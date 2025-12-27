@@ -15,7 +15,7 @@ import { colors, spacing, borderRadius, fontSize, fontWeight } from "../theme";
 type TabId = 'stock' | 'invoices' | 'transactions' | 'alerts';
 
 export function InventoryPage() {
-  const { t: _t } = useI18n(); // Reserved for i18n
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabId>('stock');
   const [loading, setLoading] = useState(false);
   const [_error, setError] = useState<string | null>(null);
@@ -37,10 +37,10 @@ export function InventoryPage() {
 
   // Tab definitions
   const tabs = [
-    { id: 'stock' as TabId, label: 'Stock Overview', icon: '📦' },
-    { id: 'invoices' as TabId, label: 'Invoice Import', icon: '📄' },
-    { id: 'transactions' as TabId, label: 'Transactions', icon: '📋' },
-    { id: 'alerts' as TabId, label: 'Low Stock', icon: '⚠️' },
+    { id: 'stock' as TabId, label: t('stock.stockOverview'), icon: '📦' },
+    { id: 'invoices' as TabId, label: t('stock.invoiceImport'), icon: '📄' },
+    { id: 'transactions' as TabId, label: t('stock.transactions'), icon: '📋' },
+    { id: 'alerts' as TabId, label: t('stock.lowStock'), icon: '⚠️' },
   ];
 
   // Fetch data based on active tab
@@ -67,13 +67,13 @@ export function InventoryPage() {
             break;
         }
       } catch {
-        setError('Failed to fetch data. Please try again.');
+        setError(t('errors.failedToLoad'));
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [activeTab]);
+  }, [activeTab, t]);
 
   // File upload handler
   const handleFileUpload = async () => {
@@ -84,7 +84,7 @@ export function InventoryPage() {
       setInvoices(prev => [invoice, ...prev]);
       setUploadFile(null);
     } catch {
-      setError('Upload failed. Please try again.');
+      setError(t('errors.failedToSave'));
     } finally {
       setUploading(false);
     }
@@ -98,7 +98,7 @@ export function InventoryPage() {
         inv.id === invoiceId ? processed : inv
       ));
     } catch {
-      setError('Failed to process invoice. Please try again.');
+      setError(t('errors.failedToSave'));
     }
   };
 
@@ -113,7 +113,7 @@ export function InventoryPage() {
       return (
         <div style={{ padding: spacing.xl, textAlign: 'center' }}>
           <Loading />
-          <Text variant="muted">Loading...</Text>
+          <Text variant="muted">{t('common.loading')}</Text>
         </div>
       );
     }
@@ -134,7 +134,7 @@ export function InventoryPage() {
   const renderStockTab = () => (
     <div>
       <Input
-        placeholder="Search items..."
+        placeholder={t('stock.searchItems')}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         style={{ marginBottom: spacing.md, maxWidth: '300px' }}
@@ -152,16 +152,16 @@ export function InventoryPage() {
         fontSize: fontSize.sm,
         fontWeight: fontWeight.semibold,
       }}>
-        <div>Item</div>
-        <div style={{ textAlign: 'center' }}>Stock</div>
-        <div style={{ textAlign: 'center' }}>Reorder</div>
-        <div style={{ textAlign: 'right' }}>Cost</div>
-        <div style={{ textAlign: 'right' }}>Sell</div>
-        <div style={{ textAlign: 'center' }}>Status</div>
+        <div>{t('stock.item')}</div>
+        <div style={{ textAlign: 'center' }}>{t('stock.currentStock')}</div>
+        <div style={{ textAlign: 'center' }}>{t('stock.reorderLevel')}</div>
+        <div style={{ textAlign: 'right' }}>{t('stock.costPrice')}</div>
+        <div style={{ textAlign: 'right' }}>{t('stock.sellPrice')}</div>
+        <div style={{ textAlign: 'center' }}>{t('common.status')}</div>
       </div>
 
       {filteredItems.length === 0 ? (
-        <Card><Text variant="muted">No items found</Text></Card>
+        <Card><Text variant="muted">{t('stock.noItems')}</Text></Card>
       ) : (
         filteredItems.map(item => {
           const stock = item.stockQuantity ?? 0;
@@ -194,7 +194,7 @@ export function InventoryPage() {
               <div style={{ textAlign: 'right' }}>{formatCurrency(item.sellPrice)}</div>
               <div style={{ textAlign: 'center' }}>
                 <Badge variant={isOut ? 'danger' : isLow ? 'warning' : 'success'}>
-                  {isOut ? 'Out of Stock' : isLow ? 'Low Stock' : 'In Stock'}
+                  {isOut ? t('stock.outOfStock') : isLow ? t('stock.lowStockStatus') : t('stock.inStock')}
                 </Badge>
               </div>
             </div>
@@ -209,7 +209,7 @@ export function InventoryPage() {
     <div>
       {/* Upload Section */}
       <Card style={{ marginBottom: spacing.lg }}>
-        <CardTitle>Upload Supplier Invoice</CardTitle>
+        <CardTitle>{t('stock.uploadInvoice')}</CardTitle>
         <div style={{ display: 'flex', gap: spacing.md, alignItems: 'center' }}>
           <input
             type="file"
@@ -222,16 +222,16 @@ export function InventoryPage() {
             disabled={!uploadFile || uploading}
             variant="primary"
           >
-            {uploading ? 'Uploading...' : 'Upload & Preview'}
+            {uploading ? t('common.uploading') : t('stock.uploadPreview')}
           </Button>
         </div>
       </Card>
 
       {/* Invoices List */}
       <Card>
-        <CardTitle>Supplier Invoices</CardTitle>
+        <CardTitle>{t('stock.supplierInvoices')}</CardTitle>
         {invoices.length === 0 ? (
-          <Text variant="muted">No invoices uploaded yet</Text>
+          <Text variant="muted">{t('stock.noInvoices')}</Text>
         ) : (
           invoices.map(invoice => (
             <div
@@ -252,7 +252,7 @@ export function InventoryPage() {
                   {invoice.supplierName} | {invoice.invoiceDate}
                 </Text>
                 <Text size="sm">
-                  {invoice.items?.length || 0} items | Total: {formatCurrency(invoice.totalGross || 0)}
+                  {invoice.items?.length || 0} items | {t('common.total')}: {formatCurrency(invoice.totalGross || 0)}
                 </Text>
               </div>
               <div style={{ display: 'flex', gap: spacing.sm, alignItems: 'center' }}>
@@ -267,7 +267,7 @@ export function InventoryPage() {
                     size="sm"
                     onClick={() => handleProcessInvoice(invoice.id)}
                   >
-                    Process
+                    {t('common.process')}
                   </Button>
                 )}
               </div>
@@ -281,9 +281,9 @@ export function InventoryPage() {
   // Transactions tab renderer
   const renderTransactionsTab = () => (
     <Card>
-      <CardTitle>Transaction History</CardTitle>
+      <CardTitle>{t('stock.transactionHistory')}</CardTitle>
       {transactions.length === 0 ? (
-        <Text variant="muted">No transactions recorded yet</Text>
+        <Text variant="muted">{t('stock.noTransactions')}</Text>
       ) : (
         <div>
           {/* Table Header */}
@@ -298,12 +298,12 @@ export function InventoryPage() {
             fontSize: fontSize.sm,
             fontWeight: fontWeight.semibold,
           }}>
-            <div>Date</div>
-            <div>Type</div>
-            <div style={{ textAlign: 'center' }}>Qty</div>
-            <div style={{ textAlign: 'center' }}>Stock</div>
-            <div>Notes</div>
-            <div>Reference</div>
+            <div>{t('common.date')}</div>
+            <div>{t('common.type')}</div>
+            <div style={{ textAlign: 'center' }}>{t('stock.qty')}</div>
+            <div style={{ textAlign: 'center' }}>{t('stock.currentStock')}</div>
+            <div>{t('common.notes')}</div>
+            <div>{t('stock.reference')}</div>
           </div>
 
           {transactions.map(txn => (
@@ -350,11 +350,11 @@ export function InventoryPage() {
   // Low stock alerts tab renderer
   const renderAlertsTab = () => (
     <Card>
-      <CardTitle style={{ color: colors.danger.main }}>⚠️ Low Stock Alerts</CardTitle>
+      <CardTitle style={{ color: colors.danger.main }}>⚠️ {t('stock.lowStockAlerts')}</CardTitle>
       {lowStockItems.length === 0 ? (
         <div style={{ textAlign: 'center', padding: spacing.xl }}>
           <Text style={{ fontSize: fontSize.xl }}>✓</Text>
-          <Text variant="muted">All items are well stocked!</Text>
+          <Text variant="muted">{t('stock.allWellStocked')}</Text>
         </div>
       ) : (
         <div>
@@ -385,7 +385,7 @@ export function InventoryPage() {
                     {stock} / {reorder}
                   </Text>
                   <Text size="sm" variant="muted">
-                    Order {deficit} more
+                    {t('stock.orderMore', { count: deficit })}
                   </Text>
                 </div>
               </div>
@@ -400,7 +400,7 @@ export function InventoryPage() {
     <div>
       {/* Header */}
       <h1 style={{ color: colors.secondary.main, marginBottom: spacing.lg }}>
-        Inventory Management
+        {t('stock.title')}
       </h1>
 
       {/* Tab Navigation */}

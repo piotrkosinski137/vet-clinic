@@ -177,11 +177,11 @@ export function ProceduresSelector({ value, onChange, readOnly = false }: Proced
                   <div>
                     <Text size="sm">{item.name}</Text>
                     <Text variant="muted" size="sm">
-                      {item.quantity} x {formatCurrency(item.sellPrice)} PLN
+                      {item.quantity} x {formatCurrency(item.sellPrice)}
                     </Text>
                   </div>
                   <Text style={{ fontWeight: fontWeight.bold, color: colors.success.main }}>
-                    +{formatCurrency(item.quantity * item.sellPrice)} PLN
+                    +{formatCurrency(item.quantity * item.sellPrice)}
                   </Text>
                 </div>
               ))}
@@ -198,7 +198,7 @@ export function ProceduresSelector({ value, onChange, readOnly = false }: Proced
             >
               <Text style={{ fontWeight: fontWeight.semibold }}>{t('procedures.totalProcedures')}</Text>
               <Text style={{ fontWeight: fontWeight.bold, color: colors.success.main }}>
-                +{formatCurrency(totalEarnings)} PLN
+                +{formatCurrency(totalEarnings)}
               </Text>
             </div>
           </>
@@ -291,7 +291,7 @@ export function ProceduresSelector({ value, onChange, readOnly = false }: Proced
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <Text style={{ fontWeight: fontWeight.bold, color: colors.success.main }}>
-                        {formatCurrency(item.sellPrice)} PLN
+                        {formatCurrency(item.sellPrice)}
                       </Text>
                       <Text variant="muted" size="sm" style={{ color: colors.success.main }}>
                         {t('procedures.subtitle')}
@@ -331,7 +331,7 @@ export function ProceduresSelector({ value, onChange, readOnly = false }: Proced
                     {item.name}
                   </Text>
                   <Text variant="muted" size="sm">
-                    {formatCurrency(item.sellPrice)} PLN / {item.unit}
+                    {formatCurrency(item.sellPrice)} / {item.unit}
                   </Text>
                 </div>
 
@@ -386,7 +386,7 @@ export function ProceduresSelector({ value, onChange, readOnly = false }: Proced
                 {/* Item Total (100% profit) */}
                 <div style={{ textAlign: "right", minWidth: "100px" }}>
                   <Text style={{ fontWeight: fontWeight.bold, color: colors.success.main }}>
-                    +{formatCurrency(item.quantity * item.sellPrice)} PLN
+                    +{formatCurrency(item.quantity * item.sellPrice)}
                   </Text>
                 </div>
 
@@ -435,7 +435,7 @@ export function ProceduresSelector({ value, onChange, readOnly = false }: Proced
                 color: colors.success.main,
               }}
             >
-              +{formatCurrency(totalEarnings)} PLN
+              +{formatCurrency(totalEarnings)}
             </Text>
           </div>
         </div>

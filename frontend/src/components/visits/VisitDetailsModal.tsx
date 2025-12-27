@@ -54,6 +54,7 @@ import {
   TabList,
   Tab,
   TabPanel,
+  ConfirmDialog,
 } from '../ui';
 import { MaterialsSelector } from '../materials';
 import { VISIT_TYPE_OPTIONS, getVisitTypeInfo } from '../../constants';
@@ -101,6 +102,8 @@ export function VisitDetailsModal({
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState('interview');
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState<Partial<VisitRequest>>({});
@@ -159,6 +162,7 @@ export function VisitDetailsModal({
   const formattedTime = visitDate.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
 
   return (
+  <>
     <Modal open={open} onClose={onClose} maxWidth="900px">
       {/* Header */}
       <ModalHeader>
@@ -253,7 +257,9 @@ export function VisitDetailsModal({
                   </label>
                   <Input
                     type="number"
-                    step="0.1"
+                    step="0.01"
+                    min="0.01"
+                    max="500"
                     value={formData.weight || ''}
                     onChange={(e) => updateField('weight', parseFloat(e.target.value) || undefined)}
                     placeholder="e.g., 12.5"
@@ -267,6 +273,8 @@ export function VisitDetailsModal({
                   <Input
                     type="number"
                     step="0.1"
+                    min="30"
+                    max="45"
                     value={formData.temperature || ''}
                     onChange={(e) => updateField('temperature', parseFloat(e.target.value) || undefined)}
                     placeholder="e.g., 38.5"
@@ -409,11 +417,7 @@ export function VisitDetailsModal({
           <Button
             variant="danger"
             size="sm"
-            onClick={() => {
-              if (window.confirm(t('visits.confirmCancelVisit'))) {
-                onStatusChange('CANCELLED');
-              }
-            }}
+            onClick={() => setShowCancelConfirm(true)}
           >
             {t('visits.cancelVisit')}
           </Button>
@@ -421,11 +425,7 @@ export function VisitDetailsModal({
         <Button
           variant="danger"
           size="sm"
-          onClick={() => {
-            if (window.confirm(t('visits.confirmDeleteVisit'))) {
-              onDelete();
-            }
-          }}
+          onClick={() => setShowDeleteConfirm(true)}
         >
           {t('common.delete')}
         </Button>
@@ -442,5 +442,32 @@ export function VisitDetailsModal({
         </Button>
       </ModalActions>
     </Modal>
+
+    {/* Confirmation Dialogs */}
+    <ConfirmDialog
+      open={showCancelConfirm}
+      title={t('visits.cancelVisit')}
+      message={t('visits.confirmCancelVisit')}
+      confirmLabel={t('visits.cancelVisit')}
+      onConfirm={() => {
+        setShowCancelConfirm(false);
+        onStatusChange('CANCELLED');
+      }}
+      onClose={() => setShowCancelConfirm(false)}
+      variant="danger"
+    />
+    <ConfirmDialog
+      open={showDeleteConfirm}
+      title={t('common.delete')}
+      message={t('visits.confirmDeleteVisit')}
+      confirmLabel={t('common.delete')}
+      onConfirm={() => {
+        setShowDeleteConfirm(false);
+        onDelete();
+      }}
+      onClose={() => setShowDeleteConfirm(false)}
+      variant="danger"
+    />
+  </>
   );
 }

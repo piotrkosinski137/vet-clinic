@@ -97,7 +97,11 @@
       "Bash(../mvnw.cmd spring-boot:run:*)",
       "Bash(taskkill:*)",
       "Bash(python3:*)",
-      "Bash(powershell -Command \"$token = \\(Get-Content token.json | ConvertFrom-Json\\).access_token; Invoke-RestMethod -Uri ''http://localhost:8080/api/v1/inventory/stock'' -Headers @{Authorization=\"\"Bearer $token\"\"} | ConvertTo-Json -Depth 3\")"
+      "Bash(powershell -Command \"$token = \\(Get-Content token.json | ConvertFrom-Json\\).access_token; Invoke-RestMethod -Uri ''http://localhost:8080/api/v1/inventory/stock'' -Headers @{Authorization=\"\"Bearer $token\"\"} | ConvertTo-Json -Depth 3\")",
+      "Bash(git commit:*)",
+      "Bash(bash test-endpoints.sh:*)",
+      "Bash(timeout 90 ./mvnw spring-boot:run:*)",
+      "Bash(timeout 120 ./mvnw spring-boot:run:*)"
     ]
   }
 }

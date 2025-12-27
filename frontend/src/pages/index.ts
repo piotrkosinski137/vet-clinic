@@ -1,4 +1,5 @@
 export { PatientsPage } from './PatientsPage';
+export { PatientDetailsPage } from './PatientDetailsPage';
 export { ClientsPage } from './ClientsPage';
 export { VisitsPage } from './VisitsPage';
 export { StatisticsPage } from './StatisticsPage';

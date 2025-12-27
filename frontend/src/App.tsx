@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-do
 import { AuthProvider, useAuth } from './auth';
 import { I18nProvider, useI18n, LanguageSelector } from './i18n';
 import { useAuthErrorHandler, useDashboardStats } from './hooks';
-import { PatientsPage, ClientsPage, VisitsPage, StatisticsPage, InventoryUsagePage, PriceListPage, LoginPage, DoctorsPage, InventoryPage, AuditPage, ConsentsPage, CertificatesPage, PaymentsPage } from './pages';
+import { PatientsPage, PatientDetailsPage, ClientsPage, VisitsPage, StatisticsPage, InventoryUsagePage, PriceListPage, LoginPage, DoctorsPage, InventoryPage, AuditPage, ConsentsPage, CertificatesPage, PaymentsPage } from './pages';
 import { Button, Card, CardTitle, Text, Loading, ToastProvider, StatCard } from './components/ui';
 import { ProtectedRoute } from './components/auth';
 import { ErrorBoundary } from './components/errors';
@@ -141,6 +141,7 @@ function AuthenticatedLayout() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/patients" element={<PatientsPage />} />
+          <Route path="/patients/:id" element={<PatientDetailsPage />} />
           <Route path="/clients" element={<ClientsPage />} />
           <Route path="/schedule" element={<VisitsPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />

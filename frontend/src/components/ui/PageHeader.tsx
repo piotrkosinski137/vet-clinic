@@ -1,8 +1,8 @@
 import { HTMLAttributes, forwardRef, ReactNode } from 'react';
 import { colors, spacing } from '../../theme';
 
-export interface PageHeaderProps extends HTMLAttributes<HTMLDivElement> {
-  title: string;
+export interface PageHeaderProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
+  title: ReactNode;
   actions?: ReactNode;
 }
 

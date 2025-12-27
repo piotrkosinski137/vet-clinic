@@ -383,9 +383,11 @@ export type ConsentStatus = 'PENDING' | 'GRANTED' | 'REVOKED' | 'EXPIRED';
 export interface GdprConsentRequest {
   clientId: string;
   consentType: ConsentType;
+  consentText: string;
   consentVersion?: string;
-  expirationDate?: string;
-  ipAddress?: string;
+  expiresAt?: string;
+  ipAddress: string;
+  notes?: string;
 }
 
 export interface GdprConsentResponse {
@@ -393,33 +395,40 @@ export interface GdprConsentResponse {
   clientId: string;
   consentType: ConsentType;
   status: ConsentStatus;
+  consentText?: string;
   consentVersion?: string;
   requestedAt: string;
   grantedAt?: string;
   revokedAt?: string;
-  expirationDate?: string;
+  expiresAt?: string;
   ipAddress?: string;
   signatureReference?: string;
-  revocationReason?: string;
-  createdAt: string;
-  updatedAt: string;
+  notes?: string;
+  active: boolean;
 }
 
 // Vaccination Certificate Types
 export type CertificateType = 'RABIES' | 'DISTEMPER' | 'PARVOVIRUS' | 'HEPATITIS' | 'LEPTOSPIROSIS' | 'BORDETELLA' | 'FELINE_LEUKEMIA' | 'FELINE_CALICIVIRUS' | 'OTHER';
 
 export interface VaccinationCertificateRequest {
-  patientId: string;
-  clientId?: string;
   certificateType: CertificateType;
+  patientId: string;
+  patientName: string;
+  patientSpecies?: string;
+  patientBreed?: string;
+  microchipNumber?: string;
+  clientId: string;
+  clientName: string;
+  visitId?: string;
   vaccineName: string;
-  manufacturer?: string;
+  vaccineManufacturer?: string;
   batchNumber?: string;
-  administrationDate: string;
+  administrationDate?: string;
   expirationDate?: string;
   nextDueDate?: string;
   veterinarianId?: string;
-  veterinarianName?: string;
+  veterinarianName: string;
+  veterinarianLicenseNumber?: string;
   notes?: string;
 }
 

@@ -27,8 +27,11 @@ import com.vetclinic.common.exception.BusinessException;
 import com.vetclinic.common.tenant.TenantAccessDeniedException;
 import com.vetclinic.config.KeycloakAdminService.KeycloakUserCreationException;
 import com.vetclinic.patient.domain.PatientNotFoundException;
+import com.vetclinic.veterinarian.domain.DayOffConflictException;
 import com.vetclinic.veterinarian.domain.VeterinarianEmailAlreadyExistsException;
+import com.vetclinic.veterinarian.domain.VeterinarianNotFoundException;
 import com.vetclinic.visit.domain.AppointmentConflictException;
+import com.vetclinic.visit.domain.OutsideWorkingHoursException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -79,6 +82,23 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND, "Client Not Found", ex.getMessage(), request.getRequestURI());
     }
 
+    @ExceptionHandler(VeterinarianNotFoundException.class)
+    public ResponseEntity<ApiError> handleVeterinarianNotFound(
+            VeterinarianNotFoundException ex, HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "Veterinarian Not Found",
+                ex.getMessage(),
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(DayOffConflictException.class)
+    public ResponseEntity<ApiError> handleDayOffConflict(
+            DayOffConflictException ex, HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.CONFLICT, "Day Off Conflict", ex.getMessage(), request.getRequestURI());
+    }
+
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ApiError> handleEmailExists(
             EmailAlreadyExistsException ex, HttpServletRequest request) {
@@ -95,6 +115,16 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(
                 HttpStatus.CONFLICT,
                 "Appointment Conflict",
+                ex.getMessage(),
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(OutsideWorkingHoursException.class)
+    public ResponseEntity<ApiError> handleOutsideWorkingHours(
+            OutsideWorkingHoursException ex, HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Outside Working Hours",
                 ex.getMessage(),
                 request.getRequestURI());
     }

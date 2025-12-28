@@ -311,7 +311,8 @@
     "tabExamination": "Examination",
     "tabDiagnostics": "Diagnostics",
     "tabRecommendations": "Recommendations",
-    "tabBilling": "Billing"
+    "tabBilling": "Billing",
+    "calendar": "Calendar"
   },
   "doctors": {
     "title": "Doctors",
@@ -629,6 +630,48 @@
       "ADJUSTMENT": "Adjustment",
       "RETURN": "Return"
     }
+  },
+  "schedule": {
+    "doctorSchedules": "Doctor Schedules",
+    "doctors": "Doctors",
+    "weeklySchedule": "Weekly Schedule",
+    "day": "Day",
+    "working": "Working",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "saveSchedule": "Save Schedule",
+    "scheduleSaved": "Schedule saved successfully",
+    "daysOff": "Days Off",
+    "addDayOff": "Add Day Off",
+    "editDayOff": "Edit Day Off",
+    "noDaysOff": "No days off scheduled",
+    "confirmDeleteDayOff": "Are you sure you want to delete this day off?",
+    "dayOffDeleted": "Day off deleted",
+    "dayOffUpdated": "Day off updated",
+    "dayOffAdded": "Day off added",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "type": "Type",
+    "description": "Description",
+    "descriptionPlaceholder": "Optional notes about this time off...",
+    "pending": "Pending",
+    "approve": "Approve",
+    "selectDoctor": "Select a doctor to view their schedule"
+  },
+  "dayOfWeek": {
+    "MONDAY": "Monday",
+    "TUESDAY": "Tuesday",
+    "WEDNESDAY": "Wednesday",
+    "THURSDAY": "Thursday",
+    "FRIDAY": "Friday",
+    "SATURDAY": "Saturday",
+    "SUNDAY": "Sunday"
+  },
+  "dayOffType": {
+    "VACATION": "Vacation",
+    "SICK_LEAVE": "Sick Leave",
+    "PERSONAL": "Personal",
+    "OTHER": "Other"
   },
   "audit": {
     "title": "Audit Trail",

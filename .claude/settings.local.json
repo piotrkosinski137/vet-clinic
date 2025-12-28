@@ -103,7 +103,8 @@
       "Bash(timeout 90 ./mvnw spring-boot:run:*)",
       "Bash(timeout 120 ./mvnw spring-boot:run:*)",
       "Bash(bash:*)",
-      "Bash(./mvnw clean compile:*)"
+      "Bash(./mvnw clean compile:*)",
+      "Bash(timeout 300 ./mvnw.cmd test:*)"
     ]
   }
 }

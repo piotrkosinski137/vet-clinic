@@ -61,6 +61,8 @@ public class DataInitializerOrchestrator implements ApplicationRunner {
         entityManager.createQuery("DELETE FROM Visit").executeUpdate();
         entityManager.createQuery("DELETE FROM Patient").executeUpdate();
         entityManager.createQuery("DELETE FROM Client").executeUpdate();
+        entityManager.createQuery("DELETE FROM VeterinarianSchedule").executeUpdate();
+        entityManager.createQuery("DELETE FROM VeterinarianDayOff").executeUpdate();
         entityManager.createQuery("DELETE FROM Veterinarian").executeUpdate();
         entityManager.createQuery("DELETE FROM PriceListItem").executeUpdate();
         entityManager.createQuery("DELETE FROM AuditLog").executeUpdate();

@@ -3,6 +3,7 @@ export { usePatients } from './usePatients';
 export { useClients } from './useClients';
 export { useVisits } from './useVisits';
 export { useVeterinarians } from './useVeterinarians';
+export { useVeterinarianSchedule, useVeterinariansAvailability } from './useVeterinarianSchedule';
 export {
   usePriceList,
   CATEGORY_LABELS,

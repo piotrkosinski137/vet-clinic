@@ -17,6 +17,7 @@ import com.vetclinic.common.util.ChangeDetector;
 import com.vetclinic.common.util.DateTimeRange;
 import com.vetclinic.visit.domain.model.Visit;
 import com.vetclinic.visit.domain.model.VisitStatus;
+import com.vetclinic.visit.domain.port.VeterinarianAvailabilityChecker;
 import com.vetclinic.visit.domain.port.VisitRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -30,12 +31,14 @@ public class VisitService {
 
     private final VisitRepository visitRepository;
     private final DomainEventPublisher eventPublisher;
+    private final VeterinarianAvailabilityChecker availabilityChecker;
 
     @Transactional
     public Visit createVisit(Visit visit) {
         if (visit.getDurationMinutes() == null) {
             visit.setDurationMinutes(AppConstants.DEFAULT_VISIT_DURATION_MINUTES);
         }
+        validateWorkingHours(visit);
         validateNoConflict(visit, null);
         var saved = visitRepository.save(visit);
         eventPublisher.publishCreated(ENTITY_TYPE, saved.getId(), VisitSnapshot.from(saved));
@@ -94,6 +97,7 @@ public class VisitService {
         var vetChanged = !Objects.equals(existing.getVeterinarianId(), updated.getVeterinarianId());
 
         if (timeChanged || vetChanged) {
+            validateWorkingHours(updated);
             validateNoConflict(updated, visitId);
         }
     }
@@ -212,12 +216,13 @@ public class VisitService {
             changedFields.add("visitDate");
         }
 
-        // Create a temporary visit object for conflict validation
+        // Create a temporary visit object for validation
         var tempVisit = new Visit();
         tempVisit.setVeterinarianId(newVeterinarianId);
         tempVisit.setVisitDate(newDateTime);
         tempVisit.setDurationMinutes(existing.getDurationMinutes());
 
+        validateWorkingHours(tempVisit);
         validateNoConflict(tempVisit, id);
 
         existing.setVeterinarianId(newVeterinarianId);
@@ -261,6 +266,25 @@ public class VisitService {
 
         if (hasConflict) {
             throw new AppointmentConflictException(visit.getVeterinarianId(), startTime);
+        }
+    }
+
+    /** Validate that a visit is scheduled within the veterinarian's working hours. */
+    private void validateWorkingHours(Visit visit) {
+        if (visit.getVeterinarianId() == null || visit.getVisitDate() == null) {
+            return; // No veterinarian assigned or no date, skip validation
+        }
+
+        var dateTime = visit.getVisitDate();
+
+        // Check if it's a day off
+        if (availabilityChecker.isDayOff(visit.getVeterinarianId(), dateTime)) {
+            throw OutsideWorkingHoursException.dayOff(visit.getVeterinarianId(), dateTime);
+        }
+
+        // Check if it's within working hours
+        if (!availabilityChecker.isWorkingAt(visit.getVeterinarianId(), dateTime)) {
+            throw OutsideWorkingHoursException.outsideHours(visit.getVeterinarianId(), dateTime);
         }
     }
 }

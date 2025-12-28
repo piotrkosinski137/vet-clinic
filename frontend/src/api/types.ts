@@ -263,6 +263,59 @@ export interface VeterinarianFilters {
   name?: string;
 }
 
+// Veterinarian Schedule Types
+export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
+export type DayOffType = 'VACATION' | 'SICK_LEAVE' | 'PERSONAL' | 'OTHER';
+
+export interface VeterinarianScheduleRequest {
+  dayOfWeek: DayOfWeek;
+  startTime: string | null; // "HH:mm" format or null
+  endTime: string | null;
+  workingDay: boolean;
+}
+
+export interface VeterinarianScheduleResponse {
+  id: string;
+  veterinarianId: string;
+  dayOfWeek: DayOfWeek;
+  startTime: string | null;
+  endTime: string | null;
+  workingDay: boolean;
+}
+
+export interface WeeklyScheduleRequest {
+  schedules: VeterinarianScheduleRequest[];
+}
+
+export interface VeterinarianDayOffRequest {
+  startDate: string; // ISO date format
+  endDate: string;
+  type: DayOffType;
+  description?: string;
+}
+
+export interface VeterinarianDayOffResponse {
+  id: string;
+  veterinarianId: string;
+  startDate: string;
+  endDate: string;
+  type: DayOffType;
+  description?: string;
+  approved: boolean;
+  createdAt: string;
+}
+
+export interface VeterinarianAvailabilityResponse {
+  veterinarianId: string;
+  date: string;
+  workingDay: boolean;
+  startTime: string | null;
+  endTime: string | null;
+  isDayOff: boolean;
+  dayOffType?: DayOffType;
+  dayOffDescription?: string;
+}
+
 // Doctor Invitation Types
 export interface DoctorInvitationRequest {
   email: string;

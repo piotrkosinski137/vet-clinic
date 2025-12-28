@@ -106,6 +106,43 @@ CREATE INDEX idx_veterinarians_clinic ON veterinarians(clinic_id);
 CREATE INDEX idx_veterinarians_active ON veterinarians(active);
 CREATE INDEX idx_veterinarians_email ON veterinarians(email);
 
+-- Veterinarian weekly schedules
+CREATE TABLE veterinarian_schedules (
+    id UUID PRIMARY KEY,
+    clinic_id UUID NOT NULL REFERENCES veterinary_clinics(id),
+    veterinarian_id UUID NOT NULL REFERENCES veterinarians(id) ON DELETE CASCADE,
+    day_of_week VARCHAR(10) NOT NULL,
+    start_time TIME,
+    end_time TIME,
+    is_working_day BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT uk_vet_schedule_day UNIQUE(clinic_id, veterinarian_id, day_of_week)
+);
+
+CREATE INDEX idx_vet_schedules_vet ON veterinarian_schedules(veterinarian_id);
+CREATE INDEX idx_vet_schedules_clinic ON veterinarian_schedules(clinic_id);
+
+-- Veterinarian days off (vacation, sick leave, etc.)
+CREATE TABLE veterinarian_days_off (
+    id UUID PRIMARY KEY,
+    clinic_id UUID NOT NULL REFERENCES veterinary_clinics(id),
+    veterinarian_id UUID NOT NULL REFERENCES veterinarians(id) ON DELETE CASCADE,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    type VARCHAR(20) NOT NULL,
+    description TEXT,
+    approved BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    version BIGINT NOT NULL DEFAULT 0
+);
+
+CREATE INDEX idx_vet_days_off_vet ON veterinarian_days_off(veterinarian_id);
+CREATE INDEX idx_vet_days_off_clinic ON veterinarian_days_off(clinic_id);
+CREATE INDEX idx_vet_days_off_dates ON veterinarian_days_off(start_date, end_date);
+
 ----------------------------------------------
 -- VISITS
 ----------------------------------------------

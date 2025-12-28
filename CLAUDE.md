@@ -19,6 +19,9 @@ When adding new API endpoints to the backend:
 - **ALWAYS use `var` keyword** for local variables when the type is obvious from the right-hand side (Java 10+)
   - Example: `var patient = patientRepository.findById(id)` instead of `Optional<Patient> patient = ...`
   - Example: `var clients = clientRepository.findAll()` instead of `List<Client> clients = ...`
+- **ALWAYS import classes and use short names** - Never use fully qualified class names in code
+  - Example: `LocalTime.of(9, 0)` NOT `java.time.LocalTime.of(9, 0)`
+  - Example: `List.of(...)` NOT `java.util.List.of(...)`
 - Use Stream API for collection processing where it improves readability
 - Prefer descriptive method names over comments
 - Extract complex logic into well-named private methods

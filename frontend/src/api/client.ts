@@ -20,6 +20,11 @@ import type {
   VeterinarianRequest,
   VeterinarianResponse,
   VeterinarianFilters,
+  VeterinarianScheduleResponse,
+  VeterinarianDayOffRequest,
+  VeterinarianDayOffResponse,
+  VeterinarianAvailabilityResponse,
+  WeeklyScheduleRequest,
   DoctorInvitationRequest,
   InventoryTransaction,
   SupplierInvoice,
@@ -421,6 +426,62 @@ class ApiClient {
     return this.request<void>(`/veterinarians/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  // Veterinarian Schedule API
+  async getVeterinarianSchedule(id: string): Promise<VeterinarianScheduleResponse[]> {
+    return this.request<VeterinarianScheduleResponse[]>(`/veterinarians/${id}/schedule`);
+  }
+
+  async updateVeterinarianSchedule(id: string, schedule: WeeklyScheduleRequest): Promise<VeterinarianScheduleResponse[]> {
+    return this.request<VeterinarianScheduleResponse[]>(`/veterinarians/${id}/schedule`, {
+      method: 'PUT',
+      body: JSON.stringify(schedule),
+    });
+  }
+
+  // Veterinarian Days Off API
+  async getVeterinarianDaysOff(id: string, startDate?: string, endDate?: string): Promise<VeterinarianDayOffResponse[]> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<VeterinarianDayOffResponse[]>(`/veterinarians/${id}/days-off${query}`);
+  }
+
+  async addVeterinarianDayOff(id: string, dayOff: VeterinarianDayOffRequest): Promise<VeterinarianDayOffResponse> {
+    return this.request<VeterinarianDayOffResponse>(`/veterinarians/${id}/days-off`, {
+      method: 'POST',
+      body: JSON.stringify(dayOff),
+    });
+  }
+
+  async updateVeterinarianDayOff(veterinarianId: string, dayOffId: string, dayOff: VeterinarianDayOffRequest): Promise<VeterinarianDayOffResponse> {
+    return this.request<VeterinarianDayOffResponse>(`/veterinarians/${veterinarianId}/days-off/${dayOffId}`, {
+      method: 'PUT',
+      body: JSON.stringify(dayOff),
+    });
+  }
+
+  async deleteVeterinarianDayOff(veterinarianId: string, dayOffId: string): Promise<void> {
+    return this.request<void>(`/veterinarians/${veterinarianId}/days-off/${dayOffId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async approveVeterinarianDayOff(veterinarianId: string, dayOffId: string, approved: boolean): Promise<VeterinarianDayOffResponse> {
+    return this.request<VeterinarianDayOffResponse>(`/veterinarians/${veterinarianId}/days-off/${dayOffId}/approve?approved=${approved}`, {
+      method: 'PATCH',
+    });
+  }
+
+  // Veterinarian Availability API
+  async getVeterinarianAvailability(id: string, date: string): Promise<VeterinarianAvailabilityResponse> {
+    return this.request<VeterinarianAvailabilityResponse>(`/veterinarians/${id}/availability?date=${date}`);
+  }
+
+  async getAllVeterinariansAvailability(date: string): Promise<VeterinarianAvailabilityResponse[]> {
+    return this.request<VeterinarianAvailabilityResponse[]>(`/veterinarians/availability?date=${date}`);
   }
 
   // Doctor Invitation API

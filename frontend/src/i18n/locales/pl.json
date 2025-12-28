@@ -311,7 +311,8 @@
     "tabExamination": "Badanie",
     "tabDiagnostics": "Diagnostyka",
     "tabRecommendations": "Zalecenia",
-    "tabBilling": "Rozliczenie"
+    "tabBilling": "Rozliczenie",
+    "calendar": "Kalendarz"
   },
   "doctors": {
     "title": "Lekarze",
@@ -629,6 +630,48 @@
       "ADJUSTMENT": "Korekta",
       "RETURN": "Zwrot"
     }
+  },
+  "schedule": {
+    "doctorSchedules": "Harmonogramy lekarzy",
+    "doctors": "Lekarze",
+    "weeklySchedule": "Harmonogram tygodniowy",
+    "day": "Dzień",
+    "working": "Pracuje",
+    "startTime": "Godzina rozpoczęcia",
+    "endTime": "Godzina zakończenia",
+    "saveSchedule": "Zapisz harmonogram",
+    "scheduleSaved": "Harmonogram zapisany pomyślnie",
+    "daysOff": "Dni wolne",
+    "addDayOff": "Dodaj dzień wolny",
+    "editDayOff": "Edytuj dzień wolny",
+    "noDaysOff": "Brak zaplanowanych dni wolnych",
+    "confirmDeleteDayOff": "Czy na pewno chcesz usunąć ten dzień wolny?",
+    "dayOffDeleted": "Dzień wolny usunięty",
+    "dayOffUpdated": "Dzień wolny zaktualizowany",
+    "dayOffAdded": "Dzień wolny dodany",
+    "startDate": "Data rozpoczęcia",
+    "endDate": "Data zakończenia",
+    "type": "Typ",
+    "description": "Opis",
+    "descriptionPlaceholder": "Opcjonalne notatki o tej nieobecności...",
+    "pending": "Oczekuje",
+    "approve": "Zatwierdź",
+    "selectDoctor": "Wybierz lekarza, aby zobaczyć jego harmonogram"
+  },
+  "dayOfWeek": {
+    "MONDAY": "Poniedziałek",
+    "TUESDAY": "Wtorek",
+    "WEDNESDAY": "Środa",
+    "THURSDAY": "Czwartek",
+    "FRIDAY": "Piątek",
+    "SATURDAY": "Sobota",
+    "SUNDAY": "Niedziela"
+  },
+  "dayOffType": {
+    "VACATION": "Urlop",
+    "SICK_LEAVE": "Zwolnienie lekarskie",
+    "PERSONAL": "Sprawy osobiste",
+    "OTHER": "Inne"
   },
   "audit": {
     "title": "Dziennik Audytu RODO",

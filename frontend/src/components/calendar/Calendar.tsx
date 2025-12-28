@@ -4,6 +4,7 @@ import { VisitResponse, VeterinarianResponse } from '../../api/types';
 import { CalendarDay } from './CalendarDay';
 import { CalendarDoctorColumn } from './CalendarDoctorColumn';
 import { Button } from '../ui/Button';
+import { useVeterinariansAvailability } from '../../hooks';
 
 export type CalendarView = 'day' | 'week';
 
@@ -69,6 +70,19 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
 
     const view = controlledView ?? internalView;
     const date = controlledDate ?? internalDate;
+
+    // Fetch availability for all veterinarians for the current date
+    const dateString = date.toISOString().split('T')[0];
+    const { availability: availabilityList } = useVeterinariansAvailability(dateString);
+
+    // Convert availability list to a map keyed by veterinarian ID
+    const availabilityMap = useMemo(() => {
+      const map: Record<string, typeof availabilityList[0]> = {};
+      availabilityList.forEach((item) => {
+        map[item.veterinarianId] = item;
+      });
+      return map;
+    }, [availabilityList]);
 
     const handleViewChange = useCallback(
       (newView: CalendarView) => {
@@ -332,6 +346,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
                       onSlotClick={onSlotClick}
                       onVisitDrop={onVisitDrop}
                       showHeader={false}
+                      availability={availabilityMap[vet.id]}
                     />
                   );
                 })}

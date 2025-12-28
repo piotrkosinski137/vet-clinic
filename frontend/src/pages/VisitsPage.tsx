@@ -9,10 +9,15 @@ import {
   Loading,
   PageHeader,
   useToast,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanel,
 } from "../components/ui";
 import { Calendar, CalendarView } from "../components/calendar";
 import { BookAppointmentModal, VisitDetailsModal } from "../components/visits";
 import { DoctorsManagementModal } from "../components/doctors";
+import { DoctorSchedulesPanel } from "../components/schedules";
 import { colors, spacing, borderRadius, fontWeight, fontSize } from "../theme";
 import { useI18n } from "../i18n";
 
@@ -267,42 +272,55 @@ export function VisitsPage() {
         </div>
       </div>
 
-      {error && (
-        <Card
-          style={{
-            padding: spacing.md,
-            backgroundColor: colors.danger.light,
-            marginBottom: spacing.md,
-            display: "flex",
-            alignItems: "center",
-            gap: spacing.md,
-          }}
-        >
-          <span style={{ fontSize: fontSize.lg }}>⚠️</span>
-          <div style={{ flex: 1 }}>
-            <Text style={{ color: colors.danger.main, fontWeight: fontWeight.medium }}>
-              {t('visits.errorLoadingAppointments')}
-            </Text>
-            <Text variant="muted" size="sm">{error}</Text>
-          </div>
-          <Button variant="ghost" size="sm" onClick={refresh}>
-            {t('errors.retry')}
-          </Button>
-        </Card>
-      )}
+      <Tabs defaultTab="calendar">
+        <TabList>
+          <Tab value="calendar" icon="📅">{t('visits.calendar')}</Tab>
+          <Tab value="schedules" icon="🕐">{t('schedule.doctorSchedules')}</Tab>
+        </TabList>
 
-      <Calendar
-        visits={visibleVisits}
-        view={view}
-        onViewChange={setView}
-        date={currentDate}
-        onDateChange={setCurrentDate}
-        onVisitSelect={handleVisitSelect}
-        onSlotClick={handleSlotClick}
-        onVisitDrop={handleVisitDrop}
-        veterinarians={visibleVeterinarians}
-        style={{ height: "calc(100vh - 200px)" }}
-      />
+        <TabPanel value="calendar">
+          {error && (
+            <Card
+              style={{
+                padding: spacing.md,
+                backgroundColor: colors.danger.light,
+                marginBottom: spacing.md,
+                display: "flex",
+                alignItems: "center",
+                gap: spacing.md,
+              }}
+            >
+              <span style={{ fontSize: fontSize.lg }}>⚠️</span>
+              <div style={{ flex: 1 }}>
+                <Text style={{ color: colors.danger.main, fontWeight: fontWeight.medium }}>
+                  {t('visits.errorLoadingAppointments')}
+                </Text>
+                <Text variant="muted" size="sm">{error}</Text>
+              </div>
+              <Button variant="ghost" size="sm" onClick={refresh}>
+                {t('errors.retry')}
+              </Button>
+            </Card>
+          )}
+
+          <Calendar
+            visits={visibleVisits}
+            view={view}
+            onViewChange={setView}
+            date={currentDate}
+            onDateChange={setCurrentDate}
+            onVisitSelect={handleVisitSelect}
+            onSlotClick={handleSlotClick}
+            onVisitDrop={handleVisitDrop}
+            veterinarians={visibleVeterinarians}
+            style={{ height: "calc(100vh - 250px)" }}
+          />
+        </TabPanel>
+
+        <TabPanel value="schedules">
+          <DoctorSchedulesPanel />
+        </TabPanel>
+      </Tabs>
 
       {/* Visit Details Modal with Tabs */}
       <VisitDetailsModal

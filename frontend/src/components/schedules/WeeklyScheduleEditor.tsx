@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useI18n } from '../../i18n';
 import { colors, spacing, fontSize, fontWeight, shadows, borderRadius } from '../../theme';
 import { Button } from '../ui/Button';
+import { TimeInput24h } from '../ui/TimeInput24h';
 import { useToast } from '../ui/Toast';
 import type {
   VeterinarianScheduleResponse,
@@ -222,35 +223,17 @@ function DayRow({
         </label>
       </td>
       <td style={cellStyle}>
-        <input
-          type="time"
+        <TimeInput24h
           value={startTime}
-          onChange={(e) => onStartTimeChange(e.target.value)}
+          onChange={onStartTimeChange}
           disabled={!workingDay}
-          style={{
-            padding: `${spacing.xs} ${spacing.sm}`,
-            border: `1px solid ${colors.neutral.border}`,
-            borderRadius: borderRadius.md,
-            fontSize: fontSize.sm,
-            opacity: workingDay ? 1 : 0.5,
-            cursor: workingDay ? 'text' : 'not-allowed',
-          }}
         />
       </td>
       <td style={cellStyle}>
-        <input
-          type="time"
+        <TimeInput24h
           value={endTime}
-          onChange={(e) => onEndTimeChange(e.target.value)}
+          onChange={onEndTimeChange}
           disabled={!workingDay}
-          style={{
-            padding: `${spacing.xs} ${spacing.sm}`,
-            border: `1px solid ${colors.neutral.border}`,
-            borderRadius: borderRadius.md,
-            fontSize: fontSize.sm,
-            opacity: workingDay ? 1 : 0.5,
-            cursor: workingDay ? 'text' : 'not-allowed',
-          }}
         />
       </td>
     </tr>

@@ -16,6 +16,7 @@ import com.vetclinic.common.event.DomainEventPublisher;
 import com.vetclinic.common.util.ChangeDetector;
 import com.vetclinic.common.util.DateTimeRange;
 import com.vetclinic.visit.domain.model.Visit;
+import com.vetclinic.visit.domain.model.VisitPriority;
 import com.vetclinic.visit.domain.model.VisitStatus;
 import com.vetclinic.visit.domain.port.VeterinarianAvailabilityChecker;
 import com.vetclinic.visit.domain.port.VisitRepository;
@@ -76,6 +77,8 @@ public class VisitService {
                         .check("weight", Visit::getWeight)
                         .check("temperature", Visit::getTemperature)
                         .check("nextVisitDate", Visit::getNextVisitDate)
+                        .check("waitingRoomNotes", Visit::getWaitingRoomNotes)
+                        .check("priority", Visit::getPriority)
                         .getChangedFields();
 
         validateScheduleChangeIfNeeded(existing, updated, id);
@@ -123,6 +126,10 @@ public class VisitService {
         existing.setWeight(updated.getWeight());
         existing.setTemperature(updated.getTemperature());
         existing.setNextVisitDate(updated.getNextVisitDate());
+        existing.setWaitingRoomNotes(updated.getWaitingRoomNotes());
+        if (updated.getPriority() != null) {
+            existing.setPriority(updated.getPriority());
+        }
 
         // Update medications - clear and re-add
         existing.clearMedications();
@@ -237,14 +244,194 @@ public class VisitService {
         return saved;
     }
 
-    /** Search visits by multiple criteria */
+    /** Search visits by multiple criteria using a criteria object */
+    public List<Visit> searchVisits(VisitSearchCriteria criteria) {
+        Objects.requireNonNull(criteria, "Search criteria must not be null");
+        if (!criteria.hasAnyCriteria()) {
+            return visitRepository.findAll();
+        }
+        return visitRepository.search(
+                criteria.patientId(),
+                criteria.clientId(),
+                criteria.status(),
+                criteria.dateFrom(),
+                criteria.dateTo());
+    }
+
+    /**
+     * Search visits by multiple criteria.
+     *
+     * @deprecated Use {@link #searchVisits(VisitSearchCriteria)} instead
+     */
+    @Deprecated(forRemoval = true)
     public List<Visit> searchVisits(
             UUID patientId,
             UUID clientId,
             VisitStatus status,
             LocalDate dateFrom,
             LocalDate dateTo) {
-        return visitRepository.search(patientId, clientId, status, dateFrom, dateTo);
+        return searchVisits(new VisitSearchCriteria(patientId, clientId, status, dateFrom, dateTo));
+    }
+
+    // ===== WAITING ROOM OPERATIONS =====
+
+    /**
+     * Check in a patient to the waiting room. Transitions status from SCHEDULED to CHECKED_IN.
+     *
+     * @param visitId the visit ID
+     * @param waitingRoomNotes optional notes for the waiting room
+     * @param priority optional priority override (defaults to NORMAL)
+     * @return the updated visit
+     * @throws InvalidVisitStateException if the visit is not in SCHEDULED status
+     */
+    @Transactional
+    public Visit checkInToWaitingRoom(
+            UUID visitId, String waitingRoomNotes, VisitPriority priority) {
+        var visit = getVisit(visitId);
+
+        if (visit.getStatus() != VisitStatus.SCHEDULED) {
+            throw new InvalidVisitStateException(
+                    visit.getStatus(),
+                    VisitStatus.CHECKED_IN,
+                    "Only SCHEDULED visits can be checked in");
+        }
+
+        var oldSnapshot = VisitSnapshot.from(visit);
+        var changedFields = new HashSet<String>();
+
+        visit.setStatus(VisitStatus.CHECKED_IN);
+        visit.setCheckedInAt(LocalDateTime.now());
+        changedFields.add("status");
+        changedFields.add("checkedInAt");
+
+        if (waitingRoomNotes != null) {
+            visit.setWaitingRoomNotes(waitingRoomNotes);
+            changedFields.add("waitingRoomNotes");
+        }
+
+        if (priority != null) {
+            visit.setPriority(priority);
+            changedFields.add("priority");
+        }
+
+        var saved = visitRepository.save(visit);
+        eventPublisher.publishUpdated(
+                ENTITY_TYPE, visitId, oldSnapshot, VisitSnapshot.from(saved), changedFields);
+
+        return saved;
+    }
+
+    /**
+     * Get all visits currently in the waiting room for today. Results are ordered by priority
+     * (URGENT first) then by check-in time.
+     *
+     * @return list of visits in the waiting room
+     */
+    public List<Visit> getWaitingRoomVisits() {
+        var today = LocalDate.now();
+        return visitRepository.findWaitingRoomVisits(
+                today.atStartOfDay(), today.plusDays(1).atStartOfDay());
+    }
+
+    /**
+     * Start a visit from the waiting room. Transitions status from CHECKED_IN to IN_PROGRESS.
+     *
+     * @param visitId the visit ID
+     * @return the updated visit
+     * @throws InvalidVisitStateException if the visit is not in CHECKED_IN status
+     */
+    @Transactional
+    public Visit startVisitFromWaitingRoom(UUID visitId) {
+        var visit = getVisit(visitId);
+
+        if (visit.getStatus() != VisitStatus.CHECKED_IN) {
+            throw new InvalidVisitStateException(
+                    visit.getStatus(),
+                    VisitStatus.IN_PROGRESS,
+                    "Only CHECKED_IN visits can be started from waiting room");
+        }
+
+        var oldSnapshot = VisitSnapshot.from(visit);
+        visit.setStatus(VisitStatus.IN_PROGRESS);
+
+        var saved = visitRepository.save(visit);
+        eventPublisher.publishUpdated(
+                ENTITY_TYPE, visitId, oldSnapshot, VisitSnapshot.from(saved), Set.of("status"));
+
+        return saved;
+    }
+
+    /**
+     * Mark a visit as no-show. Can transition from SCHEDULED or CHECKED_IN to NO_SHOW.
+     *
+     * @param visitId the visit ID
+     * @return the updated visit
+     * @throws InvalidVisitStateException if the visit cannot be marked as no-show
+     */
+    @Transactional
+    public Visit markAsNoShow(UUID visitId) {
+        var visit = getVisit(visitId);
+
+        if (visit.getStatus() != VisitStatus.SCHEDULED
+                && visit.getStatus() != VisitStatus.CHECKED_IN) {
+            throw new InvalidVisitStateException(
+                    visit.getStatus(),
+                    VisitStatus.NO_SHOW,
+                    "Only SCHEDULED or CHECKED_IN visits can be marked as NO_SHOW");
+        }
+
+        var oldSnapshot = VisitSnapshot.from(visit);
+        visit.setStatus(VisitStatus.NO_SHOW);
+
+        var saved = visitRepository.save(visit);
+        eventPublisher.publishUpdated(
+                ENTITY_TYPE, visitId, oldSnapshot, VisitSnapshot.from(saved), Set.of("status"));
+
+        return saved;
+    }
+
+    /**
+     * Update waiting room information for a checked-in visit.
+     *
+     * @param visitId the visit ID
+     * @param waitingRoomNotes new notes
+     * @param priority new priority
+     * @return the updated visit
+     * @throws InvalidVisitStateException if the visit is not in CHECKED_IN status
+     */
+    @Transactional
+    public Visit updateWaitingRoomInfo(
+            UUID visitId, String waitingRoomNotes, VisitPriority priority) {
+        var visit = getVisit(visitId);
+
+        if (visit.getStatus() != VisitStatus.CHECKED_IN) {
+            throw new InvalidVisitStateException(
+                    "Can only update waiting room info for CHECKED_IN visits. Current status: "
+                            + visit.getStatus());
+        }
+
+        var oldSnapshot = VisitSnapshot.from(visit);
+        var changedFields = new HashSet<String>();
+
+        if (!Objects.equals(visit.getWaitingRoomNotes(), waitingRoomNotes)) {
+            visit.setWaitingRoomNotes(waitingRoomNotes);
+            changedFields.add("waitingRoomNotes");
+        }
+
+        if (priority != null && !Objects.equals(visit.getPriority(), priority)) {
+            visit.setPriority(priority);
+            changedFields.add("priority");
+        }
+
+        if (changedFields.isEmpty()) {
+            return visit;
+        }
+
+        var saved = visitRepository.save(visit);
+        eventPublisher.publishUpdated(
+                ENTITY_TYPE, visitId, oldSnapshot, VisitSnapshot.from(saved), changedFields);
+
+        return saved;
     }
 
     /** Validate that a visit does not conflict with existing appointments for the veterinarian. */
@@ -275,16 +462,27 @@ public class VisitService {
             return; // No veterinarian assigned or no date, skip validation
         }
 
-        var dateTime = visit.getVisitDate();
+        var startTime = visit.getVisitDate();
+        var duration =
+                visit.getDurationMinutes() != null
+                        ? visit.getDurationMinutes()
+                        : AppConstants.DEFAULT_VISIT_DURATION_MINUTES;
+        // End time minus 1 minute to allow visits that end exactly at closing time
+        var endTime = startTime.plusMinutes(duration - 1);
 
         // Check if it's a day off
-        if (availabilityChecker.isDayOff(visit.getVeterinarianId(), dateTime)) {
-            throw OutsideWorkingHoursException.dayOff(visit.getVeterinarianId(), dateTime);
+        if (availabilityChecker.isDayOff(visit.getVeterinarianId(), startTime)) {
+            throw OutsideWorkingHoursException.dayOff(visit.getVeterinarianId(), startTime);
         }
 
-        // Check if it's within working hours
-        if (!availabilityChecker.isWorkingAt(visit.getVeterinarianId(), dateTime)) {
-            throw OutsideWorkingHoursException.outsideHours(visit.getVeterinarianId(), dateTime);
+        // Check if start time is within working hours
+        if (!availabilityChecker.isWorkingAt(visit.getVeterinarianId(), startTime)) {
+            throw OutsideWorkingHoursException.outsideHours(visit.getVeterinarianId(), startTime);
+        }
+
+        // Check if end time is within working hours
+        if (!availabilityChecker.isWorkingAt(visit.getVeterinarianId(), endTime)) {
+            throw OutsideWorkingHoursException.outsideHours(visit.getVeterinarianId(), endTime);
         }
     }
 }

@@ -39,9 +39,7 @@ class PatientServiceSearchTest {
         @Test
         void shouldSearchPatientsByName() {
             List<Patient> patients =
-                    List.of(
-                            createPatient("Buddy", Species.DOG),
-                            createPatient("Buddy Jr", Species.DOG));
+                    List.of(aPatient("Buddy", Species.DOG), aPatient("Buddy Jr", Species.DOG));
             given(patientRepository.findByNameContainingIgnoreCase("Buddy")).willReturn(patients);
 
             List<Patient> result = patientService.searchByName("Buddy");
@@ -56,7 +54,7 @@ class PatientServiceSearchTest {
         @Test
         void shouldFindPatientByMicrochip() {
             String microchip = "123456789012345";
-            Patient patient = createPatientWithMicrochip("Buddy", Species.DOG, microchip);
+            Patient patient = aPatientWithMicrochip("Buddy", Species.DOG, microchip);
             given(patientRepository.findByMicrochipNumber(microchip))
                     .willReturn(Optional.of(patient));
 
@@ -82,7 +80,7 @@ class PatientServiceSearchTest {
         @Test
         void shouldGetPatientsBySpecies() {
             List<Patient> dogs =
-                    List.of(createPatient("Buddy", Species.DOG), createPatient("Max", Species.DOG));
+                    List.of(aPatient("Buddy", Species.DOG), aPatient("Max", Species.DOG));
             given(patientRepository.findBySpecies(Species.DOG)).willReturn(dogs);
 
             List<Patient> result = patientService.getPatientsBySpecies(Species.DOG);
@@ -92,7 +90,7 @@ class PatientServiceSearchTest {
         }
     }
 
-    private Patient createPatient(String name, Species species) {
+    private static Patient aPatient(String name, Species species) {
         return Patient.builder()
                 .name(name)
                 .species(species)
@@ -102,7 +100,7 @@ class PatientServiceSearchTest {
                 .build();
     }
 
-    private Patient createPatientWithMicrochip(String name, Species species, String microchip) {
+    private static Patient aPatientWithMicrochip(String name, Species species, String microchip) {
         return Patient.builder()
                 .name(name)
                 .species(species)

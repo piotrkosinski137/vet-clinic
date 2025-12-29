@@ -14,6 +14,7 @@ const navItems: NavItem[] = [
   { path: '/patients', labelKey: 'nav.patients', icon: '🐾' },
   { path: '/clients', labelKey: 'nav.clients', icon: '👥' },
   { path: '/schedule', labelKey: 'nav.schedule', icon: '📅' },
+  { path: '/waiting-room', labelKey: 'nav.waitingRoom', icon: '🪑' },
   { path: '/statistics', labelKey: 'nav.statistics', icon: '📊' },
   { path: '/inventory', labelKey: 'nav.inventory', icon: '📦' },
   { path: '/price-list', labelKey: 'nav.priceList', icon: '🏷️' },

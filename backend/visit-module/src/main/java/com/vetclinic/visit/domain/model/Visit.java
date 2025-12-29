@@ -118,6 +118,23 @@ public class Visit extends TenantAwareEntity {
     @Column(name = "next_visit_date")
     private LocalDate nextVisitDate;
 
+    // Waiting room fields
+
+    /** Timestamp when the patient was checked into the waiting room */
+    @Column(name = "checked_in_at")
+    private LocalDateTime checkedInAt;
+
+    /** Notes specific to the waiting room (e.g., "Patient is anxious", "Owner in a hurry") */
+    @Size(max = 500, message = "Waiting room notes must not exceed 500 characters")
+    @Column(name = "waiting_room_notes", length = 500)
+    private String waitingRoomNotes;
+
+    /** Priority level for the waiting room queue */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority", length = 20)
+    @Builder.Default
+    private VisitPriority priority = VisitPriority.NORMAL;
+
     /** Add a medication to the visit. */
     public void addMedication(Medication medication) {
         if (medications == null) {

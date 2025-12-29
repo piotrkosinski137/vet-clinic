@@ -168,10 +168,15 @@ CREATE TABLE visits (
     weight DOUBLE PRECISION,
     temperature DOUBLE PRECISION,
     next_visit_date DATE,
+    -- Waiting room fields
+    checked_in_at TIMESTAMP,
+    waiting_room_notes VARCHAR(500),
+    priority VARCHAR(20) DEFAULT 'NORMAL',
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     version BIGINT NOT NULL DEFAULT 0,
-    CONSTRAINT chk_visits_status CHECK (status IN ('SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW'))
+    CONSTRAINT chk_visits_status CHECK (status IN ('SCHEDULED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW')),
+    CONSTRAINT chk_visits_priority CHECK (priority IN ('LOW', 'NORMAL', 'HIGH', 'URGENT'))
 );
 
 CREATE INDEX idx_visits_clinic_id ON visits(clinic_id);
@@ -181,6 +186,7 @@ CREATE INDEX idx_visits_visit_date ON visits(visit_date);
 CREATE INDEX idx_visits_status ON visits(status);
 CREATE INDEX idx_visits_veterinarian ON visits(veterinarian_id);
 CREATE INDEX idx_visits_patient_date ON visits(patient_id, visit_date DESC);
+CREATE INDEX idx_visits_waiting_room ON visits(clinic_id, status, checked_in_at) WHERE status = 'CHECKED_IN';
 
 CREATE TABLE visit_medications (
     visit_id UUID NOT NULL REFERENCES visits(id) ON DELETE CASCADE,

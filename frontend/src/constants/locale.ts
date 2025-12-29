@@ -14,9 +14,9 @@ export const CURRENCY = {
 } as const;
 
 export const DATE_FORMAT_OPTIONS = {
-  TIME_SHORT: { hour: '2-digit', minute: '2-digit' } as const,
+  TIME_SHORT: { hour: '2-digit', minute: '2-digit', hour12: false } as const,
   DATE_FULL: { dateStyle: 'short' } as const,
-  DATETIME_SHORT: { dateStyle: 'short', timeStyle: 'short' } as const,
+  DATETIME_SHORT: { dateStyle: 'short', timeStyle: 'short', hour12: false } as const,
 } as const;
 
 /**

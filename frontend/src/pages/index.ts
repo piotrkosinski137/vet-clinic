@@ -2,6 +2,7 @@ export { PatientsPage } from './PatientsPage';
 export { PatientDetailsPage } from './PatientDetailsPage';
 export { ClientsPage } from './ClientsPage';
 export { VisitsPage } from './VisitsPage';
+export { WaitingRoomPage } from './WaitingRoomPage';
 export { StatisticsPage } from './StatisticsPage';
 export { InventoryUsagePage } from './InventoryUsagePage';
 export { InventoryPage } from './InventoryPage';

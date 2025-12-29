@@ -39,7 +39,7 @@ class PatientServiceTest {
     @Test
     void shouldCreatePatient() {
         // given
-        Patient patient = createPatient("Buddy", Species.DOG);
+        Patient patient = aPatient("Buddy", Species.DOG);
         given(patientRepository.save(any(Patient.class))).willReturn(patient);
 
         // when
@@ -54,7 +54,7 @@ class PatientServiceTest {
     void shouldGetPatientById() {
         // given
         UUID id = UUID.randomUUID();
-        Patient patient = createPatient("Whiskers", Species.CAT);
+        Patient patient = aPatient("Whiskers", Species.CAT);
         given(patientRepository.findById(id)).willReturn(Optional.of(patient));
 
         // when
@@ -80,9 +80,7 @@ class PatientServiceTest {
     void shouldGetAllPatients() {
         // given
         List<Patient> patients =
-                List.of(
-                        createPatient("Buddy", Species.DOG),
-                        createPatient("Whiskers", Species.CAT));
+                List.of(aPatient("Buddy", Species.DOG), aPatient("Whiskers", Species.CAT));
         given(patientRepository.findAll()).willReturn(patients);
 
         // when
@@ -96,7 +94,7 @@ class PatientServiceTest {
     void shouldGetPatientsByOwner() {
         // given
         UUID ownerId = UUID.randomUUID();
-        List<Patient> patients = List.of(createPatient("Buddy", Species.DOG));
+        List<Patient> patients = List.of(aPatient("Buddy", Species.DOG));
         given(patientRepository.findByOwnerId(ownerId)).willReturn(patients);
 
         // when
@@ -110,7 +108,7 @@ class PatientServiceTest {
     void shouldDeletePatient() {
         // given
         UUID id = UUID.randomUUID();
-        Patient patient = createPatient("Buddy", Species.DOG);
+        Patient patient = aPatient("Buddy", Species.DOG);
         given(patientRepository.findById(id)).willReturn(Optional.of(patient));
 
         // when
@@ -131,7 +129,7 @@ class PatientServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
-    private Patient createPatient(String name, Species species) {
+    private static Patient aPatient(String name, Species species) {
         return Patient.builder()
                 .name(name)
                 .species(species)

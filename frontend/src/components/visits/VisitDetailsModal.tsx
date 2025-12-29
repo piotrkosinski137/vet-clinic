@@ -61,7 +61,7 @@ import { VISIT_TYPE_OPTIONS, getVisitTypeInfo, LOCALE, DATE_FORMAT_OPTIONS } fro
 import { getVisitStatusConfig } from '../../constants/visitStatus';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '../../theme';
 import { useI18n } from '../../i18n';
-import type { VisitResponse, VisitRequest, VisitStatus, VisitType } from '../../api/types';
+import type { VisitResponse, VisitRequest, VisitStatus, VisitType, VisitPriority, CheckInRequest } from '../../api/types';
 
 // Type guard for VisitType
 const isVisitType = (value: string): value is VisitType => {
@@ -87,7 +87,8 @@ interface VisitDetailsModalProps {
   onClose: () => void;
   onSave: (data: Partial<VisitRequest>) => Promise<void>;
   onStatusChange: (status: VisitStatus) => Promise<void>;
-  onDelete: () => Promise<void>;
+  onDelete: () => void;
+  onCheckIn?: (request?: CheckInRequest) => Promise<void>;
 }
 
 export function VisitDetailsModal({
@@ -97,6 +98,7 @@ export function VisitDetailsModal({
   onSave,
   onStatusChange,
   onDelete,
+  onCheckIn,
 }: VisitDetailsModalProps) {
   const { t } = useI18n();
   const [isSaving, setIsSaving] = useState(false);
@@ -104,6 +106,9 @@ export function VisitDetailsModal({
   const [activeTab, setActiveTab] = useState('interview');
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCheckInDialog, setShowCheckInDialog] = useState(false);
+  const [checkInData, setCheckInData] = useState<CheckInRequest>({ priority: 'NORMAL' });
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState<Partial<VisitRequest>>({});
@@ -395,6 +400,18 @@ export function VisitDetailsModal({
       {/* Actions */}
       <ModalActions>
         {/* Status Change Buttons */}
+        {visit.status === 'SCHEDULED' && onCheckIn && (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => {
+              setCheckInData({ priority: 'NORMAL' });
+              setShowCheckInDialog(true);
+            }}
+          >
+            🪑 {t('visits.checkIn')}
+          </Button>
+        )}
         {visit.status === 'SCHEDULED' && (
           <Button
             variant="success"
@@ -402,6 +419,15 @@ export function VisitDetailsModal({
             onClick={() => onStatusChange('IN_PROGRESS')}
           >
             {t('visits.startVisit')}
+          </Button>
+        )}
+        {visit.status === 'CHECKED_IN' && (
+          <Button
+            variant="success"
+            size="sm"
+            onClick={() => onStatusChange('IN_PROGRESS')}
+          >
+            ▶️ {t('visits.startFromWaitingRoom')}
           </Button>
         )}
         {visit.status === 'IN_PROGRESS' && (
@@ -468,6 +494,66 @@ export function VisitDetailsModal({
       onClose={() => setShowDeleteConfirm(false)}
       variant="danger"
     />
+
+    {/* Check-In Dialog */}
+    <Modal open={showCheckInDialog} onClose={() => setShowCheckInDialog(false)} maxWidth="450px">
+      <ModalHeader>
+        <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold }}>
+          🪑 {t('visits.checkIn')}
+        </Text>
+      </ModalHeader>
+      <ModalContent>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: spacing.xs, fontWeight: fontWeight.medium }}>
+              {t('waitingRoom.priority')}
+            </label>
+            <Select
+              value={checkInData.priority || 'NORMAL'}
+              onChange={(e) => setCheckInData(prev => ({ ...prev, priority: e.target.value as VisitPriority }))}
+            >
+              <option value="LOW">{t('waitingRoom.priorities.LOW')}</option>
+              <option value="NORMAL">{t('waitingRoom.priorities.NORMAL')}</option>
+              <option value="HIGH">{t('waitingRoom.priorities.HIGH')}</option>
+              <option value="URGENT">{t('waitingRoom.priorities.URGENT')}</option>
+            </Select>
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: spacing.xs, fontWeight: fontWeight.medium }}>
+              {t('waitingRoom.notes')} ({t('common.optional')})
+            </label>
+            <TextArea
+              value={checkInData.waitingRoomNotes || ''}
+              onChange={(e) => setCheckInData(prev => ({ ...prev, waitingRoomNotes: e.target.value }))}
+              placeholder={t('waitingRoom.notesPlaceholder')}
+              rows={3}
+            />
+          </div>
+        </div>
+      </ModalContent>
+      <ModalActions>
+        <Button variant="ghost" onClick={() => setShowCheckInDialog(false)} disabled={isCheckingIn}>
+          {t('common.cancel')}
+        </Button>
+        <Button
+          variant="primary"
+          onClick={async () => {
+            if (!onCheckIn) return;
+            setIsCheckingIn(true);
+            try {
+              await onCheckIn(checkInData);
+              setShowCheckInDialog(false);
+              onClose();
+            } finally {
+              setIsCheckingIn(false);
+            }
+          }}
+          disabled={isCheckingIn}
+        >
+          {isCheckingIn ? t('visits.checkingIn') : t('visits.checkIn')}
+        </Button>
+      </ModalActions>
+    </Modal>
   </>
   );
 }

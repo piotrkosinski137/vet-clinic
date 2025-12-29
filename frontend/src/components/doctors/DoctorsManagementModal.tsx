@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useVeterinarians, useVisits, formatCurrency } from "../../hooks";
+import { useVeterinarians, useVisits, formatCurrency, useConfirmDialog } from "../../hooks";
 import { api } from "../../api";
 import type { VeterinarianResponse, VeterinarianRequest, VisitResponse, UsedMaterialDto, PatientResponse } from "../../api/types";
 import {
@@ -14,10 +14,12 @@ import {
   Badge,
   Loading,
   useToast,
+  ConfirmDialog,
 } from "../ui";
 import { MaterialsSelector, ProceduresSelector } from "../materials";
 import { useI18n } from "../../i18n";
 import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../theme";
+import { formatTimeWithLocale } from "../../utils/dateFormatting";
 
 const PRESET_COLORS = [
   "#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#E91E63",
@@ -59,9 +61,9 @@ function calculateVisitRevenue(visit: VisitResponse): number {
   return materials.reduce((sum, m) => sum + (m.quantity * m.sellPrice), 0);
 }
 
-function formatTime(dateString: string): string {
+function formatTime(dateString: string, language: string): string {
   const date = new Date(dateString);
-  return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+  return formatTimeWithLocale(date, { hour: "2-digit", minute: "2-digit", hour12: false }, language);
 }
 
 function formatDateForApi(date: Date): string {
@@ -89,8 +91,9 @@ export function DoctorsManagementModal({
   onDoctorsChange,
 }: DoctorsManagementModalProps) {
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { success, error: showError } = useToast();
+  const { dialogState, showConfirm, closeDialog, handleConfirm } = useConfirmDialog();
   const {
     veterinarians,
     loading,
@@ -223,19 +226,23 @@ export function DoctorsManagementModal({
     }
   };
 
-  const handleDelete = async (doctor: VeterinarianResponse) => {
-    if (window.confirm(`Remove Dr. ${doctor.fullName}?`)) {
-      try {
-        await deleteVeterinarian(doctor.id);
-        if (selectedDoctor?.id === doctor.id) {
-          setSelectedDoctor(null);
+  const handleDelete = (doctor: VeterinarianResponse) => {
+    showConfirm(
+      t('common.confirm'),
+      t('doctors.confirmRemove', { name: doctor.fullName }),
+      async () => {
+        try {
+          await deleteVeterinarian(doctor.id);
+          if (selectedDoctor?.id === doctor.id) {
+            setSelectedDoctor(null);
+          }
+          success(t('success.doctorRemoved'));
+          onDoctorsChange?.();
+        } catch (err) {
+          showError(err instanceof Error ? err.message : t('errors.failedToDelete'));
         }
-        success(t('success.doctorRemoved'));
-        onDoctorsChange?.();
-      } catch (err) {
-        showError(err instanceof Error ? err.message : t('errors.failedToDelete'));
       }
-    }
+    );
   };
 
   const handleGoToCalendar = (doctor: VeterinarianResponse) => {
@@ -377,7 +384,7 @@ export function DoctorsManagementModal({
         >
           <div style={{ padding: spacing.sm, backgroundColor: colors.primary.light, borderRadius: borderRadius.sm, borderLeft: `3px solid ${colors.primary.main}` }}>
             <Text variant="muted" size="sm">{t('visits.time')}</Text>
-            <Text style={{ fontWeight: fontWeight.medium }}>{formatTime(selectedVisit.visitDate)}</Text>
+            <Text style={{ fontWeight: fontWeight.medium }}>{formatTime(selectedVisit.visitDate, language)}</Text>
           </div>
           <div style={{ padding: spacing.sm, backgroundColor: colors.neutral.background, borderRadius: borderRadius.sm }}>
             <Text variant="muted" size="sm">{t('visits.duration')}</Text>
@@ -568,7 +575,7 @@ export function DoctorsManagementModal({
                     }}
                   >
                     <div style={{ fontWeight: fontWeight.medium }}>
-                      {formatTime(visit.visitDate)}
+                      {formatTime(visit.visitDate, language)}
                     </div>
                     <div>
                       <Text style={{ fontWeight: fontWeight.medium }}>{getPatientName(visit.patientId)}</Text>
@@ -804,6 +811,17 @@ export function DoctorsManagementModal({
           {t('common.close')}
         </Button>
       </ModalActions>
+
+      <ConfirmDialog
+        open={dialogState.open}
+        onClose={closeDialog}
+        onConfirm={handleConfirm}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        variant="danger"
+      />
     </Modal>
   );
 }

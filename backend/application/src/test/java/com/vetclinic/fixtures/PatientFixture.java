@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import com.vetclinic.patient.api.dto.PatientRequest;
 import com.vetclinic.patient.domain.model.Gender;
 import com.vetclinic.patient.domain.model.Patient;
 import com.vetclinic.patient.domain.model.PatientLabel;
@@ -125,6 +126,7 @@ public final class PatientFixture {
         return this;
     }
 
+    /** Builds a Patient entity with the configured values. */
     public Patient build() {
         return Patient.builder()
                 .name(name)
@@ -142,50 +144,28 @@ public final class PatientFixture {
                 .build();
     }
 
-    /** Returns JSON representation for API testing. */
+    /** Builds a PatientRequest DTO with the configured values. Useful for API testing. */
+    public PatientRequest buildRequest() {
+        return new PatientRequest(
+                name,
+                species,
+                breed,
+                dateOfBirth,
+                weight,
+                ownerId,
+                microchipNumber,
+                color,
+                gender,
+                neutered,
+                labels.isEmpty() ? null : labels,
+                notes);
+    }
+
+    /**
+     * Returns JSON representation for API testing. Uses Jackson ObjectMapper for proper
+     * serialization.
+     */
     public String toJson() {
-        StringBuilder json = new StringBuilder("{");
-        json.append("\"name\":\"").append(name).append("\"");
-        json.append(",\"species\":\"").append(species.name()).append("\"");
-
-        if (breed != null) {
-            json.append(",\"breed\":\"").append(breed).append("\"");
-        }
-        if (dateOfBirth != null) {
-            json.append(",\"dateOfBirth\":\"").append(dateOfBirth).append("\"");
-        }
-        if (weight != null) {
-            json.append(",\"weight\":").append(weight);
-        }
-        if (ownerId != null) {
-            json.append(",\"ownerId\":\"").append(ownerId).append("\"");
-        }
-        if (microchipNumber != null) {
-            json.append(",\"microchipNumber\":\"").append(microchipNumber).append("\"");
-        }
-        if (color != null) {
-            json.append(",\"color\":\"").append(color).append("\"");
-        }
-        if (gender != null) {
-            json.append(",\"gender\":\"").append(gender.name()).append("\"");
-        }
-        if (neutered != null) {
-            json.append(",\"neutered\":").append(neutered);
-        }
-        if (!labels.isEmpty()) {
-            json.append(",\"labels\":[");
-            json.append(
-                    labels.stream()
-                            .map(l -> "\"" + l.name() + "\"")
-                            .reduce((a, b) -> a + "," + b)
-                            .orElse(""));
-            json.append("]");
-        }
-        if (notes != null) {
-            json.append(",\"notes\":\"").append(notes).append("\"");
-        }
-
-        json.append("}");
-        return json.toString();
+        return TestBuilders.toJson(buildRequest());
     }
 }

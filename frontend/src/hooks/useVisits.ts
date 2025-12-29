@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { api, VisitResponse, VisitRequest, VisitFilters, VisitStatus } from '../api';
+import { api, VisitResponse, VisitRequest, VisitFilters, VisitStatus, CheckInRequest } from '../api';
 
 interface UseVisits {
   visits: VisitResponse[];
@@ -19,6 +19,7 @@ interface UseVisits {
     visitDate: string
   ) => Promise<VisitResponse>;
   deleteVisit: (id: string) => Promise<void>;
+  checkIn: (id: string, request?: CheckInRequest) => Promise<VisitResponse>;
   refresh: () => void;
 }
 
@@ -151,6 +152,12 @@ export function useVisits(initialFilters?: VisitFilters): UseVisits {
     setVisits((prev) => prev.filter((v) => v.id !== id));
   };
 
+  const checkIn = async (id: string, request?: CheckInRequest): Promise<VisitResponse> => {
+    const updated = await api.checkIn(id, request);
+    setVisits((prev) => prev.map((v) => (v.id === id ? updated : v)));
+    return updated;
+  };
+
   const refresh = useCallback(() => {
     fetchVisits(currentFilters);
   }, [fetchVisits, currentFilters]);
@@ -168,6 +175,7 @@ export function useVisits(initialFilters?: VisitFilters): UseVisits {
     updateVisitStatus,
     reassignVisit,
     deleteVisit,
+    checkIn,
     refresh,
   };
 }

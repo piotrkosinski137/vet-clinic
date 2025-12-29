@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.vetclinic.visit.domain.model.VisitPriority;
 import com.vetclinic.visit.domain.model.VisitStatus;
 import com.vetclinic.visit.domain.model.VisitType;
 
@@ -36,5 +37,9 @@ public record VisitResponse(
         Double weight,
         Double temperature,
         LocalDate nextVisitDate,
+        // Waiting room fields
+        LocalDateTime checkedInAt,
+        String waitingRoomNotes,
+        VisitPriority priority,
         Instant createdAt,
         Instant updatedAt) {}

@@ -1,11 +1,33 @@
-import { LOCALE, DATE_FORMAT_OPTIONS } from '../constants/locale';
+import { LOCALE, DATE_FORMAT_OPTIONS, getLocaleForLanguage } from '../constants/locale';
 
 /**
  * Formats a date/time for display.
  */
 export const formatDateTime = (date: string | Date | null | undefined): string => {
   if (!date) return '';
-  return new Date(date).toLocaleString(LOCALE.PL);
+  return new Date(date).toLocaleString(LOCALE.PL, { hour12: false });
+};
+
+/**
+ * Formats a date with custom options and locale.
+ */
+export const formatDateWithLocale = (
+  date: Date,
+  options: Intl.DateTimeFormatOptions,
+  language: string = 'pl'
+): string => {
+  return date.toLocaleDateString(getLocaleForLanguage(language), options);
+};
+
+/**
+ * Formats a time with custom options and locale.
+ */
+export const formatTimeWithLocale = (
+  date: Date,
+  options: Intl.DateTimeFormatOptions,
+  language: string = 'pl'
+): string => {
+  return date.toLocaleTimeString(getLocaleForLanguage(language), options);
 };
 
 /**

@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import com.vetclinic.visit.domain.model.Medication;
 import com.vetclinic.visit.domain.model.Visit;
+import com.vetclinic.visit.domain.model.VisitPriority;
 import com.vetclinic.visit.domain.model.VisitStatus;
 
 /**
@@ -32,6 +33,9 @@ public record VisitSnapshot(
         Double weight,
         Double temperature,
         LocalDate nextVisitDate,
+        LocalDateTime checkedInAt,
+        String waitingRoomNotes,
+        VisitPriority priority,
         List<MedicationSnapshot> medications) {
 
     public record MedicationSnapshot(
@@ -66,6 +70,9 @@ public record VisitSnapshot(
                 visit.getWeight(),
                 visit.getTemperature(),
                 visit.getNextVisitDate(),
+                visit.getCheckedInAt(),
+                visit.getWaitingRoomNotes(),
+                visit.getPriority(),
                 visit.getMedications() != null
                         ? visit.getMedications().stream().map(MedicationSnapshot::from).toList()
                         : List.of());

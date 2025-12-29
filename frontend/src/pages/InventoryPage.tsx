@@ -318,7 +318,7 @@ export function InventoryPage() {
                 alignItems: 'center',
               }}
             >
-              <div>{new Date(txn.createdAt).toLocaleString()}</div>
+              <div>{new Date(txn.createdAt).toLocaleString('pl-PL', { hour12: false })}</div>
               <div>
                 <Badge variant={
                   txn.transactionType === 'RECEIPT' ? 'success' :

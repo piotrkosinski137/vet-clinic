@@ -3,6 +3,7 @@ import { colors, spacing, borderRadius, fontSize, fontWeight } from '../../theme
 import { VisitResponse, VisitStatus } from '../../api/types';
 import { Badge } from '../ui/Badge';
 import { useI18n } from '../../i18n';
+import { formatTimeWithLocale } from '../../utils/dateFormatting';
 
 export interface AppointmentCardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
   visit: VisitResponse;
@@ -13,33 +14,39 @@ export interface AppointmentCardProps extends Omit<HTMLAttributes<HTMLDivElement
 
 const statusColors: Record<VisitStatus, { bg: string; text: string }> = {
   SCHEDULED: { bg: colors.primary.light, text: colors.primary.main },
+  CHECKED_IN: { bg: '#FFF8E1', text: '#F57C00' },  // Amber - waiting room
   IN_PROGRESS: { bg: colors.warning.light, text: colors.warning.main },
   COMPLETED: { bg: colors.success.light, text: colors.success.main },
   CANCELLED: { bg: colors.neutral.border, text: colors.neutral.textMuted },
+  NO_SHOW: { bg: '#FFEBEE', text: '#D32F2F' },  // Red - no show
 };
 
 const statusTranslationKeys: Record<VisitStatus, string> = {
   SCHEDULED: 'visits.scheduled',
+  CHECKED_IN: 'visits.checkedIn',
   IN_PROGRESS: 'visits.inProgress',
   COMPLETED: 'visits.completed',
   CANCELLED: 'visits.cancelled',
+  NO_SHOW: 'visits.noShow',
 };
 
-const statusVariants: Record<VisitStatus, 'primary' | 'warning' | 'success' | 'secondary'> = {
+const statusVariants: Record<VisitStatus, 'primary' | 'warning' | 'success' | 'secondary' | 'error'> = {
   SCHEDULED: 'primary',
+  CHECKED_IN: 'warning',
   IN_PROGRESS: 'warning',
   COMPLETED: 'success',
   CANCELLED: 'secondary',
+  NO_SHOW: 'error',
 };
 
-function formatTime(dateString: string): string {
+function formatTime(dateString: string, language: string): string {
   const date = new Date(dateString);
-  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return formatTimeWithLocale(date, { hour: '2-digit', minute: '2-digit', hour12: false }, language);
 }
 
 export const AppointmentCard = forwardRef<HTMLDivElement, AppointmentCardProps>(
   ({ visit, onSelect, compact = false, draggable = true, style, ...props }, ref) => {
-    const { t } = useI18n();
+    const { t, language } = useI18n();
     const statusColor = statusColors[visit.status];
 
     const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
@@ -92,7 +99,7 @@ export const AppointmentCard = forwardRef<HTMLDivElement, AppointmentCardProps>(
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <span style={{ fontWeight: fontWeight.semibold, fontSize: fontSize.sm }}>
-            {formatTime(visit.visitDate)}
+            {formatTime(visit.visitDate, language)}
           </span>
           <Badge variant={statusVariants[visit.status]} style={{ fontSize: fontSize.xs }}>
             {t(statusTranslationKeys[visit.status])}

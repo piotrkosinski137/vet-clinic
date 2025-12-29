@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useVisits, useVeterinarians } from "../hooks";
-import { VisitResponse, VisitStatus, VisitRequest } from "../api/types";
+import { useVisits, useVeterinarians, useConfirmDialog } from "../hooks";
+import { VisitResponse, VisitStatus, VisitRequest, CheckInRequest } from "../api/types";
 import {
   Button,
   Card,
@@ -13,6 +13,7 @@ import {
   TabList,
   Tab,
   TabPanel,
+  ConfirmDialog,
 } from "../components/ui";
 import { Calendar, CalendarView } from "../components/calendar";
 import { BookAppointmentModal, VisitDetailsModal } from "../components/visits";
@@ -27,10 +28,11 @@ function formatDateForApi(date: Date): string {
 
 export function VisitsPage() {
   const { t } = useI18n();
-  const { visits, loading, error, fetchVisits, updateVisitStatus, updateVisit, reassignVisit, deleteVisit, refresh } =
+  const { visits, loading, error, fetchVisits, updateVisitStatus, updateVisit, reassignVisit, deleteVisit, checkIn, refresh } =
     useVisits();
   const { veterinarians, refetch: refetchVeterinarians } = useVeterinarians({ active: true });
   const { success, error: showError } = useToast();
+  const { dialogState, showConfirm, closeDialog, handleConfirm } = useConfirmDialog();
 
   const [view, setView] = useState<CalendarView>("day");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -38,6 +40,7 @@ export function VisitsPage() {
   const [showBookModal, setShowBookModal] = useState(false);
   const [bookingDate, setBookingDate] = useState<Date | null>(null);
   const [bookingHour, setBookingHour] = useState<number | null>(null);
+  const [bookingMinute, setBookingMinute] = useState<number | null>(null);
   const [bookingVeterinarianId, setBookingVeterinarianId] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedDoctor, setSelectedDoctor] = useState<string>(() => searchParams.get("doctor") || "");
@@ -106,9 +109,10 @@ export function VisitsPage() {
     setSelectedVisit(visit);
   }, []);
 
-  const handleSlotClick = useCallback((date: Date, hour: number, veterinarianId?: string) => {
+  const handleSlotClick = useCallback((date: Date, hour: number, minute: number, veterinarianId?: string) => {
     setBookingDate(date);
     setBookingHour(hour);
+    setBookingMinute(minute);
     setBookingVeterinarianId(veterinarianId || null);
     setShowBookModal(true);
   }, []);
@@ -118,18 +122,20 @@ export function VisitsPage() {
       visit: VisitResponse,
       newDate: Date,
       newHour: number,
+      newMinute: number,
       newVeterinarianId?: string,
       newVeterinarianName?: string
     ) => {
       const newDateTime = new Date(newDate);
-      newDateTime.setHours(newHour, 0, 0, 0);
+      newDateTime.setHours(newHour, newMinute, 0, 0);
 
       // Format as local datetime without UTC conversion (backend uses LocalDateTime)
       const year = newDateTime.getFullYear();
       const month = String(newDateTime.getMonth() + 1).padStart(2, "0");
       const day = String(newDateTime.getDate()).padStart(2, "0");
       const hours = String(newDateTime.getHours()).padStart(2, "0");
-      const localDateTimeStr = `${year}-${month}-${day}T${hours}:00:00`;
+      const minutes = String(newDateTime.getMinutes()).padStart(2, "0");
+      const localDateTimeStr = `${year}-${month}-${day}T${hours}:${minutes}:00`;
 
       try {
         await reassignVisit(
@@ -143,7 +149,7 @@ export function VisitsPage() {
         showError(err instanceof Error ? err.message : t('visits.failedToReassign'));
       }
     },
-    [reassignVisit, success, showError]
+    [reassignVisit, success, showError, t]
   );
 
   const handleVisitSave = async (data: Partial<VisitRequest>) => {
@@ -173,17 +179,33 @@ export function VisitsPage() {
     }
   };
 
-  const handleVisitDelete = async () => {
+  const handleVisitDelete = () => {
     if (!selectedVisit) return;
-    if (window.confirm(t('visits.confirmDeleteVisit'))) {
-      try {
-        await deleteVisit(selectedVisit.id);
-        setSelectedVisit(null);
-        success(t('visits.appointmentDeleted'));
-      } catch (err) {
-        showError(t('visits.failedToDelete'));
-        throw err;
+    showConfirm(
+      t('common.confirm'),
+      t('visits.confirmDeleteVisit'),
+      async () => {
+        try {
+          await deleteVisit(selectedVisit.id);
+          setSelectedVisit(null);
+          success(t('visits.appointmentDeleted'));
+        } catch (err) {
+          showError(t('visits.failedToDelete'));
+          throw err;
+        }
       }
+    );
+  };
+
+  const handleCheckIn = async (request?: CheckInRequest) => {
+    if (!selectedVisit) return;
+    try {
+      await checkIn(selectedVisit.id, request);
+      setSelectedVisit(null);
+      success(t('visits.checkedInSuccessfully'));
+    } catch (err) {
+      showError(err instanceof Error ? err.message : t('errors.failedToSave'));
+      throw err;
     }
   };
 
@@ -191,6 +213,7 @@ export function VisitsPage() {
     setShowBookModal(false);
     setBookingDate(null);
     setBookingHour(null);
+    setBookingMinute(null);
     setBookingVeterinarianId(null);
     refresh();
     success(t('visits.appointmentBooked'));
@@ -330,6 +353,7 @@ export function VisitsPage() {
         onSave={handleVisitSave}
         onStatusChange={handleStatusChange}
         onDelete={handleVisitDelete}
+        onCheckIn={handleCheckIn}
       />
 
       <BookAppointmentModal
@@ -338,11 +362,13 @@ export function VisitsPage() {
           setShowBookModal(false);
           setBookingDate(null);
           setBookingHour(null);
+          setBookingMinute(null);
           setBookingVeterinarianId(null);
         }}
         onSuccess={handleBookingComplete}
         initialDate={bookingDate}
         initialHour={bookingHour}
+        initialMinute={bookingMinute}
         initialVeterinarianId={bookingVeterinarianId}
       />
 
@@ -350,6 +376,17 @@ export function VisitsPage() {
         open={showDoctorsModal}
         onClose={() => setShowDoctorsModal(false)}
         onDoctorsChange={refetchVeterinarians}
+      />
+
+      <ConfirmDialog
+        open={dialogState.open}
+        onClose={closeDialog}
+        onConfirm={handleConfirm}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        variant="danger"
       />
     </div>
   );

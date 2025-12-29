@@ -64,4 +64,14 @@ public interface VisitRepository {
             LocalDateTime startTime,
             LocalDateTime endTime,
             UUID excludeVisitId);
+
+    /**
+     * Find all visits currently in the waiting room (CHECKED_IN status) for today. Results are
+     * ordered by priority (URGENT first) then by check-in time (earliest first).
+     */
+    List<Visit> findWaitingRoomVisits(LocalDateTime startOfDay, LocalDateTime endOfDay);
+
+    /** Find visits by status within a date range */
+    List<Visit> findByStatusAndVisitDateBetween(
+            VisitStatus status, LocalDateTime start, LocalDateTime end);
 }

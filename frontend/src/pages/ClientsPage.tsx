@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useClients } from '../hooks';
+import { useClients, useConfirmDialog } from '../hooks';
 import {
   ClientRequest,
   ClientResponse,
@@ -26,6 +26,7 @@ import {
   Loading,
   PageHeader,
   useToast,
+  ConfirmDialog,
 } from '../components/ui';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '../theme';
 import { useI18n } from '../i18n';
@@ -45,6 +46,7 @@ export function ClientsPage() {
   const { t } = useI18n();
   const { clients, loading, error, createClient, updateClient, deleteClient, refresh } = useClients();
   const { success, error: showError } = useToast();
+  const { dialogState, showConfirm, closeDialog, handleConfirm } = useConfirmDialog();
 
   // Search and selection state
   const [searchQuery, setSearchQuery] = useState('');
@@ -218,18 +220,22 @@ export function ClientsPage() {
     }
   };
 
-  const handleDeleteClient = async (client: ClientResponse) => {
-    if (window.confirm(t('clients.confirmDeleteClient', { firstName: client.firstName, lastName: client.lastName }))) {
-      try {
-        await deleteClient(client.id);
-        if (selectedClient?.id === client.id) {
-          setSelectedClient(null);
+  const handleDeleteClient = (client: ClientResponse) => {
+    showConfirm(
+      t('common.confirm'),
+      t('clients.confirmDeleteClient', { firstName: client.firstName, lastName: client.lastName }),
+      async () => {
+        try {
+          await deleteClient(client.id);
+          if (selectedClient?.id === client.id) {
+            setSelectedClient(null);
+          }
+          success(t('clients.clientDeleted'));
+        } catch {
+          showError(t('clients.failedToDeleteClient'));
         }
-        success(t('clients.clientDeleted'));
-      } catch {
-        showError(t('clients.failedToDeleteClient'));
       }
-    }
+    );
   };
 
   // Patient form handlers
@@ -274,18 +280,22 @@ export function ClientsPage() {
     }
   };
 
-  const handleDeletePatient = async (patient: PatientResponse) => {
-    if (window.confirm(t('clients.confirmDeletePatient', { name: patient.name }))) {
-      try {
-        await api.deletePatient(patient.id);
-        setPatients((prev) => prev.filter((p) => p.id !== patient.id));
-        setAllPatients((prev) => prev.filter((p) => p.id !== patient.id));
-        if (selectedPatient?.id === patient.id) setSelectedPatient(null);
-        success(t('clients.patientDeleted'));
-      } catch {
-        showError(t('clients.failedToDeletePatient'));
+  const handleDeletePatient = (patient: PatientResponse) => {
+    showConfirm(
+      t('common.confirm'),
+      t('clients.confirmDeletePatient', { name: patient.name }),
+      async () => {
+        try {
+          await api.deletePatient(patient.id);
+          setPatients((prev) => prev.filter((p) => p.id !== patient.id));
+          setAllPatients((prev) => prev.filter((p) => p.id !== patient.id));
+          if (selectedPatient?.id === patient.id) setSelectedPatient(null);
+          success(t('clients.patientDeleted'));
+        } catch {
+          showError(t('clients.failedToDeletePatient'));
+        }
       }
-    }
+    );
   };
 
   const toggleLabel = (label: PatientLabel) => {
@@ -917,6 +927,17 @@ export function ClientsPage() {
           </>
         )}
       </Modal>
+
+      <ConfirmDialog
+        open={dialogState.open}
+        onClose={closeDialog}
+        onConfirm={handleConfirm}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        variant="danger"
+      />
     </div>
   );
 }

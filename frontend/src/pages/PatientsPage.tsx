@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usePatients } from '../hooks';
+import { usePatients, useConfirmDialog } from '../hooks';
 import { PatientRequest, PatientResponse, PatientLabel } from '../api';
 import {
   Button,
@@ -19,6 +19,7 @@ import {
   useToast,
   Pagination,
   SearchFilter,
+  ConfirmDialog,
 } from '../components/ui';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '../theme';
 import { useI18n } from '../i18n';
@@ -37,6 +38,7 @@ export function PatientsPage() {
   const { t } = useI18n();
   const { patients, loading, error, createPatient, updatePatient, deletePatient, refresh } = usePatients();
   const { success, error: showError } = useToast();
+  const { dialogState, showConfirm, closeDialog, handleConfirm } = useConfirmDialog();
   const [showForm, setShowForm] = useState(false);
   const [editingPatient, setEditingPatient] = useState<PatientResponse | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -161,15 +163,19 @@ export function PatientsPage() {
     });
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm(t('patients.confirmDelete'))) {
-      try {
-        await deletePatient(id);
-        success(t('patients.patientDeleted'));
-      } catch (err) {
-        showError(t('patients.failedToDelete'));
+  const handleDelete = (id: string) => {
+    showConfirm(
+      t('common.confirm'),
+      t('patients.confirmDelete'),
+      async () => {
+        try {
+          await deletePatient(id);
+          success(t('patients.patientDeleted'));
+        } catch (err) {
+          showError(t('patients.failedToDelete'));
+        }
       }
-    }
+    );
   };
 
   if (loading) {
@@ -380,6 +386,17 @@ export function PatientsPage() {
           </ModalActions>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={dialogState.open}
+        onClose={closeDialog}
+        onConfirm={handleConfirm}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        variant="danger"
+      />
 
       {patients.length === 0 ? (
         <Card style={{ textAlign: 'center', padding: spacing.xxl }}>

@@ -91,7 +91,9 @@ export interface FieldError {
   rejectedValue?: unknown;
 }
 // Visit/Appointment Types
-export type VisitStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type VisitStatus = 'SCHEDULED' | 'CHECKED_IN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+
+export type VisitPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
 
 export type VisitType = 'CONSULTATION' | 'VACCINATION' | 'LAB_WORK' | 'ULTRASOUND' | 'CARDIOLOGY' | 'SURGERY' | 'DENTAL' | 'GROOMING' | 'EMERGENCY' | 'FOLLOW_UP' | 'CHECKUP';
 
@@ -133,6 +135,9 @@ export interface VisitRequest {
   weight?: number;
   temperature?: number;
   nextVisitDate?: string; // ISO date
+  // Waiting room fields
+  waitingRoomNotes?: string;
+  priority?: VisitPriority;
 }
 
 export interface VisitResponse {
@@ -153,12 +158,54 @@ export interface VisitResponse {
   recommendations?: string;
   medications?: MedicationDto[];
   usedMaterials?: UsedMaterialDto[];
+  totalMaterialsCost?: number;
+  totalMaterialsSell?: number;
+  totalMaterialsProfit?: number;
   notes?: string;
   weight?: number;
   temperature?: number;
   nextVisitDate?: string;
+  // Waiting room fields
+  checkedInAt?: string;
+  waitingRoomNotes?: string;
+  priority?: VisitPriority;
   createdAt: string;
   updatedAt: string;
+}
+
+// Waiting Room Types
+export interface CheckInRequest {
+  waitingRoomNotes?: string;
+  priority?: VisitPriority;
+}
+
+export interface WaitingRoomVisitResponse {
+  id: string;
+  visitDate: string;
+  visitType?: VisitType;
+  reason?: string;
+  // Waiting room specific
+  checkedInAt: string;
+  waitingTimeMinutes: number;
+  waitingRoomNotes?: string;
+  priority: VisitPriority;
+  // Patient info
+  patientId: string;
+  patientName: string;
+  species: string;
+  breed?: string;
+  patientLabels: string[];
+  // Client info
+  clientId?: string;
+  clientName?: string;
+  clientPhone?: string;
+  // Veterinarian info
+  veterinarianId?: string;
+  veterinarianName?: string;
+  // Financial info
+  estimatedCost: number;
+  clientDebt: number;
+  totalToPay: number;
 }
 
 export interface VisitFilters {

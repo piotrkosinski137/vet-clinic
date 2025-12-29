@@ -136,4 +136,15 @@ class VisitRepositoryAdapter implements VisitRepository {
             UUID excludeVisitId) {
         return jpaRepository.hasConflict(veterinarianId, startTime, endTime, excludeVisitId);
     }
+
+    @Override
+    public List<Visit> findWaitingRoomVisits(LocalDateTime startOfDay, LocalDateTime endOfDay) {
+        return jpaRepository.findWaitingRoomVisits(startOfDay, endOfDay);
+    }
+
+    @Override
+    public List<Visit> findByStatusAndVisitDateBetween(
+            VisitStatus status, LocalDateTime start, LocalDateTime end) {
+        return jpaRepository.findByStatusAndVisitDateBetween(status, start, end);
+    }
 }

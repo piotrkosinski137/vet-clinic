@@ -1,5 +1,7 @@
 package com.vetclinic.common.constants;
 
+import java.time.LocalTime;
+
 /** Application-wide constants to eliminate magic numbers and strings. */
 public final class AppConstants {
 
@@ -34,6 +36,8 @@ public final class AppConstants {
     // Working hours
     public static final int DEFAULT_WORK_START_HOUR = 8;
     public static final int DEFAULT_WORK_END_HOUR = 18;
+    public static final LocalTime DEFAULT_WORK_START_TIME = LocalTime.of(8, 0);
+    public static final LocalTime DEFAULT_WORK_END_TIME = LocalTime.of(17, 0);
 
     // Keycloak
     public static final String KEYCLOAK_CLINIC_ID_ATTRIBUTE = "clinic_id";

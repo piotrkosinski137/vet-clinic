@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.vetclinic.visit.api.dto.CheckInRequest;
 import com.vetclinic.visit.api.dto.VisitReassignRequest;
 import com.vetclinic.visit.api.dto.VisitRequest;
 import com.vetclinic.visit.api.dto.VisitResponse;
@@ -51,6 +52,55 @@ public class VisitController {
         VisitResponse response = visitMapper.toResponse(created);
         return ResponseEntity.created(URI.create("/api/v1/visits/" + created.getId()))
                 .body(response);
+    }
+
+    // ===== WAITING ROOM ENDPOINTS =====
+    // Note: These must be defined BEFORE /{id} to prevent path variable matching
+
+    /** Get all visits currently in the waiting room. */
+    @GetMapping("/waiting-room")
+    @PreAuthorize(HAS_ANY_ROLE)
+    public ResponseEntity<List<VisitResponse>> getWaitingRoom() {
+        List<Visit> visits = visitService.getWaitingRoomVisits();
+        return ResponseEntity.ok(visitMapper.toResponseList(visits));
+    }
+
+    /** Check in a patient to the waiting room. */
+    @PostMapping("/{id}/check-in")
+    @PreAuthorize(CAN_MANAGE_VISITS)
+    public ResponseEntity<VisitResponse> checkIn(
+            @PathVariable UUID id, @Valid @RequestBody(required = false) CheckInRequest request) {
+        var notes = request != null ? request.waitingRoomNotes() : null;
+        var priority = request != null ? request.priority() : null;
+        Visit updated = visitService.checkInToWaitingRoom(id, notes, priority);
+        return ResponseEntity.ok(visitMapper.toResponse(updated));
+    }
+
+    /** Start a visit from the waiting room. */
+    @PostMapping("/{id}/start-from-waiting-room")
+    @PreAuthorize(CAN_MANAGE_VISITS)
+    public ResponseEntity<VisitResponse> startFromWaitingRoom(@PathVariable UUID id) {
+        Visit updated = visitService.startVisitFromWaitingRoom(id);
+        return ResponseEntity.ok(visitMapper.toResponse(updated));
+    }
+
+    /** Mark a visit as no-show. */
+    @PostMapping("/{id}/no-show")
+    @PreAuthorize(CAN_MANAGE_VISITS)
+    public ResponseEntity<VisitResponse> markNoShow(@PathVariable UUID id) {
+        Visit updated = visitService.markAsNoShow(id);
+        return ResponseEntity.ok(visitMapper.toResponse(updated));
+    }
+
+    /** Update waiting room notes and priority. */
+    @PatchMapping("/{id}/waiting-room-info")
+    @PreAuthorize(CAN_MANAGE_VISITS)
+    public ResponseEntity<VisitResponse> updateWaitingRoomInfo(
+            @PathVariable UUID id, @Valid @RequestBody CheckInRequest request) {
+        Visit updated =
+                visitService.updateWaitingRoomInfo(
+                        id, request.waitingRoomNotes(), request.priority());
+        return ResponseEntity.ok(visitMapper.toResponse(updated));
     }
 
     @GetMapping("/{id}")

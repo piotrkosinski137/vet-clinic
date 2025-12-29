@@ -38,7 +38,7 @@ class ClientServiceTest {
     class CreateClient {
         @Test
         void shouldCreateClient() {
-            Client client = createClient("John", "Doe", "john@example.com");
+            Client client = aClient("John", "Doe", "john@example.com");
             given(clientRepository.existsByEmail("john@example.com")).willReturn(false);
             given(clientRepository.save(any(Client.class))).willReturn(client);
 
@@ -50,7 +50,7 @@ class ClientServiceTest {
 
         @Test
         void shouldThrowWhenEmailExists() {
-            Client client = createClient("John", "Doe", "john@example.com");
+            Client client = aClient("John", "Doe", "john@example.com");
             given(clientRepository.existsByEmail("john@example.com")).willReturn(true);
 
             assertThatThrownBy(() -> clientService.createClient(client))
@@ -63,7 +63,7 @@ class ClientServiceTest {
         @Test
         void shouldGetClientById() {
             UUID id = UUID.randomUUID();
-            Client client = createClient("John", "Doe", "john@example.com");
+            Client client = aClient("John", "Doe", "john@example.com");
             given(clientRepository.findById(id)).willReturn(Optional.of(client));
 
             Client result = clientService.getClient(id);
@@ -88,8 +88,8 @@ class ClientServiceTest {
         void shouldGetAllClients() {
             List<Client> clients =
                     List.of(
-                            createClient("John", "Doe", "john@example.com"),
-                            createClient("Jane", "Smith", "jane@example.com"));
+                            aClient("John", "Doe", "john@example.com"),
+                            aClient("Jane", "Smith", "jane@example.com"));
             given(clientRepository.findAll()).willReturn(clients);
 
             List<Client> result = clientService.getAllClients();
@@ -103,7 +103,7 @@ class ClientServiceTest {
         @Test
         void shouldDeleteClient() {
             UUID id = UUID.randomUUID();
-            Client client = createClient("John", "Doe", "john@example.com");
+            Client client = aClient("John", "Doe", "john@example.com");
             given(clientRepository.findById(id)).willReturn(Optional.of(client));
 
             clientService.deleteClient(id);
@@ -127,8 +127,8 @@ class ClientServiceTest {
         void shouldSearchClientsByName() {
             List<Client> clients =
                     List.of(
-                            createClient("John", "Doe", "john@example.com"),
-                            createClient("Johnny", "Smith", "johnny@example.com"));
+                            aClient("John", "Doe", "john@example.com"),
+                            aClient("Johnny", "Smith", "johnny@example.com"));
             given(
                             clientRepository
                                     .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
@@ -145,7 +145,7 @@ class ClientServiceTest {
     class SearchByPhone {
         @Test
         void shouldSearchClientsByPhone() {
-            List<Client> clients = List.of(createClient("John", "Doe", "john@example.com"));
+            List<Client> clients = List.of(aClient("John", "Doe", "john@example.com"));
             given(clientRepository.findByPhoneContaining("123")).willReturn(clients);
 
             List<Client> result = clientService.searchByPhone("123");
@@ -158,7 +158,7 @@ class ClientServiceTest {
     class SearchByCity {
         @Test
         void shouldSearchClientsByCity() {
-            List<Client> clients = List.of(createClient("John", "Doe", "john@example.com"));
+            List<Client> clients = List.of(aClient("John", "Doe", "john@example.com"));
             given(clientRepository.findByCityContainingIgnoreCase("Warsaw")).willReturn(clients);
 
             List<Client> result = clientService.searchByCity("Warsaw");
@@ -171,7 +171,7 @@ class ClientServiceTest {
     class GetClientByEmail {
         @Test
         void shouldGetClientByEmail() {
-            Client client = createClient("John", "Doe", "john@example.com");
+            Client client = aClient("John", "Doe", "john@example.com");
             given(clientRepository.findByEmail("john@example.com")).willReturn(Optional.of(client));
 
             Client result = clientService.getClientByEmail("john@example.com");
@@ -196,7 +196,7 @@ class ClientServiceTest {
         void shouldSearchWithCriteria() {
             ClientSearchCriteria criteria =
                     new ClientSearchCriteria("John", null, null, null, null);
-            List<Client> clients = List.of(createClient("John", "Doe", "john@example.com"));
+            List<Client> clients = List.of(aClient("John", "Doe", "john@example.com"));
             given(clientRepository.search("John", null, null, null, null)).willReturn(clients);
 
             List<Client> result = clientService.searchClients(criteria);
@@ -209,8 +209,8 @@ class ClientServiceTest {
             ClientSearchCriteria criteria = new ClientSearchCriteria(null, null, null, null, null);
             List<Client> clients =
                     List.of(
-                            createClient("John", "Doe", "john@example.com"),
-                            createClient("Jane", "Smith", "jane@example.com"));
+                            aClient("John", "Doe", "john@example.com"),
+                            aClient("Jane", "Smith", "jane@example.com"));
             given(clientRepository.findAll()).willReturn(clients);
 
             List<Client> result = clientService.searchClients(criteria);
@@ -219,7 +219,7 @@ class ClientServiceTest {
         }
     }
 
-    private Client createClient(String firstName, String lastName, String email) {
+    private static Client aClient(String firstName, String lastName, String email) {
         return Client.builder()
                 .firstName(firstName)
                 .lastName(lastName)

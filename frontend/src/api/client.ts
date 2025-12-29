@@ -13,6 +13,8 @@ import type {
   VisitResponse,
   VisitFilters,
   VisitStatus,
+  CheckInRequest,
+  VisitPriority,
   ApiError,
   PriceListItemRequest,
   PriceListItemResponse,
@@ -338,6 +340,38 @@ class ApiClient {
 
   async getPatientVisits(patientId: string): Promise<VisitResponse[]> {
     return this.request<VisitResponse[]>(`/visits/patient/${patientId}`);
+  }
+
+  // === Waiting Room API ===
+
+  async getWaitingRoom(): Promise<VisitResponse[]> {
+    return this.request<VisitResponse[]>('/visits/waiting-room');
+  }
+
+  async checkIn(visitId: string, request?: CheckInRequest): Promise<VisitResponse> {
+    return this.request<VisitResponse>(`/visits/${visitId}/check-in`, {
+      method: 'POST',
+      body: request ? JSON.stringify(request) : undefined,
+    });
+  }
+
+  async startFromWaitingRoom(visitId: string): Promise<VisitResponse> {
+    return this.request<VisitResponse>(`/visits/${visitId}/start-from-waiting-room`, {
+      method: 'POST',
+    });
+  }
+
+  async markNoShow(visitId: string): Promise<VisitResponse> {
+    return this.request<VisitResponse>(`/visits/${visitId}/no-show`, {
+      method: 'POST',
+    });
+  }
+
+  async updateWaitingRoomInfo(visitId: string, request: CheckInRequest): Promise<VisitResponse> {
+    return this.request<VisitResponse>(`/visits/${visitId}/waiting-room-info`, {
+      method: 'PATCH',
+      body: JSON.stringify(request),
+    });
   }
 
   // Price List API

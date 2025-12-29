@@ -31,6 +31,7 @@ import com.vetclinic.veterinarian.domain.DayOffConflictException;
 import com.vetclinic.veterinarian.domain.VeterinarianEmailAlreadyExistsException;
 import com.vetclinic.veterinarian.domain.VeterinarianNotFoundException;
 import com.vetclinic.visit.domain.AppointmentConflictException;
+import com.vetclinic.visit.domain.InvalidVisitStateException;
 import com.vetclinic.visit.domain.OutsideWorkingHoursException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -125,6 +126,16 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(
                 HttpStatus.BAD_REQUEST,
                 "Outside Working Hours",
+                ex.getMessage(),
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(InvalidVisitStateException.class)
+    public ResponseEntity<ApiError> handleInvalidVisitState(
+            InvalidVisitStateException ex, HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                "Invalid Visit State",
                 ex.getMessage(),
                 request.getRequestURI());
     }

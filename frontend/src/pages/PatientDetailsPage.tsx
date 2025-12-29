@@ -225,7 +225,7 @@ export function PatientDetailsPage() {
                       onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                     >
                       <TableCell>
-                        {new Date(visit.visitDate).toLocaleDateString()} {new Date(visit.visitDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(visit.visitDate).toLocaleDateString()} {new Date(visit.visitDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                       </TableCell>
                       <TableCell>
                         {visitType ? `${visitType.icon} ${visitType.label}` : visit.visitType || '-'}

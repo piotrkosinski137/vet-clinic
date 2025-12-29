@@ -1,9 +1,11 @@
 package com.vetclinic.veterinarian.domain;
 
+import static com.vetclinic.common.constants.AppConstants.DEFAULT_WORK_END_TIME;
+import static com.vetclinic.common.constants.AppConstants.DEFAULT_WORK_START_TIME;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -185,8 +187,8 @@ public class VeterinarianScheduleService {
                     .veterinarianId(veterinarianId)
                     .date(date)
                     .workingDay(!isDayOff)
-                    .startTime(isDayOff ? null : LocalTime.of(8, 0))
-                    .endTime(isDayOff ? null : LocalTime.of(17, 0))
+                    .startTime(isDayOff ? null : DEFAULT_WORK_START_TIME)
+                    .endTime(isDayOff ? null : DEFAULT_WORK_END_TIME)
                     .isDayOff(isDayOff)
                     .dayOffType(isDayOff ? dayOff.getType() : null)
                     .dayOffDescription(isDayOff ? dayOff.getDescription() : null)
@@ -227,8 +229,8 @@ public class VeterinarianScheduleService {
                 scheduleRepository.findByVeterinarianIdAndDayOfWeek(
                         veterinarianId, date.getDayOfWeek());
         if (schedule.isEmpty()) {
-            // No schedule - assume default working hours (8-17)
-            return time.isAfter(LocalTime.of(7, 59)) && time.isBefore(LocalTime.of(17, 0));
+            // No schedule - assume default working hours
+            return !time.isBefore(DEFAULT_WORK_START_TIME) && time.isBefore(DEFAULT_WORK_END_TIME);
         }
 
         return schedule.get().isWithinWorkingHours(time);
@@ -255,8 +257,8 @@ public class VeterinarianScheduleService {
                             .veterinarianId(veterinarianId)
                             .dayOfWeek(day)
                             .workingDay(!isWeekend)
-                            .startTime(isWeekend ? null : LocalTime.of(8, 0))
-                            .endTime(isWeekend ? null : LocalTime.of(17, 0))
+                            .startTime(isWeekend ? null : DEFAULT_WORK_START_TIME)
+                            .endTime(isWeekend ? null : DEFAULT_WORK_END_TIME)
                             .build();
             schedule.setClinicId(veterinarian.getClinicId());
             schedules.add(schedule);

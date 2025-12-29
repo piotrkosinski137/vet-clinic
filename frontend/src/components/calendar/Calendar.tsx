@@ -5,6 +5,8 @@ import { CalendarDay } from './CalendarDay';
 import { CalendarDoctorColumn } from './CalendarDoctorColumn';
 import { Button } from '../ui/Button';
 import { useVeterinariansAvailability } from '../../hooks';
+import { useI18n } from '../../i18n';
+import { formatDateWithLocale } from '../../utils/dateFormatting';
 
 export type CalendarView = 'day' | 'week';
 
@@ -15,11 +17,12 @@ export interface CalendarProps extends HTMLAttributes<HTMLDivElement> {
   date?: Date;
   onDateChange?: (date: Date) => void;
   onVisitSelect?: (visit: VisitResponse) => void;
-  onSlotClick?: (date: Date, hour: number, veterinarianId?: string) => void;
+  onSlotClick?: (date: Date, hour: number, minute: number, veterinarianId?: string) => void;
   onVisitDrop?: (
     visit: VisitResponse,
     newDate: Date,
     newHour: number,
+    newMinute: number,
     newVeterinarianId?: string,
     newVeterinarianName?: string
   ) => void;
@@ -42,8 +45,12 @@ function getWeekDates(date: Date): Date[] {
   return dates;
 }
 
-function formatMonthYear(date: Date): string {
-  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+function formatMonthYear(date: Date, language: string): string {
+  return formatDateWithLocale(date, { month: 'long', year: 'numeric' }, language);
+}
+
+function formatFullDate(date: Date, language: string): string {
+  return formatDateWithLocale(date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }, language);
 }
 
 export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
@@ -65,6 +72,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
     },
     ref
   ) => {
+    const { language } = useI18n();
     const [internalView, setInternalView] = useState<CalendarView>('day');
     const [internalDate, setInternalDate] = useState<Date>(new Date());
 
@@ -197,7 +205,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
               color: colors.secondary.main,
             }}
           >
-            {formatMonthYear(date)}
+            {view === 'day' ? formatFullDate(date, language) : formatMonthYear(date, language)}
           </h2>
 
           {/* View toggle */}
@@ -265,7 +273,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
                     flexShrink: 0,
                   }}
                 >
-                  {date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })}
+                  {formatDateWithLocale(date, { weekday: 'short', day: 'numeric' }, language)}
                 </div>
                 {/* Doctor headers */}
                 {veterinarians.map((vet) => (

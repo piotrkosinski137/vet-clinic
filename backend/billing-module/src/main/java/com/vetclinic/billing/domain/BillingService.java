@@ -1,11 +1,5 @@
 package com.vetclinic.billing.domain;
 
-import static com.vetclinic.common.constants.ErrorMessages.INVOICE_ALREADY_PAID;
-import static com.vetclinic.common.constants.ErrorMessages.INVOICE_CANNOT_CANCEL_PAID;
-import static com.vetclinic.common.constants.ErrorMessages.INVOICE_ITEMS_LOCKED;
-import static com.vetclinic.common.constants.ErrorMessages.INVOICE_ONLY_DRAFT_CAN_BE_DELETED;
-import static com.vetclinic.common.constants.ErrorMessages.INVOICE_ONLY_DRAFT_CAN_BE_ISSUED;
-
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -101,7 +95,7 @@ public class BillingService {
     public Invoice updateInvoice(UUID id, Invoice updated) {
         var existing = getInvoice(id);
         if (existing.getStatus() == InvoiceStatus.PAID) {
-            throw new IllegalStateException(INVOICE_ALREADY_PAID);
+            throw InvalidInvoiceStateException.cannotModifyPaid(id);
         }
 
         var oldSnapshot = InvoiceSnapshot.from(existing);
@@ -140,7 +134,7 @@ public class BillingService {
     public Invoice addItem(UUID invoiceId, InvoiceItem item) {
         var invoice = getInvoice(invoiceId);
         if (invoice.getStatus() == InvoiceStatus.PAID) {
-            throw new IllegalStateException(INVOICE_ITEMS_LOCKED);
+            throw InvalidInvoiceStateException.cannotAddItemsToPaid(invoiceId);
         }
 
         var oldSnapshot = InvoiceSnapshot.from(invoice);
@@ -184,7 +178,7 @@ public class BillingService {
     public Invoice issueInvoice(UUID id) {
         var invoice = getInvoice(id);
         if (invoice.getStatus() != InvoiceStatus.DRAFT) {
-            throw new IllegalStateException(INVOICE_ONLY_DRAFT_CAN_BE_ISSUED);
+            throw InvalidInvoiceStateException.cannotIssueNonDraft(id, invoice.getStatus());
         }
 
         var oldSnapshot = InvoiceSnapshot.from(invoice);
@@ -205,7 +199,7 @@ public class BillingService {
     public Invoice cancelInvoice(UUID id) {
         var invoice = getInvoice(id);
         if (invoice.getStatus() == InvoiceStatus.PAID) {
-            throw new IllegalStateException(INVOICE_CANNOT_CANCEL_PAID);
+            throw InvalidInvoiceStateException.cannotCancelPaid(id);
         }
 
         var oldSnapshot = InvoiceSnapshot.from(invoice);
@@ -221,7 +215,7 @@ public class BillingService {
     public void deleteInvoice(UUID id) {
         var invoice = getInvoice(id);
         if (invoice.getStatus() != InvoiceStatus.DRAFT) {
-            throw new IllegalStateException(INVOICE_ONLY_DRAFT_CAN_BE_DELETED);
+            throw InvalidInvoiceStateException.cannotDeleteNonDraft(id, invoice.getStatus());
         }
         var snapshot = InvoiceSnapshot.from(invoice);
         invoiceRepository.deleteById(id);

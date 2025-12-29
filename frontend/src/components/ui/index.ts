@@ -56,3 +56,4 @@ export { InfoCard, type InfoCardProps } from './InfoCard';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { Tabs, TabList, Tab, TabPanel } from './Tabs';
 export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';
+export { TimeInput24h, type TimeInput24hProps } from './TimeInput24h';

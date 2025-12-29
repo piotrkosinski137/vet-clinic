@@ -48,4 +48,31 @@ public interface JpaVisitRepository
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime,
             @Param("excludeVisitId") UUID excludeVisitId);
+
+    /**
+     * Find all visits currently in the waiting room. Ordered by priority (URGENT first) then by
+     * check-in time (earliest first).
+     */
+    @Query(
+            """
+            SELECT v FROM Visit v
+            WHERE v.status = 'CHECKED_IN'
+            AND v.visitDate >= :startOfDay
+            AND v.visitDate < :endOfDay
+            ORDER BY
+                CASE v.priority
+                    WHEN com.vetclinic.visit.domain.model.VisitPriority.URGENT THEN 1
+                    WHEN com.vetclinic.visit.domain.model.VisitPriority.HIGH THEN 2
+                    WHEN com.vetclinic.visit.domain.model.VisitPriority.NORMAL THEN 3
+                    WHEN com.vetclinic.visit.domain.model.VisitPriority.LOW THEN 4
+                    ELSE 5
+                END,
+                v.checkedInAt ASC
+            """)
+    List<Visit> findWaitingRoomVisits(
+            @Param("startOfDay") LocalDateTime startOfDay,
+            @Param("endOfDay") LocalDateTime endOfDay);
+
+    List<Visit> findByStatusAndVisitDateBetween(
+            VisitStatus status, LocalDateTime start, LocalDateTime end);
 }

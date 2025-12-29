@@ -2,6 +2,7 @@ package com.vetclinic.fixtures;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.vetclinic.client.api.dto.ClientRequest;
 import com.vetclinic.client.domain.model.Client;
 
 /**
@@ -87,6 +88,7 @@ public final class ClientFixture {
         return this;
     }
 
+    /** Builds a Client entity with the configured values. */
     public Client build() {
         return Client.builder()
                 .firstName(firstName)
@@ -100,30 +102,17 @@ public final class ClientFixture {
                 .build();
     }
 
-    /** Returns JSON representation for API testing. */
+    /** Builds a ClientRequest DTO with the configured values. Useful for API testing. */
+    public ClientRequest buildRequest() {
+        return new ClientRequest(
+                firstName, lastName, email, phone, address, city, postalCode, notes);
+    }
+
+    /**
+     * Returns JSON representation for API testing. Uses Jackson ObjectMapper for proper
+     * serialization.
+     */
     public String toJson() {
-        StringBuilder json = new StringBuilder("{");
-        json.append("\"firstName\":\"").append(firstName).append("\"");
-        json.append(",\"lastName\":\"").append(lastName).append("\"");
-        json.append(",\"email\":\"").append(email).append("\"");
-
-        if (phone != null) {
-            json.append(",\"phone\":\"").append(phone).append("\"");
-        }
-        if (address != null) {
-            json.append(",\"address\":\"").append(address).append("\"");
-        }
-        if (city != null) {
-            json.append(",\"city\":\"").append(city).append("\"");
-        }
-        if (postalCode != null) {
-            json.append(",\"postalCode\":\"").append(postalCode).append("\"");
-        }
-        if (notes != null) {
-            json.append(",\"notes\":\"").append(notes).append("\"");
-        }
-
-        json.append("}");
-        return json.toString();
+        return TestBuilders.toJson(buildRequest());
     }
 }

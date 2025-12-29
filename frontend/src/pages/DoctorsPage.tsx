@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useConfirmDialog } from '../hooks';
 import { useI18n } from '../i18n';
 import {
   VeterinarianResponse,
@@ -19,6 +20,7 @@ import {
   Loading,
   PageHeader,
   useToast,
+  ConfirmDialog,
 } from '../components/ui';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '../theme';
 
@@ -27,6 +29,7 @@ const ITEMS_PER_PAGE = 6;
 export function DoctorsPage() {
   const { t } = useI18n();
   const { success, error: showError } = useToast();
+  const { dialogState, showConfirm, closeDialog, handleConfirm } = useConfirmDialog();
 
   // Data state
   const [doctors, setDoctors] = useState<VeterinarianResponse[]>([]);
@@ -148,20 +151,30 @@ export function DoctorsPage() {
     setShowDetailsModal(true);
   };
 
-  const handleToggleActive = async (doctor: VeterinarianResponse) => {
+  const handleToggleActive = (doctor: VeterinarianResponse) => {
     const newActive = !doctor.active;
-    if (!newActive && !window.confirm(t('doctors.confirmDeactivate'))) {
-      return;
-    }
-    try {
-      const updated = await api.toggleVeterinarianActive(doctor.id, newActive);
-      setDoctors((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
-      if (selectedDoctor?.id === doctor.id) {
-        setSelectedDoctor(updated);
+
+    const doToggle = async () => {
+      try {
+        const updated = await api.toggleVeterinarianActive(doctor.id, newActive);
+        setDoctors((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
+        if (selectedDoctor?.id === doctor.id) {
+          setSelectedDoctor(updated);
+        }
+        success(newActive ? t('doctors.doctorActivated') : t('doctors.doctorDeactivated'));
+      } catch {
+        showError(t('errors.failedToSave'));
       }
-      success(newActive ? t('doctors.doctorActivated') : t('doctors.doctorDeactivated'));
-    } catch {
-      showError(t('errors.failedToSave'));
+    };
+
+    if (!newActive) {
+      showConfirm(
+        t('common.confirm'),
+        t('doctors.confirmDeactivate'),
+        doToggle
+      );
+    } else {
+      doToggle();
     }
   };
 
@@ -622,6 +635,17 @@ export function DoctorsPage() {
           </>
         )}
       </Modal>
+
+      <ConfirmDialog
+        open={dialogState.open}
+        onClose={closeDialog}
+        onConfirm={handleConfirm}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmLabel={t('doctors.deactivate')}
+        cancelLabel={t('common.cancel')}
+        variant="danger"
+      />
     </div>
   );
 }

@@ -11,17 +11,20 @@ export interface CalendarDoctorColumnProps extends HTMLAttributes<HTMLDivElement
   startHour?: number;
   endHour?: number;
   onVisitSelect?: (visit: VisitResponse) => void;
-  onSlotClick?: (date: Date, hour: number, veterinarianId?: string) => void;
+  onSlotClick?: (date: Date, hour: number, minute: number, veterinarianId?: string) => void;
   onVisitDrop?: (
     visit: VisitResponse,
     newDate: Date,
     newHour: number,
+    newMinute: number,
     newVeterinarianId?: string,
     newVeterinarianName?: string
   ) => void;
   showHeader?: boolean;
   availability?: VeterinarianAvailabilityResponse;
 }
+
+const QUARTER_HOURS = [0, 15, 30, 45];
 
 // Parse time string (HH:mm:ss or HH:mm) to hour number
 function parseTimeToHour(time: string | null): number | null {
@@ -60,7 +63,7 @@ export const CalendarDoctorColumn = forwardRef<HTMLDivElement, CalendarDoctorCol
     ref
   ) => {
     const { t } = useI18n();
-    const [dragOverHour, setDragOverHour] = useState<number | null>(null);
+    const [dragOverSlot, setDragOverSlot] = useState<string | null>(null);
     const hours = useMemo(() => {
       const h: number[] = [];
       for (let i = startHour; i <= endHour; i++) {
@@ -69,15 +72,20 @@ export const CalendarDoctorColumn = forwardRef<HTMLDivElement, CalendarDoctorCol
       return h;
     }, [startHour, endHour]);
 
-    const visitsByHour = useMemo(() => {
-      const map: Record<number, VisitResponse[]> = {};
+    // Map visits to their starting quarter-hour slot
+    const visitsBySlot = useMemo(() => {
+      const map: Record<string, VisitResponse[]> = {};
       visits.forEach((visit) => {
         const visitDate = new Date(visit.visitDate);
         const hour = visitDate.getHours();
-        if (!map[hour]) {
-          map[hour] = [];
+        const minute = visitDate.getMinutes();
+        // Round down to nearest quarter
+        const quarterMinute = Math.floor(minute / 15) * 15;
+        const slotKey = `${hour}:${quarterMinute}`;
+        if (!map[slotKey]) {
+          map[slotKey] = [];
         }
-        map[hour].push(visit);
+        map[slotKey].push(visit);
       });
       return map;
     }, [visits]);
@@ -175,56 +183,16 @@ export const CalendarDoctorColumn = forwardRef<HTMLDivElement, CalendarDoctorCol
           </div>
         )}
 
-        {/* Hour slots */}
+        {/* Hour slots with 15-minute intervals */}
         <div style={{ flex: 1 }}>
           {hours.map((hour) => {
-            const hourVisits = visitsByHour[hour] || [];
-            const isDragOver = dragOverHour === hour;
-
-            const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-              e.preventDefault();
-              e.dataTransfer.dropEffect = 'move';
-              setDragOverHour(hour);
-            };
-
-            const handleDragLeave = () => {
-              setDragOverHour(null);
-            };
-
-            const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-              e.preventDefault();
-              setDragOverHour(null);
-
-              try {
-                const visitData = e.dataTransfer.getData('application/json');
-                if (visitData && onVisitDrop) {
-                  const visit: VisitResponse = JSON.parse(visitData);
-                  onVisitDrop(visit, date, hour, veterinarian.id, veterinarian.fullName);
-                }
-              } catch {
-                // Invalid drop data - ignore
-              }
-            };
-
             const isAvailable = isWithinWorkingHours(hour);
-
-            // Determine background color based on availability
-            const getBackgroundColor = (): string => {
-              if (isDragOver) return `${doctorColor}40`;
-              if (isDayOff) return `${DAY_OFF_COLOR}15`; // Day off - light red background
-              if (!isAvailable) return '#f0f0f0'; // Outside working hours - light gray
-              if (hourVisits.length > 0) return `${doctorColor}25`; // Working hour with visits
-              return `${doctorColor}15`; // Working hour without visits - visible tint
-            };
-
-            // Determine if slot is clickable (for booking prevention)
-            const isSlotClickable = isAvailable && !isDayOff;
 
             // Get left border color based on availability
             const getLeftBorderColor = (): string => {
               if (isDayOff) return DAY_OFF_COLOR;
               if (isAvailable) return doctorColor;
-              return '#ccc'; // Non-working hours
+              return '#aaa';
             };
 
             return (
@@ -232,44 +200,95 @@ export const CalendarDoctorColumn = forwardRef<HTMLDivElement, CalendarDoctorCol
                 key={hour}
                 style={{
                   display: 'flex',
+                  flexDirection: 'column',
                   minHeight: '60px',
                   borderBottom: `1px solid ${colors.neutral.border}`,
                   borderLeft: `4px solid ${getLeftBorderColor()}`,
-                  cursor: isSlotClickable && onSlotClick ? 'pointer' : 'not-allowed',
-                  backgroundColor: getBackgroundColor(),
-                  transition: 'background-color 0.15s ease, border-color 0.15s ease',
-                  borderTop: isDragOver ? `2px dashed ${doctorColor}` : '2px solid transparent',
-                  borderRight: isDragOver ? `2px dashed ${doctorColor}` : '2px solid transparent',
                   opacity: isAvailable ? 1 : 0.5,
-                  position: 'relative',
                 }}
-                onDragOver={isSlotClickable ? handleDragOver : undefined}
-                onDragLeave={isSlotClickable ? handleDragLeave : undefined}
-                onDrop={isSlotClickable ? handleDrop : undefined}
-                onClick={(e) => {
-                  // Only trigger slot click if clicking the slot itself, not an appointment
-                  if ((e.target as HTMLElement).closest('[data-appointment]')) return;
-                  // Prevent booking on unavailable slots
-                  if (!isSlotClickable) return;
-                  onSlotClick?.(date, hour, veterinarian.id);
-                }}
-                title={!isAvailable ? t('visits.outsideWorkingHours') : isDayOff ? t('visits.doctorOnDayOff') : ''}
               >
-                <div
-                  style={{
-                    flex: 1,
-                    padding: spacing.xs,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: spacing.xs,
-                  }}
-                >
-                  {hourVisits.map((visit) => (
-                    <div key={visit.id} data-appointment>
-                      <AppointmentCard visit={visit} onSelect={onVisitSelect} compact />
+                {QUARTER_HOURS.map((minute) => {
+                  const slotKey = `${hour}:${minute}`;
+                  const slotVisits = visitsBySlot[slotKey] || [];
+                  const isDragOver = dragOverSlot === slotKey;
+                  const isSlotClickable = isAvailable && !isDayOff;
+
+                  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    setDragOverSlot(slotKey);
+                  };
+
+                  const handleDragLeave = () => {
+                    setDragOverSlot(null);
+                  };
+
+                  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+                    e.preventDefault();
+                    setDragOverSlot(null);
+
+                    try {
+                      const visitData = e.dataTransfer.getData('application/json');
+                      if (visitData && onVisitDrop) {
+                        const visit: VisitResponse = JSON.parse(visitData);
+                        onVisitDrop(visit, date, hour, minute, veterinarian.id, veterinarian.fullName);
+                      }
+                    } catch {
+                      // Invalid drop data - ignore
+                    }
+                  };
+
+                  // Determine background color
+                  const getBackgroundColor = (): string => {
+                    if (isDragOver) return `${doctorColor}50`;
+                    if (isDayOff) return `${DAY_OFF_COLOR}20`;
+                    if (!isAvailable) return '#d0d0d0';
+                    if (slotVisits.length > 0) return `${doctorColor}40`;
+                    return `${doctorColor}25`;
+                  };
+
+                  return (
+                    <div
+                      key={slotKey}
+                      style={{
+                        display: 'flex',
+                        minHeight: '15px',
+                        borderBottom: minute < 45 ? `1px dashed ${colors.neutral.border}` : 'none',
+                        cursor: isSlotClickable && onSlotClick ? 'pointer' : 'not-allowed',
+                        backgroundColor: getBackgroundColor(),
+                        transition: 'background-color 0.15s ease',
+                        borderTop: isDragOver ? `2px dashed ${doctorColor}` : '2px solid transparent',
+                        borderRight: isDragOver ? `2px dashed ${doctorColor}` : '2px solid transparent',
+                        position: 'relative',
+                      }}
+                      onDragOver={isSlotClickable ? handleDragOver : undefined}
+                      onDragLeave={isSlotClickable ? handleDragLeave : undefined}
+                      onDrop={isSlotClickable ? handleDrop : undefined}
+                      onClick={(e) => {
+                        if ((e.target as HTMLElement).closest('[data-appointment]')) return;
+                        if (!isSlotClickable) return;
+                        onSlotClick?.(date, hour, minute, veterinarian.id);
+                      }}
+                      title={!isAvailable ? t('visits.outsideWorkingHours') : isDayOff ? t('visits.doctorOnDayOff') : `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`}
+                    >
+                      <div
+                        style={{
+                          flex: 1,
+                          padding: slotVisits.length > 0 ? spacing.xs : '2px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: spacing.xs,
+                        }}
+                      >
+                        {slotVisits.map((visit) => (
+                          <div key={visit.id} data-appointment>
+                            <AppointmentCard visit={visit} onSelect={onVisitSelect} compact />
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
             );
           })}

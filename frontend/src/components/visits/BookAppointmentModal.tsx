@@ -19,13 +19,14 @@ export interface BookAppointmentModalProps {
   onSuccess: () => void;
   initialDate?: Date | null;
   initialHour?: number | null;
+  initialMinute?: number | null;
   initialVeterinarianId?: string | null;
 }
 
-function formatDateTimeLocal(date: Date, hour?: number | null): string {
+function formatDateTimeLocal(date: Date, hour?: number | null, minute?: number | null): string {
   const d = new Date(date);
   if (hour !== null && hour !== undefined) {
-    d.setHours(hour, 0, 0, 0);
+    d.setHours(hour, minute ?? 0, 0, 0);
   }
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -41,6 +42,7 @@ export function BookAppointmentModal({
   onSuccess,
   initialDate,
   initialHour,
+  initialMinute,
   initialVeterinarianId,
 }: BookAppointmentModalProps) {
   const { t } = useI18n();
@@ -71,10 +73,10 @@ export function BookAppointmentModal({
       const dateToUse = initialDate || new Date();
       setFormData((prev) => ({
         ...prev,
-        visitDate: formatDateTimeLocal(dateToUse, initialHour),
+        visitDate: formatDateTimeLocal(dateToUse, initialHour, initialMinute),
       }));
     }
-  }, [open, initialDate, initialHour]);
+  }, [open, initialDate, initialHour, initialMinute]);
 
   // Set initial veterinarian when modal opens with veterinarian selected
   useEffect(() => {
@@ -168,6 +170,7 @@ export function BookAppointmentModal({
         <FormField label={t('visits.dateTime')} required>
           <Input
             type="datetime-local"
+            lang="en-GB"
             value={formData.visitDate}
             onChange={(e) => setFormData({ ...formData, visitDate: e.target.value })}
             required

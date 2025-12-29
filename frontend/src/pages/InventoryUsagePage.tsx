@@ -13,6 +13,7 @@ import {
 import { formatCurrency } from "../hooks";
 import { useI18n } from "../i18n";
 import { colors, spacing, borderRadius, fontSize, fontWeight } from "../theme";
+import { getLocaleForLanguage } from "../constants/locale";
 
 interface AggregatedMaterial {
   materialId: string;
@@ -35,7 +36,7 @@ function formatDateForInput(date: Date): string {
 
 function formatDisplayDate(dateString: string, language: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString(language === "pl" ? "pl-PL" : "en-US", {
+  return date.toLocaleDateString(getLocaleForLanguage(language), {
     weekday: "long",
     year: "numeric",
     month: "long",

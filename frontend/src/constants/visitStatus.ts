@@ -9,6 +9,13 @@ export const VISIT_STATUS_CONFIG = {
     bgColor: '#E3F2FD',
     icon: 'S',
   },
+  CHECKED_IN: {
+    label: 'Checked In',
+    color: '#F57C00',
+    bg: '#FFF8E1',
+    bgColor: '#FFF8E1',
+    icon: 'W',
+  },
   IN_PROGRESS: {
     label: 'In Progress',
     color: '#FF9800',

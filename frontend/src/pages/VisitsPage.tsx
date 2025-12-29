@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useVisits, useVeterinarians, useConfirmDialog } from "../hooks";
-import { VisitResponse, VisitStatus, VisitRequest, CheckInRequest } from "../api/types";
+import { api } from "../api";
+import { VisitResponse, VisitStatus, VisitRequest, CheckInRequest, VisitType } from "../api/types";
 import {
   Button,
   Card,
@@ -42,6 +43,14 @@ export function VisitsPage() {
   const [bookingHour, setBookingHour] = useState<number | null>(null);
   const [bookingMinute, setBookingMinute] = useState<number | null>(null);
   const [bookingVeterinarianId, setBookingVeterinarianId] = useState<string | null>(null);
+  // Follow-up booking state
+  const [followUpPatientId, setFollowUpPatientId] = useState<string | undefined>();
+  const [followUpPatientName, setFollowUpPatientName] = useState<string | undefined>();
+  const [followUpClientId, setFollowUpClientId] = useState<string | undefined>();
+  const [followUpClientName, setFollowUpClientName] = useState<string | undefined>();
+  const [followUpVisitType, setFollowUpVisitType] = useState<VisitType | undefined>();
+  const [followUpReason, setFollowUpReason] = useState<string | undefined>();
+  const [followUpPreviousVisitId, setFollowUpPreviousVisitId] = useState<string | undefined>();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedDoctor, setSelectedDoctor] = useState<string>(() => searchParams.get("doctor") || "");
   const [showDoctorsModal, setShowDoctorsModal] = useState(false);
@@ -217,14 +226,69 @@ export function VisitsPage() {
     }
   };
 
-  const handleBookingComplete = () => {
-    setShowBookModal(false);
+  const handleBookFollowUp = (data: {
+    patientId: string;
+    patientName?: string;
+    clientId?: string;
+    clientName?: string;
+    veterinarianId?: string;
+    veterinarianName?: string;
+    visitDate: string;
+    visitType: VisitType;
+    reason: string;
+    previousVisitId: string;
+  }) => {
+    const visitDateTime = new Date(data.visitDate);
+    setBookingDate(visitDateTime);
+    setBookingHour(visitDateTime.getHours());
+    setBookingMinute(visitDateTime.getMinutes());
+    setBookingVeterinarianId(data.veterinarianId || null);
+    setFollowUpPatientId(data.patientId);
+    setFollowUpPatientName(data.patientName);
+    setFollowUpClientId(data.clientId);
+    setFollowUpClientName(data.clientName);
+    setFollowUpVisitType(data.visitType);
+    setFollowUpReason(data.reason);
+    setFollowUpPreviousVisitId(data.previousVisitId);
+    setSelectedVisit(null); // Close the visit details modal
+    setShowBookModal(true); // Open the booking modal
+  };
+
+  const clearBookingState = () => {
     setBookingDate(null);
     setBookingHour(null);
     setBookingMinute(null);
     setBookingVeterinarianId(null);
+    setFollowUpPatientId(undefined);
+    setFollowUpPatientName(undefined);
+    setFollowUpClientId(undefined);
+    setFollowUpClientName(undefined);
+    setFollowUpVisitType(undefined);
+    setFollowUpReason(undefined);
+    setFollowUpPreviousVisitId(undefined);
+  };
+
+  const handleBookingComplete = async (returnToVisitId?: string) => {
+    setShowBookModal(false);
+    clearBookingState();
     refresh();
     success(t('visits.appointmentBooked'));
+
+    // If this was a follow-up booking, re-open the previous visit
+    if (returnToVisitId) {
+      try {
+        // Try to find in current list first, otherwise fetch from API
+        let previousVisit = visits.find(v => v.id === returnToVisitId);
+        if (!previousVisit) {
+          previousVisit = await api.getVisit(returnToVisitId);
+        }
+        if (previousVisit) {
+          setSelectedVisit(previousVisit);
+        }
+      } catch {
+        // If we can't find the visit, just don't re-open it
+      }
+    }
   };
 
   if (loading && visits.length === 0) {
@@ -362,22 +426,27 @@ export function VisitsPage() {
         onStatusChange={handleStatusChange}
         onDelete={handleVisitDelete}
         onCheckIn={handleCheckIn}
+        onBookFollowUp={handleBookFollowUp}
       />
 
       <BookAppointmentModal
         open={showBookModal}
         onClose={() => {
           setShowBookModal(false);
-          setBookingDate(null);
-          setBookingHour(null);
-          setBookingMinute(null);
-          setBookingVeterinarianId(null);
+          clearBookingState();
         }}
         onSuccess={handleBookingComplete}
         initialDate={bookingDate}
         initialHour={bookingHour}
         initialMinute={bookingMinute}
         initialVeterinarianId={bookingVeterinarianId}
+        initialPatientId={followUpPatientId}
+        initialPatientName={followUpPatientName}
+        initialClientId={followUpClientId}
+        initialClientName={followUpClientName}
+        initialVisitType={followUpVisitType}
+        initialReason={followUpReason}
+        previousVisitId={followUpPreviousVisitId}
       />
 
       <DoctorsManagementModal

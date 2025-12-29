@@ -1,6 +1,5 @@
 package com.vetclinic.visit.api.dto;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -36,7 +35,8 @@ public record VisitRequest(
         String notes,
         Double weight,
         Double temperature,
-        LocalDate nextVisitDate,
+        LocalDateTime nextVisitDate,
+        UUID previousVisitId,
         // Waiting room fields
         @Size(max = 500, message = "Waiting room notes must not exceed 500 characters")
                 String waitingRoomNotes,

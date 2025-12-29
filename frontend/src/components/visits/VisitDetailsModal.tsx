@@ -100,6 +100,19 @@ const getViewMode = (status: VisitStatus): ViewMode => {
   }
 };
 
+interface FollowUpVisitData {
+  patientId: string;
+  patientName?: string;
+  clientId?: string;
+  clientName?: string;
+  veterinarianId?: string;
+  veterinarianName?: string;
+  visitDate: string;
+  visitType: VisitType;
+  reason: string;
+  previousVisitId: string;
+}
+
 interface VisitDetailsModalProps {
   visit: VisitResponse | null;
   open: boolean;
@@ -108,6 +121,7 @@ interface VisitDetailsModalProps {
   onStatusChange: (status: VisitStatus) => Promise<void>;
   onDelete: () => void;
   onCheckIn?: (request?: CheckInRequest) => Promise<void>;
+  onBookFollowUp?: (data: FollowUpVisitData) => void;
 }
 
 export function VisitDetailsModal({
@@ -118,6 +132,7 @@ export function VisitDetailsModal({
   onStatusChange,
   onDelete,
   onCheckIn,
+  onBookFollowUp,
 }: VisitDetailsModalProps) {
   const { t } = useI18n();
   const [isSaving, setIsSaving] = useState(false);
@@ -907,11 +922,99 @@ export function VisitDetailsModal({
                 <label style={{ display: 'block', marginBottom: spacing.xs, fontSize: fontSize.sm, fontWeight: fontWeight.medium }}>
                   {t('visits.nextVisitDate')}
                 </label>
-                <Input
-                  type="date"
-                  value={formData.nextVisitDate || ''}
-                  onChange={(e) => updateField('nextVisitDate', e.target.value)}
-                />
+
+                {/* Shortcut buttons */}
+                <div style={{ display: 'flex', gap: spacing.xs, marginBottom: spacing.sm }}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const visitTime = visit?.visitDate ? new Date(visit.visitDate) : new Date();
+                      const nextDate = new Date();
+                      nextDate.setDate(nextDate.getDate() + 7);
+                      nextDate.setHours(visitTime.getHours(), visitTime.getMinutes(), 0, 0);
+                      updateField('nextVisitDate', nextDate.toISOString().slice(0, 16));
+                    }}
+                  >
+                    {t('visits.inOneWeek')}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const visitTime = visit?.visitDate ? new Date(visit.visitDate) : new Date();
+                      const nextDate = new Date();
+                      nextDate.setMonth(nextDate.getMonth() + 1);
+                      nextDate.setHours(visitTime.getHours(), visitTime.getMinutes(), 0, 0);
+                      updateField('nextVisitDate', nextDate.toISOString().slice(0, 16));
+                    }}
+                  >
+                    {t('visits.inOneMonth')}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const visitTime = visit?.visitDate ? new Date(visit.visitDate) : new Date();
+                      const nextDate = new Date();
+                      nextDate.setFullYear(nextDate.getFullYear() + 1);
+                      nextDate.setHours(visitTime.getHours(), visitTime.getMinutes(), 0, 0);
+                      updateField('nextVisitDate', nextDate.toISOString().slice(0, 16));
+                    }}
+                  >
+                    {t('visits.inOneYear')}
+                  </Button>
+                </div>
+
+                {/* Date and Time pickers */}
+                <div style={{ display: 'flex', gap: spacing.sm, marginBottom: spacing.sm }}>
+                  <div style={{ flex: 1 }}>
+                    <Input
+                      type="date"
+                      value={formData.nextVisitDate ? formData.nextVisitDate.slice(0, 10) : ''}
+                      onChange={(e) => {
+                        const currentTime = formData.nextVisitDate ? formData.nextVisitDate.slice(11, 16) : '10:00';
+                        updateField('nextVisitDate', e.target.value ? `${e.target.value}T${currentTime}` : '');
+                      }}
+                    />
+                  </div>
+                  <div style={{ width: '120px' }}>
+                    <Input
+                      type="time"
+                      value={formData.nextVisitDate ? formData.nextVisitDate.slice(11, 16) : ''}
+                      onChange={(e) => {
+                        const currentDate = formData.nextVisitDate ? formData.nextVisitDate.slice(0, 10) : new Date().toISOString().slice(0, 10);
+                        updateField('nextVisitDate', e.target.value ? `${currentDate}T${e.target.value}` : '');
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Book Follow-up Button */}
+                {formData.nextVisitDate && onBookFollowUp && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      const nextVisitDateTime = new Date(formData.nextVisitDate!);
+                      onBookFollowUp({
+                        patientId: visit!.patientId,
+                        patientName: visit!.patientName,
+                        clientId: visit!.clientId,
+                        clientName: visit!.clientName,
+                        veterinarianId: visit!.veterinarianId,
+                        veterinarianName: visit!.veterinarianName,
+                        visitDate: nextVisitDateTime.toISOString(),
+                        visitType: 'FOLLOW_UP',
+                        reason: t('visits.followUpVisit'),
+                        previousVisitId: visit!.id,
+                      });
+                    }}
+                    style={{ width: '100%' }}
+                  >
+                    {t('visits.bookFollowUp')}
+                  </Button>
+                )}
               </div>
             </div>
           </TabPanel>

@@ -1,6 +1,5 @@
 package com.vetclinic.visit.api.dto;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -21,5 +20,5 @@ public record VisitSummaryResponse(
         List<MedicationDto> medications,
         Double weight,
         Double temperature,
-        LocalDate nextVisitDate,
+        LocalDateTime nextVisitDate,
         String generatedAt) {}

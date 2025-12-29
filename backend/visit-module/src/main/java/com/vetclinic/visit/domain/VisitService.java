@@ -485,7 +485,7 @@ public class VisitService {
             String recommendations,
             Double weight,
             Double temperature,
-            LocalDate nextVisitDate,
+            LocalDateTime nextVisitDate,
             List<UsedMaterialSnapshot> usedMaterials,
             List<MedicationSnapshot> medications,
             String currentUser) {

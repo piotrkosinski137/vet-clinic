@@ -1,7 +1,7 @@
 package com.vetclinic.visit.domain.model;
 
 import java.time.Instant;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -65,7 +65,7 @@ public class VisitDraft {
     private Double temperature;
 
     @Column(name = "next_visit_date")
-    private LocalDate nextVisitDate;
+    private LocalDateTime nextVisitDate;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "used_materials", columnDefinition = "jsonb")

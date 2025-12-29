@@ -176,7 +176,8 @@ CREATE TABLE visits (
     notes TEXT,
     weight DOUBLE PRECISION,
     temperature DOUBLE PRECISION,
-    next_visit_date DATE,
+    next_visit_date TIMESTAMP,
+    previous_visit_id UUID,
     -- Waiting room fields
     checked_in_at TIMESTAMP,
     waiting_room_notes VARCHAR(500),
@@ -227,7 +228,7 @@ CREATE TABLE visit_drafts (
     recommendations TEXT,
     weight DOUBLE PRECISION,
     temperature DOUBLE PRECISION,
-    next_visit_date DATE,
+    next_visit_date TIMESTAMP,
     used_materials JSONB DEFAULT '[]',
     medications JSONB DEFAULT '[]',
 

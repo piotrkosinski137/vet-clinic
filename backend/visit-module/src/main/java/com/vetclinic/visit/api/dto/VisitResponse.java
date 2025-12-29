@@ -2,7 +2,6 @@ package com.vetclinic.visit.api.dto;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -38,7 +37,8 @@ public record VisitResponse(
         String notes,
         Double weight,
         Double temperature,
-        LocalDate nextVisitDate,
+        LocalDateTime nextVisitDate,
+        UUID previousVisitId,
         // Waiting room fields
         LocalDateTime checkedInAt,
         String waitingRoomNotes,

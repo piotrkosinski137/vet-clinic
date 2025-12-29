@@ -1,6 +1,5 @@
 package com.vetclinic.visit.domain;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -32,7 +31,7 @@ public record VisitSnapshot(
         String notes,
         Double weight,
         Double temperature,
-        LocalDate nextVisitDate,
+        LocalDateTime nextVisitDate,
         LocalDateTime checkedInAt,
         String waitingRoomNotes,
         VisitPriority priority,

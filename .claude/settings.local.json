@@ -63,7 +63,13 @@
       "Bash(..mvnw.cmd clean install -DskipTests)",
       "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend\\\\visit-module''; ..\\\\mvnw.cmd clean install -DskipTests\")",
       "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend\\\\application''; ..\\\\mvnw.cmd spring-boot:run\")",
-      "Bash(powershell.exe -Command \"Get-Process -Name java -ErrorAction SilentlyContinue | Where-Object { $_MainWindowTitle -like ''*vetclinic*'' -or $_CommandLine -like ''*vetclinic*'' } | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2\")"
+      "Bash(powershell.exe -Command \"Get-Process -Name java -ErrorAction SilentlyContinue | Where-Object { $_MainWindowTitle -like ''*vetclinic*'' -or $_CommandLine -like ''*vetclinic*'' } | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend\\\\application''; ..\\\\mvnw.cmd clean compile -DskipTests\")",
+      "Bash(.mvnw.cmd spotless:apply:*)",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend''; .\\\\mvnw.cmd spotless:apply -q\")",
+      "Bash(powershell.exe -Command \"Get-Process -Name java -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 3\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend''; .\\\\mvnw.cmd clean compile -DskipTests -q\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend\\\\visit-module''; ..\\\\mvnw.cmd clean install -DskipTests -q\")"
     ],
     "defaultMode": "acceptEdits"
   }

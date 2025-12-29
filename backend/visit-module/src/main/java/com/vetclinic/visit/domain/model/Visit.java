@@ -1,7 +1,6 @@
 package com.vetclinic.visit.domain.model;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -124,7 +123,11 @@ public class Visit extends TenantAwareEntity {
     private Double temperature;
 
     @Column(name = "next_visit_date")
-    private LocalDate nextVisitDate;
+    private LocalDateTime nextVisitDate;
+
+    /** Reference to the previous visit (for follow-up visits) */
+    @Column(name = "previous_visit_id")
+    private UUID previousVisitId;
 
     // Waiting room fields
 

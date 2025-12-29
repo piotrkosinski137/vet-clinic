@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { api, VisitRequest, PatientResponse, VeterinarianResponse, ClientResponse, VisitType } from "../../api";
+import { api, VisitRequest, PatientResponse, VeterinarianResponse, ClientResponse, VisitType, ApiRequestError } from "../../api";
 import {
   Button,
   Modal,
@@ -29,11 +29,19 @@ function useDebounce<T>(value: T, delay: number): T {
 export interface BookAppointmentModalProps {
   open: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (returnToVisitId?: string) => void;
   initialDate?: Date | null;
   initialHour?: number | null;
   initialMinute?: number | null;
   initialVeterinarianId?: string | null;
+  // Pre-filled data for follow-up visits
+  initialPatientId?: string;
+  initialPatientName?: string;
+  initialClientId?: string;
+  initialClientName?: string;
+  initialVisitType?: VisitType;
+  initialReason?: string;
+  previousVisitId?: string;
 }
 
 function formatDateTimeLocal(date: Date, hour?: number | null, minute?: number | null): string {
@@ -57,6 +65,13 @@ export function BookAppointmentModal({
   initialHour,
   initialMinute,
   initialVeterinarianId,
+  initialPatientId,
+  initialPatientName,
+  initialClientId,
+  initialClientName,
+  initialVisitType,
+  initialReason,
+  previousVisitId,
 }: BookAppointmentModalProps) {
   const { t } = useI18n();
   const { error: showError } = useToast();
@@ -187,26 +202,55 @@ export function BookAppointmentModal({
   useEffect(() => {
     if (open) {
       const dateToUse = initialDate || new Date();
-      // Reset patient selection when modal opens
-      setPatientSearch("");
-      setSelectedPatient(null);
       setFilteredPatients([]);
       setShowPatientDropdown(false);
-      setFormData({
-        patientId: "",
-        visitDate: formatDateTimeLocal(dateToUse, initialHour, initialMinute),
-        durationMinutes: 30,
-        visitType: "CONSULTATION",
-        reason: "",
-        veterinarianId: "",
-        veterinarianName: "",
-      });
-    }
-  }, [open, initialDate, initialHour, initialMinute]);
 
-  // Set initial veterinarian when modal opens with veterinarian selected
+      // Find veterinarian from initialVeterinarianId if available
+      const selectedVet = initialVeterinarianId
+        ? veterinarians.find((v) => v.id === initialVeterinarianId)
+        : null;
+
+      // Check if we have pre-filled patient data (for follow-up visits)
+      if (initialPatientId && initialPatientName) {
+        // Pre-fill for follow-up visit
+        const displayName = initialClientName
+          ? `${initialPatientName} (${initialClientName})`
+          : initialPatientName;
+        setPatientSearch(displayName);
+        setSelectedPatient({ id: initialPatientId, name: initialPatientName, ownerId: initialClientId } as PatientResponse);
+        setFormData({
+          patientId: initialPatientId,
+          patientName: initialPatientName,
+          clientId: initialClientId,
+          clientName: initialClientName,
+          visitDate: formatDateTimeLocal(dateToUse, initialHour, initialMinute),
+          durationMinutes: 30,
+          visitType: initialVisitType || "FOLLOW_UP",
+          reason: initialReason || "",
+          veterinarianId: selectedVet?.id || "",
+          veterinarianName: selectedVet?.fullName || "",
+          previousVisitId: previousVisitId,
+        });
+      } else {
+        // Reset for new booking
+        setPatientSearch("");
+        setSelectedPatient(null);
+        setFormData({
+          patientId: "",
+          visitDate: formatDateTimeLocal(dateToUse, initialHour, initialMinute),
+          durationMinutes: 30,
+          visitType: "CONSULTATION",
+          reason: "",
+          veterinarianId: selectedVet?.id || "",
+          veterinarianName: selectedVet?.fullName || "",
+        });
+      }
+    }
+  }, [open, initialDate, initialHour, initialMinute, initialPatientId, initialPatientName, initialClientId, initialClientName, initialVisitType, initialReason, previousVisitId, initialVeterinarianId, veterinarians]);
+
+  // Set initial veterinarian when veterinarians load after modal is already open
   useEffect(() => {
-    if (open && initialVeterinarianId && veterinarians.length > 0) {
+    if (open && initialVeterinarianId && veterinarians.length > 0 && !formData.veterinarianId) {
       const selectedVet = veterinarians.find((v) => v.id === initialVeterinarianId);
       if (selectedVet) {
         setFormData((prev) => ({
@@ -216,7 +260,7 @@ export function BookAppointmentModal({
         }));
       }
     }
-  }, [open, initialVeterinarianId, veterinarians]);
+  }, [open, initialVeterinarianId, veterinarians, formData.veterinarianId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,6 +285,8 @@ export function BookAppointmentModal({
         visitDate: formData.visitDate + ":00",
         status: "SCHEDULED",
       });
+      // Store previousVisitId before resetting form
+      const returnToVisitId = previousVisitId;
       setFormData({
         patientId: "",
         visitDate: "",
@@ -250,12 +296,13 @@ export function BookAppointmentModal({
         veterinarianId: "",
         veterinarianName: "",
       });
-      onSuccess();
+      onSuccess(returnToVisitId);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : t('errors.failedToSave');
-      if (typeof err === "object" && err !== null && "detail" in err) {
-        showError((err as { detail: string }).detail);
+      // Handle 409 Conflict (appointment overlap) with user-friendly Polish message
+      if (err instanceof ApiRequestError && err.status === 409) {
+        showError(t('errors.appointmentConflict'));
       } else {
+        const errorMessage = err instanceof Error ? err.message : t('errors.failedToSave');
         showError(errorMessage);
       }
     } finally {

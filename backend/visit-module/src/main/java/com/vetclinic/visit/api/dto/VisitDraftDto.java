@@ -1,7 +1,7 @@
 package com.vetclinic.visit.api.dto;
 
 import java.time.Instant;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.vetclinic.visit.domain.model.VisitType;
@@ -18,7 +18,7 @@ public record VisitDraftDto(
         String recommendations,
         Double weight,
         Double temperature,
-        LocalDate nextVisitDate,
+        LocalDateTime nextVisitDate,
         List<UsedMaterialDto> usedMaterials,
         List<MedicationDto> medications,
 
@@ -36,7 +36,7 @@ public record VisitDraftDto(
             String recommendations,
             Double weight,
             Double temperature,
-            LocalDate nextVisitDate,
+            LocalDateTime nextVisitDate,
             List<UsedMaterialDto> usedMaterials,
             List<MedicationDto> medications) {
         return new VisitDraftDto(

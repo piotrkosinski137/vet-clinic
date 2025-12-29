@@ -101,6 +101,7 @@ export const AppointmentCard = forwardRef<HTMLDivElement, AppointmentCardProps>(
         }}
         {...props}
       >
+        {/* Time and Status */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: spacing.xs }}>
           <span style={{ fontWeight: fontWeight.semibold, fontSize: fontSize.xs }}>
             {formatTime(visit.visitDate, language)}
@@ -109,7 +110,7 @@ export const AppointmentCard = forwardRef<HTMLDivElement, AppointmentCardProps>(
             {t(statusTranslationKeys[visit.status])}
           </Badge>
         </div>
-        {/* Visit type icon + Patient name + Client name */}
+        {/* Visit type icon + Patient name (Client name) */}
         <div
           style={{
             fontSize: fontSize.xs,
@@ -124,24 +125,13 @@ export const AppointmentCard = forwardRef<HTMLDivElement, AppointmentCardProps>(
           }}
         >
           <span title={t(`visitTypes.${visit.visitType || 'CONSULTATION'}`)}>{visitTypeConfig.icon}</span>
-          <span style={{ fontWeight: fontWeight.medium }}>
-            {visit.patientName || '—'}
+          <span>
+            <span style={{ fontWeight: fontWeight.medium }}>{visit.patientName || '—'}</span>
+            {visit.clientName && (
+              <span style={{ color: colors.neutral.textMuted }}> ({visit.clientName})</span>
+            )}
           </span>
         </div>
-        {visit.clientName && (
-          <div
-            style={{
-              fontSize: fontSize.xs,
-              color: colors.neutral.textMuted,
-              marginTop: '1px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {visit.clientName}
-          </div>
-        )}
         {!compact && (
           <div style={{ fontSize: fontSize.xs, color: colors.neutral.textMuted, marginTop: '2px' }}>
             {visit.durationMinutes || 30} min

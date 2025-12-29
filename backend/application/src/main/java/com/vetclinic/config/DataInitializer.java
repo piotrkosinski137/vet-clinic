@@ -1104,7 +1104,7 @@ public class DataInitializer implements ApplicationRunner {
             visit.setRecommendations(generateRecommendations());
             visit.setNotes("Visit completed successfully.");
             if (random.nextDouble() > 0.7) {
-                visit.setNextVisitDate(date.plusDays(7 + random.nextInt(21)));
+                visit.setNextVisitDate(visit.getVisitDate().plusDays(7 + random.nextInt(21)));
             }
 
             // Add used materials for income/profit tracking

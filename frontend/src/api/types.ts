@@ -136,7 +136,8 @@ export interface VisitRequest {
   notes?: string;
   weight?: number;
   temperature?: number;
-  nextVisitDate?: string; // ISO date
+  nextVisitDate?: string; // ISO datetime
+  previousVisitId?: string;
   // Waiting room fields
   waitingRoomNotes?: string;
   priority?: VisitPriority;
@@ -168,7 +169,8 @@ export interface VisitResponse {
   notes?: string;
   weight?: number;
   temperature?: number;
-  nextVisitDate?: string;
+  nextVisitDate?: string; // ISO datetime
+  previousVisitId?: string;
   // Waiting room fields
   checkedInAt?: string;
   waitingRoomNotes?: string;
@@ -627,7 +629,7 @@ export interface VisitDraftDto {
   recommendations?: string;
   weight?: number;
   temperature?: number;
-  nextVisitDate?: string;
+  nextVisitDate?: string; // ISO datetime
   usedMaterials?: UsedMaterialDto[];
   medications?: MedicationDto[];
   // Read-only metadata from server

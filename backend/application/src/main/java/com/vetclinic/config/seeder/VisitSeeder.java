@@ -162,10 +162,20 @@ public class VisitSeeder implements DataSeeder {
         var visitType = selectVisitType(random);
         var reason = selectReason(visitType, random);
 
+        // Find client name for the patient's owner
+        var clientName =
+                context.getClients().stream()
+                        .filter(c -> c.getId().equals(patient.getOwnerId()))
+                        .findFirst()
+                        .map(c -> c.getFirstName() + " " + c.getLastName())
+                        .orElse(null);
+
         var visit =
                 Visit.builder()
                         .patientId(patient.getId())
+                        .patientName(patient.getName())
                         .clientId(patient.getOwnerId())
+                        .clientName(clientName)
                         .veterinarianId(context.getVeterinarianIds().get(vetIndex))
                         .veterinarianName(context.getVeterinarianNames().get(vetIndex))
                         .visitDate(LocalDateTime.of(date, LocalTime.of(hour, 0)))
@@ -210,8 +220,7 @@ public class VisitSeeder implements DataSeeder {
                 "Continue current diet and exercise routine. Return in 2 weeks for follow-up.");
         visit.setNotes("Visit completed successfully.");
         if (random.nextDouble() > 0.7) {
-            visit.setNextVisitDate(
-                    visit.getVisitDate().toLocalDate().plusDays(7 + random.nextInt(21)));
+            visit.setNextVisitDate(visit.getVisitDate().plusDays(7 + random.nextInt(21)));
         }
     }
 
@@ -267,6 +276,7 @@ public class VisitSeeder implements DataSeeder {
             VisitType.CHECKUP,
             VisitType.VACCINATION,
             VisitType.VACCINATION,
+            VisitType.DEWORMING,
             VisitType.LAB_WORK,
             VisitType.FOLLOW_UP,
             VisitType.ULTRASOUND,
@@ -282,6 +292,7 @@ public class VisitSeeder implements DataSeeder {
     private String selectReason(VisitType type, Random random) {
         return switch (type) {
             case VACCINATION -> "Annual vaccination";
+            case DEWORMING -> "Deworming treatment";
             case LAB_WORK -> "Blood work panel";
             case ULTRASOUND -> "Abdominal ultrasound";
             case CARDIOLOGY -> "Heart examination";

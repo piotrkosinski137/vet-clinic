@@ -16,6 +16,10 @@ export interface SearchFilterProps {
   maxWidth?: string;
   /** Additional container styles */
   style?: React.CSSProperties;
+  /** Whether search is currently loading */
+  loading?: boolean;
+  /** Text to show when loading */
+  loadingText?: string;
 }
 
 /**
@@ -29,6 +33,8 @@ export function SearchFilter({
   resultCount,
   maxWidth = '400px',
   style,
+  loading,
+  loadingText = 'Searching...',
 }: SearchFilterProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(e.target.value);
@@ -43,10 +49,16 @@ export function SearchFilter({
         placeholder={placeholder}
         style={{ maxWidth }}
       />
-      {value && resultCount !== undefined && (
+      {loading ? (
         <Text variant="muted" size="sm" style={{ marginTop: spacing.xs }}>
-          Found {resultCount} result{resultCount !== 1 ? 's' : ''}
+          {loadingText}
         </Text>
+      ) : (
+        value && resultCount !== undefined && (
+          <Text variant="muted" size="sm" style={{ marginTop: spacing.xs }}>
+            Found {resultCount} result{resultCount !== 1 ? 's' : ''}
+          </Text>
+        )
       )}
     </div>
   );

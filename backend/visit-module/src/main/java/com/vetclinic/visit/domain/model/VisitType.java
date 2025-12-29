@@ -13,6 +13,9 @@ public enum VisitType {
     /** Vaccination (needle icon). */
     VACCINATION,
 
+    /** Deworming treatment. */
+    DEWORMING,
+
     /** Blood tests, lab work (flask icon). */
     LAB_WORK,
 

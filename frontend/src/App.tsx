@@ -2,12 +2,12 @@ import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-do
 import { AuthProvider, useAuth } from './auth';
 import { I18nProvider, useI18n, LanguageSelector } from './i18n';
 import { useAuthErrorHandler, useDashboardStats } from './hooks';
-import { PatientsPage, PatientDetailsPage, ClientsPage, VisitsPage, WaitingRoomPage, StatisticsPage, InventoryUsagePage, PriceListPage, LoginPage, DoctorsPage, InventoryPage, AuditPage, ConsentsPage, CertificatesPage, PaymentsPage } from './pages';
+import { PatientsPage, PatientDetailsPage, ClientsPage, VisitsPage, WaitingRoomPage, StatisticsPage, InventoryUsagePage, PriceListPage, LoginPage, DoctorsPage, InventoryPage, AuditPage, ConsentsPage, CertificatesPage, PaymentsPage, VisitDetailsPage } from './pages';
 import { Button, Card, CardTitle, Text, Loading, ToastProvider, StatCard } from './components/ui';
 import { ProtectedRoute } from './components/auth';
 import { ErrorBoundary } from './components/errors';
 import { Sidebar } from './components/layout';
-import { colors, spacing, borderRadius, shadows, layout } from './theme';
+import { colors, spacing, borderRadius, shadows, layout, fontSize, fontWeight } from './theme';
 
 function App() {
   return (
@@ -33,30 +33,52 @@ const layoutStyles: React.CSSProperties = {
 const mainContentStyles: React.CSSProperties = {
   marginLeft: layout.sidebarWidth,
   flex: 1,
-  padding: spacing.lg,
-  paddingTop: spacing.xl,
   background: colors.gradients.pageBackground,
   minHeight: '100vh',
+  display: 'flex',
+  flexDirection: 'column',
 };
 
 const topBarStyles: React.CSSProperties = {
+  position: 'sticky',
+  top: 0,
+  zIndex: 50,
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  marginBottom: spacing.xl,
-  padding: `${spacing.sm} ${spacing.md}`,
-  backgroundColor: colors.neutral.surface,
-  borderRadius: borderRadius.lg,
-  boxShadow: shadows.sm,
-  border: `1px solid ${colors.neutral.borderLight}`,
+  padding: `${spacing.md} ${spacing.lg}`,
+  background: colors.gradients.sidebar,
+  boxShadow: shadows.lg,
 };
 
-const breadcrumbStyles: React.CSSProperties = {
+const contentWrapperStyles: React.CSSProperties = {
+  flex: 1,
+  padding: spacing.lg,
+};
+
+const brandStyles: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: spacing.sm,
-  color: colors.neutral.textMuted,
-  fontSize: '14px',
+  gap: spacing.md,
+};
+
+const brandIconStyles: React.CSSProperties = {
+  fontSize: '24px',
+  width: '40px',
+  height: '40px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+};
+
+const brandTextStyles: React.CSSProperties = {
+  fontSize: fontSize.lg,
+  fontWeight: fontWeight.semibold,
+  background: colors.gradients.headerAccent,
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  backgroundClip: 'text',
 };
 
 function AppContent() {
@@ -131,30 +153,34 @@ function AuthenticatedLayout() {
     <div className="app" style={layoutStyles}>
       <Sidebar />
       <main style={mainContentStyles}>
-        <div style={topBarStyles}>
-          <div style={breadcrumbStyles}>
-            <span>🏥</span>
-            <span>VetClinic Dashboard</span>
+        <header style={topBarStyles}>
+          <div style={brandStyles}>
+            <span style={brandIconStyles}>🏥</span>
+            <span style={brandTextStyles}>VetClinic Dashboard</span>
           </div>
           <LanguageSelector />
+        </header>
+        <div style={contentWrapperStyles}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/patients" element={<PatientsPage />} />
+            <Route path="/patients/:id" element={<PatientDetailsPage />} />
+            <Route path="/clients" element={<ClientsPage />} />
+            <Route path="/schedule" element={<VisitsPage />} />
+            <Route path="/visit/:id" element={<VisitDetailsPage />} />
+            <Route path="/visits/:id" element={<VisitDetailsPage />} />
+            <Route path="/waiting-room" element={<WaitingRoomPage />} />
+            <Route path="/statistics" element={<StatisticsPage />} />
+            <Route path="/inventory" element={<InventoryPage />} />
+            <Route path="/inventory-usage" element={<InventoryUsagePage />} />
+            <Route path="/price-list" element={<PriceListPage />} />
+            <Route path="/doctors" element={<DoctorsPage />} />
+            <Route path="/payments" element={<PaymentsPage />} />
+            <Route path="/certificates" element={<CertificatesPage />} />
+            <Route path="/consents" element={<ConsentsPage />} />
+            <Route path="/audit" element={<AuditPage />} />
+          </Routes>
         </div>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/patients" element={<PatientsPage />} />
-          <Route path="/patients/:id" element={<PatientDetailsPage />} />
-          <Route path="/clients" element={<ClientsPage />} />
-          <Route path="/schedule" element={<VisitsPage />} />
-          <Route path="/waiting-room" element={<WaitingRoomPage />} />
-          <Route path="/statistics" element={<StatisticsPage />} />
-          <Route path="/inventory" element={<InventoryPage />} />
-          <Route path="/inventory-usage" element={<InventoryUsagePage />} />
-          <Route path="/price-list" element={<PriceListPage />} />
-          <Route path="/doctors" element={<DoctorsPage />} />
-          <Route path="/payments" element={<PaymentsPage />} />
-          <Route path="/certificates" element={<CertificatesPage />} />
-          <Route path="/consents" element={<ConsentsPage />} />
-          <Route path="/audit" element={<AuditPage />} />
-        </Routes>
       </main>
     </div>
   );

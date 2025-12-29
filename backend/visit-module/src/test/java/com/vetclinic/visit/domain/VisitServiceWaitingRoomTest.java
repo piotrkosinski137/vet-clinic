@@ -30,6 +30,7 @@ import com.vetclinic.visit.domain.model.Visit;
 import com.vetclinic.visit.domain.model.VisitPriority;
 import com.vetclinic.visit.domain.model.VisitStatus;
 import com.vetclinic.visit.domain.port.VeterinarianAvailabilityChecker;
+import com.vetclinic.visit.domain.port.VisitDraftRepository;
 import com.vetclinic.visit.domain.port.VisitRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,6 +38,7 @@ import com.vetclinic.visit.domain.port.VisitRepository;
 class VisitServiceWaitingRoomTest {
 
     @Mock private VisitRepository visitRepository;
+    @Mock private VisitDraftRepository draftRepository;
     @Mock private DomainEventPublisher eventPublisher;
     @Mock private VeterinarianAvailabilityChecker availabilityChecker;
 
@@ -46,7 +48,9 @@ class VisitServiceWaitingRoomTest {
 
     @BeforeEach
     void setUp() {
-        visitService = new VisitService(visitRepository, eventPublisher, availabilityChecker);
+        visitService =
+                new VisitService(
+                        visitRepository, draftRepository, eventPublisher, availabilityChecker);
     }
 
     @Nested

@@ -42,4 +42,24 @@ public interface JpaPatientRepository
             @Param("breed") String breed,
             @Param("ownerId") UUID ownerId,
             @Param("microchipNumber") String microchipNumber);
+
+    /**
+     * Full-text search across patient name, species, breed AND owner name. Uses unaccent for
+     * diacritic-insensitive search (e.g., "Wozniak" finds "Woźniak").
+     */
+    @Query(
+            value =
+                    """
+            SELECT p.* FROM patients p
+            LEFT JOIN clients c ON p.owner_id = c.id
+            WHERE unaccent(lower(p.name)) LIKE unaccent(lower(concat('%', :query, '%')))
+               OR unaccent(lower(COALESCE(p.species, ''))) LIKE unaccent(lower(concat('%', :query, '%')))
+               OR unaccent(lower(COALESCE(p.breed, ''))) LIKE unaccent(lower(concat('%', :query, '%')))
+               OR unaccent(lower(COALESCE(c.first_name, ''))) LIKE unaccent(lower(concat('%', :query, '%')))
+               OR unaccent(lower(COALESCE(c.last_name, ''))) LIKE unaccent(lower(concat('%', :query, '%')))
+               OR unaccent(lower(concat(COALESCE(c.first_name, ''), ' ', COALESCE(c.last_name, '')))) LIKE unaccent(lower(concat('%', :query, '%')))
+            ORDER BY p.name
+            """,
+            nativeQuery = true)
+    List<Patient> searchByQuery(@Param("query") String query);
 }

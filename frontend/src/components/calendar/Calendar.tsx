@@ -65,7 +65,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
       onSlotClick,
       onVisitDrop,
       startHour = 8,
-      endHour = 18,
+      endHour = 24,
       veterinarians = [],
       style,
       ...props
@@ -281,7 +281,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
                     key={vet.id}
                     style={{
                       flex: 1,
-                      minWidth: '180px',
+                      minWidth: '220px',
                       padding: spacing.sm,
                       backgroundColor: vet.colorCode || colors.primary.main,
                       textAlign: 'center',
@@ -302,7 +302,10 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
               {/* Scrollable content */}
               <div
                 style={{
-                  display: 'flex',
+                  display: 'grid',
+                  gridTemplateColumns: `50px repeat(${veterinarians.length}, minmax(220px, 1fr))`,
+                  gridAutoRows: '1fr',
+                  alignItems: 'stretch',
                   flex: 1,
                   overflowY: 'auto',
                   overflowX: 'auto',
@@ -315,21 +318,20 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
                     flexDirection: 'column',
                     borderRight: `1px solid ${colors.neutral.border}`,
                     backgroundColor: colors.neutral.background,
-                    flexShrink: 0,
-                    width: '50px',
                   }}
                 >
-                  {Array.from({ length: endHour - startHour + 1 }, (_, i) => startHour + i).map((hour) => (
+                  {Array.from({ length: endHour - startHour }, (_, i) => startHour + i).map((hour) => (
                     <div
                       key={hour}
                       style={{
-                        minHeight: '60px',
+                        height: '120px',
                         padding: spacing.xs,
                         fontSize: fontSize.xs,
                         color: colors.neutral.textMuted,
                         borderBottom: `1px solid ${colors.neutral.border}`,
                         display: 'flex',
                         alignItems: 'flex-start',
+                        boxSizing: 'border-box',
                       }}
                     >
                       {hour.toString().padStart(2, '0')}:00

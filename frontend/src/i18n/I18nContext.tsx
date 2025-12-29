@@ -105,21 +105,30 @@ export function useI18n(): I18nContextType {
 export function LanguageSelector() {
   const { language, setLanguage } = useI18n();
 
+  const containerStyle: React.CSSProperties = {
+    display: 'flex',
+    gap: '8px',
+    padding: '4px',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: '8px',
+  };
+
   const flagStyle = (isActive: boolean): React.CSSProperties => ({
-    padding: '4px 8px',
-    borderRadius: '4px',
-    border: isActive ? '2px solid #fff' : '2px solid transparent',
-    background: isActive ? 'rgba(255,255,255,0.2)' : 'transparent',
+    padding: '6px 10px',
+    borderRadius: '6px',
+    border: 'none',
+    background: isActive ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
     cursor: 'pointer',
     fontSize: '20px',
     display: 'flex',
     alignItems: 'center',
-    gap: '4px',
+    justifyContent: 'center',
     transition: 'all 0.2s',
+    opacity: isActive ? 1 : 0.7,
   });
 
   return (
-    <div style={{ display: 'flex', gap: '4px' }}>
+    <div style={containerStyle}>
       <button
         onClick={() => setLanguage('pl')}
         style={flagStyle(language === 'pl')}

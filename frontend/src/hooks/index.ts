@@ -19,3 +19,4 @@ export { useAuthErrorHandler, dispatchAuthError, AUTH_ERROR_EVENT } from './useA
 export { useDashboardStats, type UseDashboardStatsResult } from './useDashboardStats';
 export { usePagination, type UsePaginationOptions, type UsePaginationResult } from './usePagination';
 export { useConfirmDialog, type ConfirmDialogState, type UseConfirmDialogResult } from './useConfirmDialog';
+export { useVisitDraft } from './useVisitDraft';

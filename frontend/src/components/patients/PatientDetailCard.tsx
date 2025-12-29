@@ -3,6 +3,7 @@ import { Card, CardHeader, CardContent, Badge, Text, Button } from '../ui';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '../../theme';
 import { getSpeciesInfo, getLabelInfo, getVisitTypeInfo, getVisitStatusConfig } from '../../constants';
 import { formatDate, formatTime } from '../../utils';
+import { formatWeightDisplay } from '../../utils/formatting';
 import { useI18n } from '../../i18n';
 
 export interface PatientDetailCardProps {
@@ -122,7 +123,7 @@ export function PatientDetailCard({
               <Text variant="muted" size="sm" style={{ marginBottom: spacing.xs }}>
                 {t('patients.weight')}
               </Text>
-              <Text weight="medium">{patient.weight} kg</Text>
+              <Text weight="medium">{formatWeightDisplay(patient.weight)}</Text>
             </div>
           )}
 

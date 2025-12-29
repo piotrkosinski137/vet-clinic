@@ -152,6 +152,17 @@ public class PatientService {
                 criteria.microchipNumber());
     }
 
+    /**
+     * Full-text search across patient name, species, breed AND owner name. Uses unaccent for
+     * diacritic-insensitive search (e.g., "Wozniak" finds "Woźniak").
+     */
+    public List<Patient> searchByQuery(String query) {
+        if (query == null || query.isBlank()) {
+            return patientRepository.findAll();
+        }
+        return patientRepository.searchByQuery(query.trim());
+    }
+
     /** Add a label to a patient */
     @Transactional
     public Patient addLabel(UUID patientId, PatientLabel label) {

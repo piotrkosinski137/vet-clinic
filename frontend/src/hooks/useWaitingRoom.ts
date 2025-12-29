@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { api, VisitResponse, CheckInRequest, VisitPriority } from '../api';
+import { api, VisitResponse, WaitingRoomVisitResponse, CheckInRequest, VisitPriority } from '../api';
 
 interface UseWaitingRoom {
-  visits: VisitResponse[];
+  visits: WaitingRoomVisitResponse[];
   loading: boolean;
   error: string | null;
   fetchWaitingRoom: () => Promise<void>;
@@ -16,7 +16,7 @@ interface UseWaitingRoom {
 const AUTO_REFRESH_INTERVAL_MS = 30000; // 30 seconds
 
 export function useWaitingRoom(autoRefresh = true): UseWaitingRoom {
-  const [visits, setVisits] = useState<VisitResponse[]>([]);
+  const [visits, setVisits] = useState<WaitingRoomVisitResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -25,7 +25,8 @@ export function useWaitingRoom(autoRefresh = true): UseWaitingRoom {
     try {
       setLoading(true);
       setError(null);
-      const data = await api.getWaitingRoom();
+      // Use enriched endpoint with patient, client and financial data
+      const data = await api.getEnrichedWaitingRoom();
       setVisits(data);
     } catch (err) {
       if (err instanceof Error) {
@@ -38,10 +39,10 @@ export function useWaitingRoom(autoRefresh = true): UseWaitingRoom {
 
   const checkIn = useCallback(async (visitId: string, request?: CheckInRequest): Promise<VisitResponse> => {
     const updated = await api.checkIn(visitId, request);
-    // Add to waiting room list
-    setVisits((prev) => [...prev, updated]);
+    // Re-fetch to get enriched data
+    await fetchWaitingRoom();
     return updated;
-  }, []);
+  }, [fetchWaitingRoom]);
 
   const startVisit = useCallback(async (visitId: string): Promise<VisitResponse> => {
     const updated = await api.startFromWaitingRoom(visitId);
@@ -63,11 +64,11 @@ export function useWaitingRoom(autoRefresh = true): UseWaitingRoom {
         waitingRoomNotes: notes,
         priority,
       });
-      // Update in list
-      setVisits((prev) => prev.map((v) => (v.id === visitId ? updated : v)));
+      // Re-fetch to get updated enriched data
+      await fetchWaitingRoom();
       return updated;
     },
-    []
+    [fetchWaitingRoom]
   );
 
   const refresh = useCallback(() => {

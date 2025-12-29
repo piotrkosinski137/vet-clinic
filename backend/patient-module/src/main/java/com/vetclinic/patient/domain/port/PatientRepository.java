@@ -45,4 +45,10 @@ public interface PatientRepository {
     /** Search patients by multiple criteria */
     List<Patient> search(
             String name, Species species, String breed, UUID ownerId, String microchipNumber);
+
+    /**
+     * Full-text search across patient name, species, breed AND owner name. Uses unaccent for
+     * diacritic-insensitive search.
+     */
+    List<Patient> searchByQuery(String query);
 }

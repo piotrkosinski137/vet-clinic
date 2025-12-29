@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useClients, useConfirmDialog } from '../hooks';
 import {
@@ -11,6 +11,16 @@ import {
   PatientLabel,
   api,
 } from '../api';
+
+// Debounce hook for search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 import {
   Button,
   Card,
@@ -54,14 +64,19 @@ export function ClientsPage() {
   const [selectedPatient, setSelectedPatient] = useState<PatientResponse | null>(null);
   const [selectedVisit, setSelectedVisit] = useState<VisitResponse | null>(null);
 
+  // Debounced search for backend queries
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
   // Data state - all patients for search
   const [allPatients, setAllPatients] = useState<PatientResponse[]>([]);
   const [allConsents, setAllConsents] = useState<GdprConsentResponse[]>([]);
   const [patients, setPatients] = useState<PatientResponse[]>([]);
   const [visits, setVisits] = useState<VisitResponse[]>([]);
+  const [filteredClients, setFilteredClients] = useState<ClientResponse[]>([]);
   const [loadingAllPatients, setLoadingAllPatients] = useState(false);
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [loadingVisits, setLoadingVisits] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   // Pagination
   const [clientsPage, setClientsPage] = useState(0);
@@ -118,34 +133,29 @@ export function ClientsPage() {
     [allPatients]
   );
 
-  // Filter clients by search (including pet names) - memoized for performance
-  const filteredClients = useMemo(() => {
-    const query = searchQuery.toLowerCase();
-    return clients.filter((client) => {
-      // Check client fields
-      const matchesClient =
-        client.firstName.toLowerCase().includes(query) ||
-        client.lastName.toLowerCase().includes(query) ||
-        client.email.toLowerCase().includes(query) ||
-        client.phone?.toLowerCase().includes(query);
+  // Backend search for clients with debounce
+  useEffect(() => {
+    const searchClients = async () => {
+      setSearchLoading(true);
+      try {
+        // Use backend search with 'q' parameter for diacritic-insensitive search
+        const results = await api.getClients(debouncedSearch || undefined);
+        setFilteredClients(results);
+      } catch {
+        // Fall back to all clients from hook if search fails
+        setFilteredClients(clients);
+      } finally {
+        setSearchLoading(false);
+      }
+    };
 
-      if (matchesClient) return true;
-
-      // Check pet names for this client
-      const clientPets = getPetsForClient(client.id);
-      const matchesPet = clientPets.some((pet) =>
-        pet.name.toLowerCase().includes(query) ||
-        pet.breed?.toLowerCase().includes(query)
-      );
-
-      return matchesPet;
-    });
-  }, [clients, searchQuery, getPetsForClient]);
+    searchClients();
+  }, [debouncedSearch, clients]);
 
   // Reset clients page when search changes
   useEffect(() => {
     setClientsPage(0);
-  }, [searchQuery]);
+  }, [debouncedSearch]);
 
   // Load patients when client selected
   useEffect(() => {
@@ -327,8 +337,10 @@ export function ClientsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ width: '100%' }}
             />
-            {loadingAllPatients && (
-              <Text variant="muted" size="sm" style={{ marginTop: spacing.xs }}>{t('clients.loadingPets')}</Text>
+            {(loadingAllPatients || searchLoading) && (
+              <Text variant="muted" size="sm" style={{ marginTop: spacing.xs }}>
+                {searchLoading ? t('common.searching') : t('clients.loadingPets')}
+              </Text>
             )}
           </div>
 
@@ -720,6 +732,20 @@ export function ClientsPage() {
                                     </div>
                                   </div>
                                 )}
+
+                                {/* Details Button */}
+                                <div style={{ marginTop: spacing.sm, textAlign: 'right' }}>
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/visit/${visit.id}`);
+                                    }}
+                                  >
+                                    {t('common.details')}
+                                  </Button>
+                                </div>
                               </div>
                             );
                           })}

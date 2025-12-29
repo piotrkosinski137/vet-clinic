@@ -61,6 +61,8 @@ public class PatientController {
     /**
      * Get all patients with optional filtering.
      *
+     * @param q Full-text search query (searches patient name, species, breed, AND owner name) Uses
+     *     diacritic-insensitive search (e.g., "Wozniak" finds "Woźniak")
      * @param ownerId Filter by owner ID
      * @param name Search by name (partial, case-insensitive)
      * @param species Filter by species
@@ -71,6 +73,7 @@ public class PatientController {
     @GetMapping
     @PreAuthorize(HAS_ANY_ROLE)
     public ResponseEntity<List<PatientResponse>> getAllPatients(
+            @RequestParam(required = false) String q,
             @RequestParam(required = false) UUID ownerId,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Species species,
@@ -78,14 +81,21 @@ public class PatientController {
             @RequestParam(required = false) String microchipNumber,
             @RequestParam(required = false) Set<PatientLabel> labels) {
 
-        PatientSearchCriteria criteria =
-                new PatientSearchCriteria(name, species, breed, ownerId, microchipNumber, labels);
-
         List<Patient> patients;
-        if (criteria.hasAnyCriteria()) {
-            patients = patientService.searchPatients(criteria);
+
+        // If 'q' parameter is provided, use full-text search
+        if (q != null && !q.isBlank()) {
+            patients = patientService.searchByQuery(q);
         } else {
-            patients = patientService.getAllPatients();
+            PatientSearchCriteria criteria =
+                    new PatientSearchCriteria(
+                            name, species, breed, ownerId, microchipNumber, labels);
+
+            if (criteria.hasAnyCriteria()) {
+                patients = patientService.searchPatients(criteria);
+            } else {
+                patients = patientService.getAllPatients();
+            }
         }
 
         List<PatientResponse> responses = patients.stream().map(patientMapper::toResponse).toList();

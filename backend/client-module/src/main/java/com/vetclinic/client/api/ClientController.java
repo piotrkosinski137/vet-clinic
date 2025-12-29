@@ -57,6 +57,8 @@ public class ClientController {
     /**
      * Get all clients with optional filtering.
      *
+     * @param q Full-text search query (searches client name, email, phone) Uses
+     *     diacritic-insensitive search (e.g., "Wozniak" finds "Woźniak")
      * @param firstName Search by first name (partial, case-insensitive)
      * @param lastName Search by last name (partial, case-insensitive)
      * @param email Search by email (partial, case-insensitive)
@@ -66,20 +68,27 @@ public class ClientController {
     @GetMapping
     @PreAuthorize(HAS_ANY_ROLE)
     public ResponseEntity<List<ClientResponse>> getAllClients(
+            @RequestParam(required = false) String q,
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String phone,
             @RequestParam(required = false) String city) {
 
-        ClientSearchCriteria criteria =
-                new ClientSearchCriteria(firstName, lastName, email, phone, city);
-
         List<Client> clients;
-        if (criteria.hasAnyCriteria()) {
-            clients = clientService.searchClients(criteria);
+
+        // If 'q' parameter is provided, use full-text search
+        if (q != null && !q.isBlank()) {
+            clients = clientService.searchByQuery(q);
         } else {
-            clients = clientService.getAllClients();
+            ClientSearchCriteria criteria =
+                    new ClientSearchCriteria(firstName, lastName, email, phone, city);
+
+            if (criteria.hasAnyCriteria()) {
+                clients = clientService.searchClients(criteria);
+            } else {
+                clients = clientService.getAllClients();
+            }
         }
 
         List<ClientResponse> responses = clients.stream().map(clientMapper::toResponse).toList();

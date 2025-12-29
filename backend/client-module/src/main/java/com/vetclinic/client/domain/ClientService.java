@@ -126,4 +126,15 @@ public class ClientService {
                 criteria.phone(),
                 criteria.city());
     }
+
+    /**
+     * Full-text search across client name, email, phone. Uses unaccent for diacritic-insensitive
+     * search (e.g., "Wozniak" finds "Woźniak").
+     */
+    public List<Client> searchByQuery(String query) {
+        if (query == null || query.isBlank()) {
+            return clientRepository.findAll();
+        }
+        return clientRepository.searchByQuery(query.trim());
+    }
 }

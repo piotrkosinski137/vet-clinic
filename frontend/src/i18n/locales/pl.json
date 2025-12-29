@@ -10,6 +10,7 @@
     "back": "Wróć",
     "view": "Zobacz",
     "search": "Szukaj",
+    "searching": "Szukanie...",
     "loading": "Ładowanie...",
     "noData": "Brak danych",
     "yes": "Tak",
@@ -54,7 +55,9 @@
     "grant": "Udziel",
     "revoke": "Cofnij",
     "issue": "Wystaw",
-    "pay": "Zapłać"
+    "pay": "Zapłać",
+    "at": "o",
+    "goBack": "Wróć"
   },
   "nav": {
     "home": "Strona główna",
@@ -236,11 +239,15 @@
   },
   "visits": {
     "title": "Wizyty",
+    "visitNotFound": "Wizyta nie znaleziona",
+    "owner": "Właściciel",
     "schedule": "Harmonogram",
     "bookAppointment": "+ Zarezerwuj wizytę",
+    "bookAppointmentTitle": "Zarezerwuj wizytę",
     "appointmentDetails": "Szczegóły wizyty",
     "patient": "Pacjent",
     "selectPatient": "Wybierz pacjenta...",
+    "searchPatientPlaceholder": "Szukaj po nazwie zwierzęcia lub właściciela...",
     "dateTime": "Data i godzina",
     "duration": "Czas trwania",
     "durationMinutes": "Czas trwania (minuty)",
@@ -257,6 +264,11 @@
     "noShow": "Nieobecny",
     "startVisit": "Rozpocznij wizytę",
     "completeVisit": "Zakończ wizytę",
+    "inProgressBanner": "WIZYTA W TRAKCIE",
+    "draftRestored": "Przywrócono niezapisane zmiany z poprzedniej sesji",
+    "savingDraft": "Zapisywanie...",
+    "draftSaved": "Szkic zapisany",
+    "draftError": "Nie udało się zapisać szkicu",
     "cancelVisit": "Anuluj wizytę",
     "visitNotes": "Notatki z wizyty",
     "noNotesYet": "Brak notatek.",
@@ -322,7 +334,28 @@
     "startFromWaitingRoom": "Rozpocznij z poczekalni",
     "markNoShow": "Oznacz jako nieobecny",
     "confirmMarkNoShow": "Czy na pewno chcesz oznaczyć tego pacjenta jako nieobecnego?",
-    "markedNoShow": "Pacjent oznaczony jako nieobecny"
+    "markedNoShow": "Pacjent oznaczony jako nieobecny",
+    "noReason": "Nie podano powodu wizyty",
+    "notAssigned": "Nie przypisano",
+    "recentHistory": "Ostatnie wizyty",
+    "noHistory": "Brak historii wizyt dla tego pacjenta",
+    "noExaminationNotes": "Brak danych z badania",
+    "visitType": "Typ wizyty",
+    "selectVisitType": "Wybierz typ wizyty..."
+  },
+  "visitTypes": {
+    "CONSULTATION": "Konsultacja",
+    "VACCINATION": "Szczepienie",
+    "DEWORMING": "Odrobaczanie",
+    "LAB_WORK": "Badania laboratoryjne",
+    "ULTRASOUND": "USG",
+    "CARDIOLOGY": "Kardiologia",
+    "SURGERY": "Operacja",
+    "DENTAL": "Stomatologia",
+    "GROOMING": "Pielęgnacja",
+    "EMERGENCY": "Nagły przypadek",
+    "FOLLOW_UP": "Wizyta kontrolna",
+    "CHECKUP": "Rutynowa kontrola"
   },
   "waitingRoom": {
     "title": "Poczekalnia",
@@ -369,7 +402,10 @@
     "infoUpdated": "Informacje poczekalni zaktualizowane",
     "visitStarted": "Wizyta rozpoczęta z poczekalni",
     "failedToStart": "Nie udało się rozpocząć wizyty",
-    "failedToUpdate": "Nie udało się zaktualizować informacji poczekalni"
+    "failedToUpdate": "Nie udało się zaktualizować informacji poczekalni",
+    "clientDebt": "Zadłużenie klienta",
+    "hasDebt": "Ma dług",
+    "unknownPatient": "Nieznany pacjent"
   },
   "doctors": {
     "title": "Lekarze",

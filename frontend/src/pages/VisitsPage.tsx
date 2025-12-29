@@ -170,9 +170,17 @@ export function VisitsPage() {
   const handleStatusChange = async (status: VisitStatus) => {
     if (!selectedVisit) return;
     try {
-      const updated = await updateVisitStatus(selectedVisit.id, status);
-      setSelectedVisit(updated);
+      const updatedVisit = await updateVisitStatus(selectedVisit.id, status);
       success(t('visits.statusUpdated'));
+      // If completed or cancelled, close the modal and refresh visits
+      if (status === 'COMPLETED' || status === 'CANCELLED') {
+        setSelectedVisit(null);
+        refresh();
+      } else {
+        // Update selected visit with new status to reflect changes in modal
+        setSelectedVisit(updatedVisit);
+        refresh();
+      }
     } catch (err) {
       showError(t('visits.failedToUpdateStatus'));
       throw err;

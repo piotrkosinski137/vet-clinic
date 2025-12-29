@@ -2,6 +2,13 @@
 -- All tables and seed data in a single migration
 
 ----------------------------------------------
+-- EXTENSIONS
+----------------------------------------------
+
+-- Enable unaccent extension for diacritic-insensitive search (e.g., "Wozniak" finds "Woźniak")
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
+----------------------------------------------
 -- CORE TABLES
 ----------------------------------------------
 
@@ -151,7 +158,9 @@ CREATE TABLE visits (
     id UUID PRIMARY KEY,
     clinic_id UUID NOT NULL REFERENCES veterinary_clinics(id),
     patient_id UUID NOT NULL REFERENCES patients(id),
+    patient_name VARCHAR(200),
     client_id UUID,
+    client_name VARCHAR(200),
     veterinarian_id UUID,
     veterinarian_name VARCHAR(255),
     visit_date TIMESTAMP NOT NULL,
@@ -198,6 +207,39 @@ CREATE TABLE visit_medications (
 );
 
 CREATE INDEX idx_visit_medications_visit_id ON visit_medications(visit_id);
+
+----------------------------------------------
+-- VISIT DRAFTS (Auto-save functionality)
+----------------------------------------------
+
+-- Visit drafts for auto-save functionality
+-- Stores work-in-progress visit data that hasn't been committed yet
+CREATE TABLE visit_drafts (
+    visit_id UUID PRIMARY KEY REFERENCES visits(id) ON DELETE CASCADE,
+    clinic_id UUID NOT NULL REFERENCES veterinary_clinics(id),
+
+    -- Draft content (mirrors editable visit fields)
+    visit_type VARCHAR(50),
+    interview TEXT,
+    examination TEXT,
+    diagnosis TEXT,
+    treatment TEXT,
+    recommendations TEXT,
+    weight DOUBLE PRECISION,
+    temperature DOUBLE PRECISION,
+    next_visit_date DATE,
+    used_materials JSONB DEFAULT '[]',
+    medications JSONB DEFAULT '[]',
+
+    -- Metadata for debugging and conflict resolution
+    saved_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    saved_by VARCHAR(255)
+);
+
+CREATE INDEX idx_visit_drafts_clinic ON visit_drafts(clinic_id);
+
+COMMENT ON TABLE visit_drafts IS 'Temporary storage for visit form data before final save';
+COMMENT ON COLUMN visit_drafts.saved_by IS 'Username or ID of the doctor who last edited the draft';
 
 ----------------------------------------------
 -- BILLING

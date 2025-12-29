@@ -1,7 +1,17 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePatients, useConfirmDialog } from '../hooks';
-import { PatientRequest, PatientResponse, PatientLabel } from '../api';
+import { PatientRequest, PatientResponse, PatientLabel, api } from '../api';
+
+// Debounce hook for search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 import {
   Button,
   Card,
@@ -32,6 +42,7 @@ import {
   getBreedsForSpecies,
 } from '../constants';
 import { isSpecies, isGender } from '../utils';
+import { formatWeightDisplay } from '../utils/formatting';
 
 export function PatientsPage() {
   const navigate = useNavigate();
@@ -59,30 +70,40 @@ export function PatientsPage() {
   // Search and pagination
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
+  const [filteredPatients, setFilteredPatients] = useState<PatientResponse[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  // Debounced search for backend queries
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   // Update available breeds when species changes
   useEffect(() => {
     setAvailableBreeds(getBreedsForSpecies(formData.species));
   }, [formData.species]);
 
-  // Filter patients by search - memoized to avoid recalculating on every render
-  const filteredPatients = useMemo(() => {
-    const query = searchQuery.toLowerCase();
-    return patients.filter((patient) =>
-      patient.name.toLowerCase().includes(query) ||
-      patient.species.toLowerCase().includes(query) ||
-      patient.breed?.toLowerCase().includes(query) ||
-      patient.notes?.toLowerCase().includes(query)
-    );
-  }, [patients, searchQuery]);
+  // Backend search for patients with debounce
+  useEffect(() => {
+    const searchPatients = async () => {
+      setSearchLoading(true);
+      try {
+        // Use backend search with 'q' parameter for diacritic-insensitive search
+        const results = await api.getPatients(undefined, debouncedSearch || undefined);
+        setFilteredPatients(results);
+      } catch {
+        // Fall back to all patients from hook if search fails
+        setFilteredPatients(patients);
+      } finally {
+        setSearchLoading(false);
+      }
+    };
 
-  // Paginated patients - memoized for performance
-  const paginatedPatients = useMemo(() =>
-    filteredPatients.slice(
-      currentPage * PAGINATION.DEFAULT_PAGE_SIZE,
-      (currentPage + 1) * PAGINATION.DEFAULT_PAGE_SIZE
-    ),
-    [filteredPatients, currentPage]
+    searchPatients();
+  }, [debouncedSearch, patients]);
+
+  // Paginated patients
+  const paginatedPatients = filteredPatients.slice(
+    currentPage * PAGINATION.DEFAULT_PAGE_SIZE,
+    (currentPage + 1) * PAGINATION.DEFAULT_PAGE_SIZE
   );
 
   // Reset page when search changes
@@ -211,6 +232,8 @@ export function PatientsPage() {
           onChange={handleSearchChange}
           placeholder={t('patients.searchPlaceholder')}
           resultCount={searchQuery ? filteredPatients.length : undefined}
+          loading={searchLoading}
+          loadingText={t('common.searching')}
         />
       )}
 
@@ -552,7 +575,7 @@ export function PatientsPage() {
                         fontSize: fontSize.sm,
                         color: colors.neutral.text,
                       }}>
-                        {patient.weight ? `${patient.weight} kg` : '-'}
+                        {formatWeightDisplay(patient.weight)}
                       </td>
                       <td style={{
                         padding: spacing.md,

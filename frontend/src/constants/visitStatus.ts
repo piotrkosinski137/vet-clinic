@@ -11,9 +11,9 @@ export const VISIT_STATUS_CONFIG = {
   },
   CHECKED_IN: {
     label: 'Checked In',
-    color: '#F57C00',
-    bg: '#FFF8E1',
-    bgColor: '#FFF8E1',
+    color: '#7B1FA2',
+    bg: '#F3E5F5',
+    bgColor: '#F3E5F5',
     icon: 'W',
   },
   IN_PROGRESS: {

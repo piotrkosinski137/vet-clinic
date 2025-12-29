@@ -76,11 +76,49 @@ public class VisitSeeder implements DataSeeder {
             if (currentHour >= WORK_DAY_START && currentHour <= WORK_DAY_END) {
                 createVisit(entityManager, context, today, currentHour, VisitStatus.IN_PROGRESS);
             }
+
+            // Create some CHECKED_IN visits for waiting room demo
+            seedCheckedInVisits(entityManager, context, today);
+
             for (int hour = Math.max(currentHour + 1, 13); hour <= WORK_DAY_END; hour++) {
                 if (context.getRandom().nextDouble() > 0.4) {
                     createVisit(entityManager, context, today, hour, VisitStatus.SCHEDULED);
                 }
             }
+        }
+    }
+
+    private void seedCheckedInVisits(
+            EntityManager entityManager, SeedContext context, LocalDate today) {
+        // Create 2-4 CHECKED_IN visits with different priorities for waiting room demo
+        var priorities =
+                new com.vetclinic.visit.domain.model.VisitPriority[] {
+                    com.vetclinic.visit.domain.model.VisitPriority.NORMAL,
+                    com.vetclinic.visit.domain.model.VisitPriority.HIGH,
+                    com.vetclinic.visit.domain.model.VisitPriority.URGENT,
+                    com.vetclinic.visit.domain.model.VisitPriority.LOW
+                };
+        var waitingRoomNotes =
+                new String[] {
+                    "Patient seems anxious",
+                    "Brought stool sample",
+                    "Owner reports urgent symptoms",
+                    null
+                };
+
+        var currentHour = LocalTime.now().getHour();
+        for (int i = 0; i < Math.min(4, priorities.length); i++) {
+            var visit =
+                    createVisit(
+                            entityManager,
+                            context,
+                            today,
+                            Math.max(WORK_DAY_START, currentHour - 1),
+                            VisitStatus.CHECKED_IN);
+            visit.setPriority(priorities[i]);
+            visit.setWaitingRoomNotes(waitingRoomNotes[i]);
+            // Set check-in time to simulate different wait times
+            visit.setCheckedInAt(LocalDateTime.now().minusMinutes(5 + i * 15));
         }
     }
 
@@ -109,7 +147,7 @@ public class VisitSeeder implements DataSeeder {
         }
     }
 
-    private void createVisit(
+    private Visit createVisit(
             EntityManager entityManager,
             SeedContext context,
             LocalDate date,
@@ -148,6 +186,8 @@ public class VisitSeeder implements DataSeeder {
         if (status == VisitStatus.COMPLETED) {
             context.addCompletedVisit(visit);
         }
+
+        return visit;
     }
 
     private void populateCompletedVisitDetails(

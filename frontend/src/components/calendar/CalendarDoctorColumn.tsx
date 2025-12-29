@@ -51,7 +51,7 @@ export const CalendarDoctorColumn = forwardRef<HTMLDivElement, CalendarDoctorCol
       date,
       visits,
       startHour = 8,
-      endHour = 18,
+      endHour = 24,
       onVisitSelect,
       onSlotClick,
       onVisitDrop,
@@ -66,7 +66,7 @@ export const CalendarDoctorColumn = forwardRef<HTMLDivElement, CalendarDoctorCol
     const [dragOverSlot, setDragOverSlot] = useState<string | null>(null);
     const hours = useMemo(() => {
       const h: number[] = [];
-      for (let i = startHour; i <= endHour; i++) {
+      for (let i = startHour; i < endHour; i++) {
         h.push(i);
       }
       return h;
@@ -110,11 +110,7 @@ export const CalendarDoctorColumn = forwardRef<HTMLDivElement, CalendarDoctorCol
       <div
         ref={ref}
         style={{
-          display: 'flex',
-          flexDirection: 'column',
           borderRight: `1px solid ${colors.neutral.border}`,
-          minWidth: '180px',
-          flex: 1,
           ...style,
         }}
         {...props}
@@ -184,7 +180,7 @@ export const CalendarDoctorColumn = forwardRef<HTMLDivElement, CalendarDoctorCol
         )}
 
         {/* Hour slots with 15-minute intervals */}
-        <div style={{ flex: 1 }}>
+        <div>
           {hours.map((hour) => {
             const isAvailable = isWithinWorkingHours(hour);
 
@@ -201,10 +197,12 @@ export const CalendarDoctorColumn = forwardRef<HTMLDivElement, CalendarDoctorCol
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  minHeight: '60px',
+                  height: '120px',
+                  boxSizing: 'border-box',
                   borderBottom: `1px solid ${colors.neutral.border}`,
                   borderLeft: `4px solid ${getLeftBorderColor()}`,
                   opacity: isAvailable ? 1 : 0.5,
+                  position: 'relative',
                 }}
               >
                 {QUARTER_HOURS.map((minute) => {
@@ -252,7 +250,8 @@ export const CalendarDoctorColumn = forwardRef<HTMLDivElement, CalendarDoctorCol
                       key={slotKey}
                       style={{
                         display: 'flex',
-                        minHeight: '15px',
+                        height: '30px',
+                        flex: 1,
                         borderBottom: minute < 45 ? `1px dashed ${colors.neutral.border}` : 'none',
                         cursor: isSlotClickable && onSlotClick ? 'pointer' : 'not-allowed',
                         backgroundColor: getBackgroundColor(),
@@ -271,21 +270,27 @@ export const CalendarDoctorColumn = forwardRef<HTMLDivElement, CalendarDoctorCol
                       }}
                       title={!isAvailable ? t('visits.outsideWorkingHours') : isDayOff ? t('visits.doctorOnDayOff') : `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`}
                     >
-                      <div
-                        style={{
-                          flex: 1,
-                          padding: slotVisits.length > 0 ? spacing.xs : '2px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: spacing.xs,
-                        }}
-                      >
-                        {slotVisits.map((visit) => (
-                          <div key={visit.id} data-appointment>
-                            <AppointmentCard visit={visit} onSelect={onVisitSelect} compact />
+                      {slotVisits.map((visit) => {
+                        // Calculate appointment height based on duration (120px per hour = 2px per minute)
+                        const durationMinutes = visit.durationMinutes || 30;
+                        const appointmentHeight = Math.max(durationMinutes * 2, 50); // minimum 50px for readability
+                        return (
+                          <div
+                            key={visit.id}
+                            data-appointment
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: '4px',
+                              right: '2px',
+                              height: `${appointmentHeight}px`,
+                              zIndex: 10,
+                            }}
+                          >
+                            <AppointmentCard visit={visit} onSelect={onVisitSelect} compact style={{ height: '100%' }} />
                           </div>
-                        ))}
-                      </div>
+                        );
+                      })}
                     </div>
                   );
                 })}

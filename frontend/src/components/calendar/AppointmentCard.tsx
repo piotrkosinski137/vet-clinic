@@ -4,6 +4,7 @@ import { VisitResponse, VisitStatus } from '../../api/types';
 import { Badge } from '../ui/Badge';
 import { useI18n } from '../../i18n';
 import { formatTimeWithLocale } from '../../utils/dateFormatting';
+import { VISIT_TYPE_CONFIG, VisitTypeKey } from '../../constants/visitTypes';
 
 export interface AppointmentCardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
   visit: VisitResponse;
@@ -14,8 +15,8 @@ export interface AppointmentCardProps extends Omit<HTMLAttributes<HTMLDivElement
 
 const statusColors: Record<VisitStatus, { bg: string; text: string }> = {
   SCHEDULED: { bg: colors.primary.light, text: colors.primary.main },
-  CHECKED_IN: { bg: '#FFF8E1', text: '#F57C00' },  // Amber - waiting room
-  IN_PROGRESS: { bg: colors.warning.light, text: colors.warning.main },
+  CHECKED_IN: { bg: '#F3E5F5', text: '#7B1FA2' },  // Purple - waiting in lobby
+  IN_PROGRESS: { bg: colors.warning.light, text: colors.warning.main },  // Orange - active visit
   COMPLETED: { bg: colors.success.light, text: colors.success.main },
   CANCELLED: { bg: colors.neutral.border, text: colors.neutral.textMuted },
   NO_SHOW: { bg: '#FFEBEE', text: '#D32F2F' },  // Red - no show
@@ -32,8 +33,8 @@ const statusTranslationKeys: Record<VisitStatus, string> = {
 
 const statusVariants: Record<VisitStatus, 'primary' | 'warning' | 'success' | 'secondary' | 'error'> = {
   SCHEDULED: 'primary',
-  CHECKED_IN: 'warning',
-  IN_PROGRESS: 'warning',
+  CHECKED_IN: 'secondary',  // Purple badge
+  IN_PROGRESS: 'warning',   // Orange badge
   COMPLETED: 'success',
   CANCELLED: 'secondary',
   NO_SHOW: 'error',
@@ -48,6 +49,7 @@ export const AppointmentCard = forwardRef<HTMLDivElement, AppointmentCardProps>(
   ({ visit, onSelect, compact = false, draggable = true, style, ...props }, ref) => {
     const { t, language } = useI18n();
     const statusColor = statusColors[visit.status];
+    const visitTypeConfig = VISIT_TYPE_CONFIG[(visit.visitType || 'CONSULTATION') as VisitTypeKey];
 
     const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
       e.dataTransfer.setData('application/json', JSON.stringify(visit));
@@ -68,9 +70,11 @@ export const AppointmentCard = forwardRef<HTMLDivElement, AppointmentCardProps>(
       backgroundColor: statusColor.bg,
       borderLeft: `4px solid ${statusColor.text}`,
       borderRadius: borderRadius.sm,
-      padding: spacing.sm,
+      padding: spacing.xs,
       cursor: draggable ? 'grab' : onSelect ? 'pointer' : 'default',
       transition: 'transform 0.1s ease, box-shadow 0.1s ease, opacity 0.2s ease',
+      overflow: 'hidden',
+      boxSizing: 'border-box',
       ...style,
     };
 
@@ -97,36 +101,52 @@ export const AppointmentCard = forwardRef<HTMLDivElement, AppointmentCardProps>(
         }}
         {...props}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <span style={{ fontWeight: fontWeight.semibold, fontSize: fontSize.sm }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: spacing.xs }}>
+          <span style={{ fontWeight: fontWeight.semibold, fontSize: fontSize.xs }}>
             {formatTime(visit.visitDate, language)}
           </span>
-          <Badge variant={statusVariants[visit.status]} style={{ fontSize: fontSize.xs }}>
+          <Badge variant={statusVariants[visit.status]} style={{ fontSize: '10px', padding: '1px 4px' }}>
             {t(statusTranslationKeys[visit.status])}
           </Badge>
         </div>
-        {!compact && visit.veterinarianName && (
-          <div style={{ fontSize: fontSize.xs, color: colors.neutral.textLight, marginTop: spacing.xs }}>
-            Dr. {visit.veterinarianName}
-          </div>
-        )}
-        {visit.reason && (
+        {/* Visit type icon + Patient name + Client name */}
+        <div
+          style={{
+            fontSize: fontSize.xs,
+            color: colors.neutral.text,
+            marginTop: '2px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          <span title={t(`visitTypes.${visit.visitType || 'CONSULTATION'}`)}>{visitTypeConfig.icon}</span>
+          <span style={{ fontWeight: fontWeight.medium }}>
+            {visit.patientName || '—'}
+          </span>
+        </div>
+        {visit.clientName && (
           <div
             style={{
               fontSize: fontSize.xs,
-              color: colors.neutral.text,
-              marginTop: spacing.xs,
+              color: colors.neutral.textMuted,
+              marginTop: '1px',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
             }}
           >
-            {visit.reason}
+            {visit.clientName}
           </div>
         )}
-        <div style={{ fontSize: fontSize.xs, color: colors.neutral.textMuted, marginTop: spacing.xs }}>
-          {visit.durationMinutes || 30} min
-        </div>
+        {!compact && (
+          <div style={{ fontSize: fontSize.xs, color: colors.neutral.textMuted, marginTop: '2px' }}>
+            {visit.durationMinutes || 30} min
+          </div>
+        )}
       </div>
     );
   }

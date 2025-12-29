@@ -14,6 +14,7 @@ import { colors, spacing, borderRadius, fontSize, fontWeight } from '../theme';
 import { getSpeciesInfo, getLabelInfo, VISIT_TYPE_OPTIONS } from '../constants';
 import { getVisitStatusConfig } from '../constants/visitStatus';
 import { useI18n } from '../i18n';
+import { formatWeightDisplay } from '../utils/formatting';
 
 export function PatientDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -105,7 +106,7 @@ export function PatientDetailsPage() {
             <InfoRow label={t('patients.breed')} value={patient.breed || '-'} />
             <InfoRow label={t('patients.gender')} value={patient.gender ? t(`common.${patient.gender.toLowerCase()}`) : t('common.unknown')} />
             <InfoRow label={t('patients.neutered')} value={patient.neutered ? t('common.yes') : t('common.no')} />
-            <InfoRow label={t('patients.weight')} value={patient.weight ? `${patient.weight} kg` : '-'} />
+            <InfoRow label={t('patients.weight')} value={formatWeightDisplay(patient.weight)} />
             <InfoRow label={t('patients.dateOfBirth')} value={patient.dateOfBirth || '-'} />
             <InfoRow label={t('patients.microchip')} value={patient.microchipNumber || '-'} />
             <InfoRow label={t('patients.color')} value={patient.color || '-'} />
@@ -220,7 +221,7 @@ export function PatientDetailsPage() {
                         borderBottom: `1px solid ${colors.neutral.border}`,
                         cursor: 'pointer',
                       }}
-                      onClick={() => navigate(`/schedule`)}
+                      onClick={() => navigate(`/visit/${visit.id}`)}
                       onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.primary.light; }}
                       onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                     >

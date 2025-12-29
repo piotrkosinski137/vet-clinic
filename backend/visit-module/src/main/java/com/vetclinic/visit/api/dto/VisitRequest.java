@@ -16,7 +16,9 @@ import com.vetclinic.visit.domain.model.VisitType;
 /** Request DTO for creating/updating a visit. */
 public record VisitRequest(
         @NotNull(message = "Patient ID is required") UUID patientId,
+        String patientName,
         UUID clientId,
+        String clientName,
         UUID veterinarianId,
         String veterinarianName,
         @NotNull(message = "Visit date is required") LocalDateTime visitDate,

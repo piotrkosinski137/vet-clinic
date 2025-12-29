@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { api, VisitRequest, PatientResponse, VeterinarianResponse } from "../../api";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { api, VisitRequest, PatientResponse, VeterinarianResponse, ClientResponse, VisitType } from "../../api";
 import {
   Button,
   Modal,
@@ -9,9 +9,22 @@ import {
   Input,
   Select,
   TextArea,
+  Text,
   useToast,
 } from "../ui";
 import { useI18n } from "../../i18n";
+import { colors, spacing, borderRadius, fontSize, fontWeight, zIndex } from "../../theme";
+import { VISIT_TYPE_CONFIG, VisitTypeKey } from "../../constants/visitTypes";
+
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 export interface BookAppointmentModalProps {
   open: boolean;
@@ -48,33 +61,146 @@ export function BookAppointmentModal({
   const { t } = useI18n();
   const { error: showError } = useToast();
   const [loading, setLoading] = useState(false);
-  const [patients, setPatients] = useState<PatientResponse[]>([]);
+  const [clients, setClients] = useState<ClientResponse[]>([]);
   const [veterinarians, setVeterinarians] = useState<VeterinarianResponse[]>([]);
   const [formData, setFormData] = useState<VisitRequest>({
     patientId: "",
     visitDate: "",
     durationMinutes: 30,
+    visitType: "CONSULTATION",
     reason: "",
     veterinarianId: "",
     veterinarianName: "",
   });
 
-  // Fetch patients and veterinarians for selection
+  // Patient search state
+  const [patientSearch, setPatientSearch] = useState("");
+  const [showPatientDropdown, setShowPatientDropdown] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<PatientResponse | null>(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [filteredPatients, setFilteredPatients] = useState<PatientResponse[]>([]);
+  const patientInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Debounce search query (300ms delay)
+  const debouncedSearch = useDebounce(patientSearch, 300);
+
+  // Get client name helper - uses clients cache
+  const getClientName = useCallback((clientId: string | undefined) => {
+    if (!clientId) return '';
+    const client = clients.find(c => c.id === clientId);
+    return client ? `${client.firstName} ${client.lastName}` : '';
+  }, [clients]);
+
+  // Fetch clients for name display and veterinarians
   useEffect(() => {
     if (open) {
-      api.getPatients().then(setPatients).catch(() => { /* Silently fail */ });
+      api.getClients().then(setClients).catch(() => { /* Silently fail */ });
       api.getVeterinarians({ active: true }).then(setVeterinarians).catch(() => { /* Silently fail */ });
     }
   }, [open]);
 
-  // Set initial date/time and veterinarian when modal opens
+  // Search patients on backend when debounced search changes
+  useEffect(() => {
+    if (!open) return;
+
+    const searchPatients = async () => {
+      setSearchLoading(true);
+      try {
+        // Use backend search with 'q' parameter for diacritic-insensitive search
+        const results = await api.getPatients(undefined, debouncedSearch || undefined);
+        setFilteredPatients(results);
+      } catch {
+        setFilteredPatients([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    };
+
+    searchPatients();
+  }, [open, debouncedSearch]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        patientInputRef.current &&
+        !patientInputRef.current.contains(event.target as Node)
+      ) {
+        setShowPatientDropdown(false);
+      }
+    };
+    if (showPatientDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showPatientDropdown]);
+
+  // Handle patient selection
+  const handleSelectPatient = (patient: PatientResponse) => {
+    setSelectedPatient(patient);
+    const clientName = getClientName(patient.ownerId);
+    setFormData({
+      ...formData,
+      patientId: patient.id,
+      patientName: patient.name,
+      clientId: patient.ownerId,
+      clientName: clientName || undefined,
+    });
+    setPatientSearch(`${patient.name} (${clientName})`);
+    setShowPatientDropdown(false);
+  };
+
+  // Handle keyboard navigation
+  const handlePatientKeyDown = (e: React.KeyboardEvent) => {
+    if (!showPatientDropdown) {
+      if (e.key === "ArrowDown" || e.key === "Enter") {
+        setShowPatientDropdown(true);
+      }
+      return;
+    }
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setHighlightedIndex(prev => Math.min(prev + 1, filteredPatients.length - 1));
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setHighlightedIndex(prev => Math.max(prev - 1, 0));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (filteredPatients[highlightedIndex]) {
+          handleSelectPatient(filteredPatients[highlightedIndex]);
+        }
+        break;
+      case "Escape":
+        setShowPatientDropdown(false);
+        break;
+    }
+  };
+
+  // Reset form and patient selection when modal opens
   useEffect(() => {
     if (open) {
       const dateToUse = initialDate || new Date();
-      setFormData((prev) => ({
-        ...prev,
+      // Reset patient selection when modal opens
+      setPatientSearch("");
+      setSelectedPatient(null);
+      setFilteredPatients([]);
+      setShowPatientDropdown(false);
+      setFormData({
+        patientId: "",
         visitDate: formatDateTimeLocal(dateToUse, initialHour, initialMinute),
-      }));
+        durationMinutes: 30,
+        visitType: "CONSULTATION",
+        reason: "",
+        veterinarianId: "",
+        veterinarianName: "",
+      });
     }
   }, [open, initialDate, initialHour, initialMinute]);
 
@@ -119,6 +245,7 @@ export function BookAppointmentModal({
         patientId: "",
         visitDate: "",
         durationMinutes: 30,
+        visitType: "CONSULTATION",
         reason: "",
         veterinarianId: "",
         veterinarianName: "",
@@ -141,30 +268,137 @@ export function BookAppointmentModal({
       patientId: "",
       visitDate: "",
       durationMinutes: 30,
+      visitType: "CONSULTATION",
       reason: "",
       veterinarianId: "",
       veterinarianName: "",
     });
+    setPatientSearch("");
+    setSelectedPatient(null);
+    setShowPatientDropdown(false);
     onClose();
   };
 
+  // Get the selected veterinarian name for the title
+  const selectedVetForTitle = initialVeterinarianId
+    ? veterinarians.find(v => v.id === initialVeterinarianId)
+    : null;
+
   return (
     <Modal open={open} onClose={handleClose}>
-      <ModalTitle>{t('visits.bookAppointment')}</ModalTitle>
+      <ModalTitle>
+        {t('visits.bookAppointmentTitle')}
+        {selectedVetForTitle && (
+          <Text variant="muted" size="sm" style={{ marginTop: spacing.xs, fontWeight: fontWeight.normal }}>
+            Dr. {selectedVetForTitle.fullName}
+          </Text>
+        )}
+      </ModalTitle>
       <form onSubmit={handleSubmit}>
         <FormField label={t('visits.patient')} required>
-          <Select
-            value={formData.patientId}
-            onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
-            required
-          >
-            <option value="">{t('visits.selectPatient')}</option>
-            {patients.map((patient) => (
-              <option key={patient.id} value={patient.id}>
-                {patient.name} ({patient.species})
-              </option>
-            ))}
-          </Select>
+          <div style={{ position: 'relative' }}>
+            <Input
+              ref={patientInputRef}
+              type="text"
+              value={patientSearch}
+              onChange={(e) => {
+                setPatientSearch(e.target.value);
+                setShowPatientDropdown(true);
+                setHighlightedIndex(0);
+                // Clear selection if user types something different
+                if (selectedPatient && e.target.value !== `${selectedPatient.name} (${getClientName(selectedPatient.ownerId)})`) {
+                  setSelectedPatient(null);
+                  setFormData({ ...formData, patientId: "" });
+                }
+              }}
+              onFocus={() => setShowPatientDropdown(true)}
+              onKeyDown={handlePatientKeyDown}
+              placeholder={t('visits.searchPatientPlaceholder')}
+              style={{
+                borderColor: selectedPatient ? colors.success.main : undefined,
+              }}
+            />
+            {selectedPatient && (
+              <span
+                style={{
+                  position: 'absolute',
+                  right: spacing.sm,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: colors.success.main,
+                  fontSize: fontSize.lg,
+                }}
+              >
+                ✓
+              </span>
+            )}
+
+            {/* Dropdown */}
+            {showPatientDropdown && (
+              <div
+                ref={dropdownRef}
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: colors.neutral.white,
+                  border: `1px solid ${colors.neutral.border}`,
+                  borderRadius: borderRadius.sm,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                  zIndex: zIndex.dropdown,
+                  marginTop: '2px',
+                }}
+              >
+                {searchLoading ? (
+                  <div style={{ padding: spacing.md, textAlign: 'center' }}>
+                    <Text variant="muted" size="sm">{t('common.searching')}</Text>
+                  </div>
+                ) : filteredPatients.length === 0 ? (
+                  <div style={{ padding: spacing.md, textAlign: 'center' }}>
+                    <Text variant="muted" size="sm">{t('common.noData')}</Text>
+                  </div>
+                ) : (
+                  filteredPatients.slice(0, 50).map((patient, index) => {
+                    const clientName = getClientName(patient.ownerId);
+                    return (
+                      <div
+                        key={patient.id}
+                        onClick={() => handleSelectPatient(patient)}
+                        onMouseEnter={() => setHighlightedIndex(index)}
+                        style={{
+                          padding: spacing.sm,
+                          cursor: 'pointer',
+                          backgroundColor: index === highlightedIndex ? colors.primary.light : 'transparent',
+                          borderBottom: `1px solid ${colors.neutral.borderLight}`,
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <Text style={{ fontWeight: fontWeight.medium }}>
+                              🐾 {patient.name}
+                            </Text>
+                            <Text variant="muted" size="sm">
+                              {patient.species}{patient.breed ? ` • ${patient.breed}` : ''}
+                            </Text>
+                          </div>
+                          {clientName && (
+                            <div style={{ textAlign: 'right' }}>
+                              <Text variant="muted" size="sm">
+                                👤 {clientName}
+                              </Text>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
         </FormField>
 
         <FormField label={t('visits.dateTime')} required>
@@ -209,6 +443,19 @@ export function BookAppointmentModal({
             {veterinarians.map((vet) => (
               <option key={vet.id} value={vet.id}>
                 Dr. {vet.fullName} - {vet.specialization || t('doctors.generalPractice')}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+
+        <FormField label={t('visits.visitType')}>
+          <Select
+            value={formData.visitType || "CONSULTATION"}
+            onChange={(e) => setFormData({ ...formData, visitType: e.target.value as VisitType })}
+          >
+            {Object.entries(VISIT_TYPE_CONFIG).map(([key, config]) => (
+              <option key={key} value={key}>
+                {config.icon} {t(`visitTypes.${key}`)}
               </option>
             ))}
           </Select>

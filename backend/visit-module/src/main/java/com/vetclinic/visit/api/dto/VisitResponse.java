@@ -15,7 +15,9 @@ import com.vetclinic.visit.domain.model.VisitType;
 public record VisitResponse(
         UUID id,
         UUID patientId,
+        String patientName,
         UUID clientId,
+        String clientName,
         UUID veterinarianId,
         String veterinarianName,
         LocalDateTime visitDate,

@@ -79,4 +79,9 @@ class PatientRepositoryAdapter implements PatientRepository {
             String name, Species species, String breed, UUID ownerId, String microchipNumber) {
         return jpaRepository.search(name, species, breed, ownerId, microchipNumber);
     }
+
+    @Override
+    public List<Patient> searchByQuery(String query) {
+        return jpaRepository.searchByQuery(query);
+    }
 }

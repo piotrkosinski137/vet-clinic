@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
-import { useWaitingRoom, useConfirmDialog } from '../hooks';
-import { VisitResponse, VisitPriority } from '../api/types';
+import { useWaitingRoom, useConfirmDialog, useVisits } from '../hooks';
+import { WaitingRoomVisitResponse, VisitPriority, VisitResponse, VisitRequest, VisitStatus } from '../api/types';
+import { VisitDetailsModal } from '../components/visits';
 import {
   Button,
   Card,
@@ -62,16 +63,17 @@ function formatTime(dateString: string | undefined): string {
 }
 
 interface WaitingRoomCardProps {
-  visit: VisitResponse;
+  visit: WaitingRoomVisitResponse;
   t: (key: string, params?: Record<string, unknown>) => string;
-  onStartVisit: (visit: VisitResponse) => void;
-  onMarkNoShow: (visit: VisitResponse) => void;
-  onEditInfo: (visit: VisitResponse) => void;
+  onStartVisit: (visit: WaitingRoomVisitResponse) => void;
+  onMarkNoShow: (visit: WaitingRoomVisitResponse) => void;
+  onEditInfo: (visit: WaitingRoomVisitResponse) => void;
 }
 
 function WaitingRoomCard({ visit, t, onStartVisit, onMarkNoShow, onEditInfo }: WaitingRoomCardProps) {
   const priority = visit.priority || 'NORMAL';
   const priorityStyle = priorityColors[priority];
+  const hasDebt = visit.clientDebt > 0;
 
   return (
     <Card
@@ -84,14 +86,33 @@ function WaitingRoomCard({ visit, t, onStartVisit, onMarkNoShow, onEditInfo }: W
       hoverable
     >
       <div style={{ display: 'flex', gap: spacing.lg }}>
-        {/* Left: Patient Info */}
+        {/* Left: Patient & Client Info */}
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm }}>
             <span style={{ fontSize: fontSize.xl }}>🐾</span>
             <div>
-              <Text style={{ fontWeight: fontWeight.bold, fontSize: fontSize.lg }}>
-                {visit.patientId ? `Patient #${visit.patientId.slice(0, 8)}` : 'Unknown Patient'}
-              </Text>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+                <Text style={{ fontWeight: fontWeight.bold, fontSize: fontSize.lg }}>
+                  {visit.patientName || t('waitingRoom.unknownPatient')}
+                </Text>
+                {visit.species && (
+                  <Badge variant="secondary" style={{ fontSize: fontSize.xs }}>
+                    {visit.species}
+                  </Badge>
+                )}
+                {visit.patientLabels?.map((label) => (
+                  <Badge
+                    key={label}
+                    variant={label === 'AGGRESSIVE' ? 'error' : label === 'VIP' ? 'warning' : 'secondary'}
+                    style={{ fontSize: fontSize.xs }}
+                  >
+                    {label}
+                  </Badge>
+                ))}
+              </div>
+              {visit.breed && (
+                <Text variant="muted" size="sm">{visit.breed}</Text>
+              )}
               {visit.reason && (
                 <Text variant="muted" size="sm">
                   {visit.reason}
@@ -99,6 +120,16 @@ function WaitingRoomCard({ visit, t, onStartVisit, onMarkNoShow, onEditInfo }: W
               )}
             </div>
           </div>
+
+          {/* Client Info */}
+          {visit.clientName && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs }}>
+              <Text variant="muted" size="sm">👤 {visit.clientName}</Text>
+              {visit.clientPhone && (
+                <Text variant="muted" size="sm">📞 {visit.clientPhone}</Text>
+              )}
+            </div>
+          )}
 
           {/* Veterinarian */}
           {visit.veterinarianName && (
@@ -148,6 +179,36 @@ function WaitingRoomCard({ visit, t, onStartVisit, onMarkNoShow, onEditInfo }: W
           </Badge>
         </div>
 
+        {/* Financial Info */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: `${spacing.sm} ${spacing.md}`,
+            backgroundColor: hasDebt ? colors.danger.light : colors.success.light,
+            borderRadius: borderRadius.md,
+            minWidth: '100px',
+          }}
+        >
+          <Text size="sm" variant="muted">{t('waitingRoom.clientDebt')}</Text>
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.bold,
+              color: hasDebt ? colors.danger.main : colors.success.main
+            }}
+          >
+            {formatCurrency(visit.clientDebt || 0)}
+          </Text>
+          {hasDebt && (
+            <Badge variant="error" style={{ marginTop: spacing.xs, fontSize: fontSize.xs }}>
+              {t('waitingRoom.hasDebt')}
+            </Badge>
+          )}
+        </div>
+
         {/* Right: Actions */}
         <div
           style={{
@@ -159,10 +220,10 @@ function WaitingRoomCard({ visit, t, onStartVisit, onMarkNoShow, onEditInfo }: W
           }}
         >
           <Button variant="primary" size="sm" onClick={() => onStartVisit(visit)}>
-            ▶️ {t('waitingRoom.startVisit')}
+            {t('waitingRoom.startVisit')}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => onEditInfo(visit)}>
-            ✏️ {t('waitingRoom.updateInfo')}
+            {t('waitingRoom.updateInfo')}
           </Button>
           <Button
             variant="ghost"
@@ -170,7 +231,7 @@ function WaitingRoomCard({ visit, t, onStartVisit, onMarkNoShow, onEditInfo }: W
             onClick={() => onMarkNoShow(visit)}
             style={{ color: colors.danger.main }}
           >
-            ❌ {t('visits.markNoShow')}
+            {t('visits.markNoShow')}
           </Button>
         </div>
       </div>
@@ -195,7 +256,7 @@ function WaitingRoomCard({ visit, t, onStartVisit, onMarkNoShow, onEditInfo }: W
 }
 
 interface EditInfoModalProps {
-  visit: VisitResponse | null;
+  visit: WaitingRoomVisitResponse | null;
   open: boolean;
   onClose: () => void;
   onSave: (visitId: string, notes: string, priority: VisitPriority) => Promise<void>;
@@ -278,10 +339,13 @@ export function WaitingRoomPage() {
   const { t } = useI18n();
   const { success, error: showError } = useToast();
   const { visits, loading, error, startVisit, markNoShow, updateWaitingRoomInfo, refresh } = useWaitingRoom(true);
+  const { updateVisit, updateVisitStatus, deleteVisit } = useVisits();
   const { dialogState, showConfirm, closeDialog, handleConfirm } = useConfirmDialog();
 
   const [sortBy, setSortBy] = useState<SortOption>('priority');
-  const [editingVisit, setEditingVisit] = useState<VisitResponse | null>(null);
+  const [editingVisit, setEditingVisit] = useState<WaitingRoomVisitResponse | null>(null);
+  // State for the visit being conducted (opened after "Start Visit")
+  const [activeVisit, setActiveVisit] = useState<VisitResponse | null>(null);
 
   // Sort visits based on selected option
   const sortedVisits = useMemo(() => {
@@ -308,16 +372,71 @@ export function WaitingRoomPage() {
     }
   }, [visits, sortBy]);
 
-  const handleStartVisit = useCallback(async (visit: VisitResponse) => {
+  const handleStartVisit = useCallback(async (visit: WaitingRoomVisitResponse) => {
     try {
-      await startVisit(visit.id);
+      const visitResponse = await startVisit(visit.id);
+      // Open the visit form modal for the clinician to fill in details
+      setActiveVisit(visitResponse);
       success(t('waitingRoom.visitStarted'));
     } catch (err) {
       showError(err instanceof Error ? err.message : t('waitingRoom.failedToStart'));
     }
   }, [startVisit, success, showError, t]);
 
-  const handleMarkNoShow = useCallback((visit: VisitResponse) => {
+  // Handlers for the active visit modal
+  const handleVisitSave = useCallback(async (data: Partial<VisitRequest>) => {
+    if (!activeVisit) return;
+    try {
+      const updated = await updateVisit(activeVisit.id, {
+        ...activeVisit,
+        ...data,
+      } as VisitRequest);
+      setActiveVisit(updated);
+      success(t('visits.visitUpdated'));
+    } catch (err) {
+      showError(t('visits.failedToSave'));
+      throw err;
+    }
+  }, [activeVisit, updateVisit, success, showError, t]);
+
+  const handleVisitStatusChange = useCallback(async (status: VisitStatus) => {
+    if (!activeVisit) return;
+    try {
+      const updatedVisit = await updateVisitStatus(activeVisit.id, status);
+      success(t('visits.statusUpdated'));
+      // If completed or cancelled, close the modal and refresh waiting room
+      if (status === 'COMPLETED' || status === 'CANCELLED') {
+        setActiveVisit(null);
+        refresh();
+      } else {
+        // Update active visit with new status to reflect changes in modal
+        setActiveVisit(updatedVisit);
+        refresh();
+      }
+    } catch (err) {
+      showError(t('visits.failedToUpdateStatus'));
+      throw err;
+    }
+  }, [activeVisit, updateVisitStatus, success, showError, t, refresh]);
+
+  const handleVisitDelete = useCallback(() => {
+    if (!activeVisit) return;
+    showConfirm(
+      t('common.confirm'),
+      t('visits.confirmDelete'),
+      async () => {
+        try {
+          await deleteVisit(activeVisit.id);
+          setActiveVisit(null);
+          success(t('visits.visitDeleted'));
+        } catch (err) {
+          showError(t('visits.failedToDelete'));
+        }
+      }
+    );
+  }, [activeVisit, deleteVisit, showConfirm, success, showError, t]);
+
+  const handleMarkNoShow = useCallback((visit: WaitingRoomVisitResponse) => {
     showConfirm(
       t('visits.markNoShow'),
       t('visits.confirmMarkNoShow'),
@@ -474,6 +593,16 @@ export function WaitingRoomPage() {
         confirmLabel={t('common.confirm')}
         cancelLabel={t('common.cancel')}
         variant="danger"
+      />
+
+      {/* Visit Details Modal - opens after starting a visit */}
+      <VisitDetailsModal
+        visit={activeVisit}
+        open={!!activeVisit}
+        onClose={() => setActiveVisit(null)}
+        onSave={handleVisitSave}
+        onStatusChange={handleVisitStatusChange}
+        onDelete={handleVisitDelete}
       />
     </div>
   );

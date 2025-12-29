@@ -52,9 +52,10 @@ export function MaterialsSelector({ value, onChange, readOnly = false }: Materia
   const availableMaterials = filteredMaterials.filter(m => {
     // Already selected? Skip
     if (value.some(v => v.materialId === m.id)) return false;
-    // Out of stock? Only show if toggle is on
-    const stock = m.stockQuantity ?? 0;
-    if (stock <= 0 && !showOutOfStock) return false;
+    // Services (null stock) are always available - they don't need stock tracking
+    if (m.stockQuantity === null || m.stockQuantity === undefined) return true;
+    // Out of stock products? Only show if toggle is on
+    if (m.stockQuantity <= 0 && !showOutOfStock) return false;
     return true;
   });
 
@@ -305,9 +306,11 @@ export function MaterialsSelector({ value, onChange, readOnly = false }: Materia
                 const catInfo = CATEGORY_LABELS[material.category];
                 const margin = material.sellPrice - material.costPrice;
                 const marginPercent = ((margin / material.costPrice) * 100).toFixed(0);
+                // Services have null stock - treat as unlimited
+                const isService = material.stockQuantity === null || material.stockQuantity === undefined;
                 const stock = material.stockQuantity ?? 0;
-                const isLowStock = stock > 0 && stock <= (material.reorderPoint ?? 5);
-                const isOutOfStock = stock <= 0;
+                const isLowStock = !isService && stock > 0 && stock <= (material.reorderPoint ?? 5);
+                const isOutOfStock = !isService && stock <= 0;
 
                 return (
                   <div
@@ -337,10 +340,10 @@ export function MaterialsSelector({ value, onChange, readOnly = false }: Materia
                           {t('materials.perUnit')} {material.unit}
                         </Text>
                         <Text size="sm" style={{
-                          color: isOutOfStock ? colors.danger.main : isLowStock ? colors.warning.main : colors.success.main,
+                          color: isService ? colors.neutral.textMuted : isOutOfStock ? colors.danger.main : isLowStock ? colors.warning.main : colors.success.main,
                           fontWeight: fontWeight.medium,
                         }}>
-                          Stock: {stock} {material.unit}
+                          {isService ? 'Service (unlimited)' : `Stock: ${stock} ${material.unit}`}
                         </Text>
                       </div>
                       <div style={{ textAlign: "right" }}>

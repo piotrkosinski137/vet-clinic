@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vetclinic.visit.api.dto.CheckInRequest;
+import com.vetclinic.visit.api.dto.VisitDraftDto;
 import com.vetclinic.visit.api.dto.VisitReassignRequest;
 import com.vetclinic.visit.api.dto.VisitRequest;
 import com.vetclinic.visit.api.dto.VisitResponse;
@@ -43,6 +44,7 @@ public class VisitController {
 
     private final VisitService visitService;
     private final VisitMapper visitMapper;
+    private final VisitDraftMapper draftMapper;
 
     @PostMapping
     @PreAuthorize(CAN_MANAGE_VISITS)
@@ -232,5 +234,60 @@ public class VisitController {
     public ResponseEntity<VisitSummaryResponse> getVisitSummary(@PathVariable UUID id) {
         Visit visit = visitService.getVisit(id);
         return ResponseEntity.ok(visitMapper.toSummaryResponse(visit));
+    }
+
+    // ===== DRAFT ENDPOINTS =====
+
+    /**
+     * Save or update a draft for a visit. Called automatically by frontend every few seconds while
+     * editing.
+     */
+    @PutMapping("/{id}/draft")
+    @PreAuthorize(CAN_MANAGE_VISITS)
+    public ResponseEntity<VisitDraftDto> saveDraft(
+            @PathVariable UUID id, @RequestBody VisitDraftDto draft) {
+        // TODO: Get current user from SecurityContext
+        var currentUser = "anonymous";
+        var saved =
+                visitService.saveDraft(
+                        id,
+                        draft.visitType(),
+                        draft.interview(),
+                        draft.examination(),
+                        draft.diagnosis(),
+                        draft.treatment(),
+                        draft.recommendations(),
+                        draft.weight(),
+                        draft.temperature(),
+                        draft.nextVisitDate(),
+                        draftMapper.toUsedMaterialSnapshotList(draft.usedMaterials()),
+                        draftMapper.toMedicationSnapshotList(draft.medications()),
+                        currentUser);
+        return ResponseEntity.ok(draftMapper.toDto(saved));
+    }
+
+    /**
+     * Get existing draft for a visit. Called when opening VisitDetailsModal to restore unsaved
+     * work.
+     */
+    @GetMapping("/{id}/draft")
+    @PreAuthorize(HAS_ANY_ROLE)
+    public ResponseEntity<VisitDraftDto> getDraft(@PathVariable UUID id) {
+        return visitService
+                .getDraft(id)
+                .map(draftMapper::toDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Delete draft for a visit. Called after successful save (also done automatically by
+     * updateVisit).
+     */
+    @DeleteMapping("/{id}/draft")
+    @PreAuthorize(CAN_MANAGE_VISITS)
+    public ResponseEntity<Void> deleteDraft(@PathVariable UUID id) {
+        visitService.deleteDraft(id);
+        return ResponseEntity.noContent().build();
     }
 }

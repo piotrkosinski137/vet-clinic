@@ -40,4 +40,10 @@ public interface ClientRepository {
 
     /** Search clients by multiple criteria */
     List<Client> search(String firstName, String lastName, String email, String phone, String city);
+
+    /**
+     * Full-text search across client name, email, phone. Uses unaccent for diacritic-insensitive
+     * search.
+     */
+    List<Client> searchByQuery(String query);
 }

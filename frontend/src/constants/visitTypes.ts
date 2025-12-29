@@ -9,6 +9,11 @@ export const VISIT_TYPE_CONFIG = {
     icon: '💉',
     color: '#4CAF50',  // green
   },
+  DEWORMING: {
+    label: 'Deworming',
+    icon: '💊',
+    color: '#795548',  // brown
+  },
   LAB_WORK: {
     label: 'Lab Work',
     icon: '🧪',

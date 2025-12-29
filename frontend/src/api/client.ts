@@ -15,6 +15,8 @@ import type {
   VisitStatus,
   CheckInRequest,
   VisitPriority,
+  WaitingRoomVisitResponse,
+  VisitDraftDto,
   ApiError,
   PriceListItemRequest,
   PriceListItemResponse,
@@ -203,8 +205,11 @@ class ApiClient {
 
 
   // Patients API
-  async getPatients(ownerId?: string): Promise<PatientResponse[]> {
-    const query = ownerId ? `?ownerId=${ownerId}` : '';
+  async getPatients(ownerId?: string, q?: string): Promise<PatientResponse[]> {
+    const params = new URLSearchParams();
+    if (ownerId) params.append('ownerId', ownerId);
+    if (q) params.append('q', q);
+    const query = params.toString() ? `?${params.toString()}` : '';
     return this.request<PatientResponse[]>(`/patients${query}`);
   }
 
@@ -233,8 +238,9 @@ class ApiClient {
   }
 
   // Clients API
-  async getClients(): Promise<ClientResponse[]> {
-    return this.request<ClientResponse[]>('/clients');
+  async getClients(q?: string): Promise<ClientResponse[]> {
+    const query = q ? `?q=${encodeURIComponent(q)}` : '';
+    return this.request<ClientResponse[]>(`/clients${query}`);
   }
 
   async getClient(id: string): Promise<ClientResponse> {
@@ -348,6 +354,14 @@ class ApiClient {
     return this.request<VisitResponse[]>('/visits/waiting-room');
   }
 
+  /**
+   * Get enriched waiting room data with patient, client and financial info.
+   * This endpoint is optimized for the waiting room display.
+   */
+  async getEnrichedWaitingRoom(): Promise<WaitingRoomVisitResponse[]> {
+    return this.request<WaitingRoomVisitResponse[]>('/waiting-room');
+  }
+
   async checkIn(visitId: string, request?: CheckInRequest): Promise<VisitResponse> {
     return this.request<VisitResponse>(`/visits/${visitId}/check-in`, {
       method: 'POST',
@@ -372,6 +386,53 @@ class ApiClient {
       method: 'PATCH',
       body: JSON.stringify(request),
     });
+  }
+
+  // === Visit Draft API ===
+
+  /**
+   * Save or update a draft for a visit.
+   * Called automatically by frontend every few seconds while editing.
+   */
+  async saveVisitDraft(visitId: string, draft: VisitDraftDto): Promise<VisitDraftDto> {
+    return this.request<VisitDraftDto>(`/visits/${visitId}/draft`, {
+      method: 'PUT',
+      body: JSON.stringify(draft),
+    });
+  }
+
+  /**
+   * Get existing draft for a visit.
+   * Called when opening VisitDetailsModal to restore unsaved work.
+   */
+  async getVisitDraft(visitId: string): Promise<VisitDraftDto | null> {
+    try {
+      return await this.request<VisitDraftDto>(`/visits/${visitId}/draft`);
+    } catch (error) {
+      // 404 means no draft exists - this is normal
+      if (error instanceof ApiRequestError && error.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Delete draft for a visit.
+   * Called after successful save (also done automatically by updateVisit).
+   */
+  async deleteVisitDraft(visitId: string): Promise<void> {
+    try {
+      return await this.request<void>(`/visits/${visitId}/draft`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      // 404 is okay - draft might not exist
+      if (error instanceof ApiRequestError && error.status === 404) {
+        return;
+      }
+      throw error;
+    }
   }
 
   // Price List API

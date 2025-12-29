@@ -1,10 +1,12 @@
 package com.vetclinic.visit.domain;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -15,10 +17,15 @@ import com.vetclinic.common.constants.AppConstants;
 import com.vetclinic.common.event.DomainEventPublisher;
 import com.vetclinic.common.util.ChangeDetector;
 import com.vetclinic.common.util.DateTimeRange;
+import com.vetclinic.visit.domain.model.MedicationSnapshot;
+import com.vetclinic.visit.domain.model.UsedMaterialSnapshot;
 import com.vetclinic.visit.domain.model.Visit;
+import com.vetclinic.visit.domain.model.VisitDraft;
 import com.vetclinic.visit.domain.model.VisitPriority;
 import com.vetclinic.visit.domain.model.VisitStatus;
+import com.vetclinic.visit.domain.model.VisitType;
 import com.vetclinic.visit.domain.port.VeterinarianAvailabilityChecker;
+import com.vetclinic.visit.domain.port.VisitDraftRepository;
 import com.vetclinic.visit.domain.port.VisitRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -31,6 +38,7 @@ public class VisitService {
     private static final String ENTITY_TYPE = "Visit";
 
     private final VisitRepository visitRepository;
+    private final VisitDraftRepository draftRepository;
     private final DomainEventPublisher eventPublisher;
     private final VeterinarianAvailabilityChecker availabilityChecker;
 
@@ -85,6 +93,10 @@ public class VisitService {
         applyVisitUpdates(existing, updated);
 
         var saved = visitRepository.save(existing);
+
+        // Clean up any draft after successful save
+        draftRepository.deleteByVisitId(id);
+
         if (!changedFields.isEmpty()) {
             eventPublisher.publishUpdated(
                     ENTITY_TYPE, id, oldSnapshot, VisitSnapshot.from(saved), changedFields);
@@ -135,6 +147,12 @@ public class VisitService {
         existing.clearMedications();
         if (updated.getMedications() != null) {
             updated.getMedications().forEach(existing::addMedication);
+        }
+
+        // Update used materials - clear and re-add
+        existing.clearUsedMaterials();
+        if (updated.getUsedMaterials() != null) {
+            updated.getUsedMaterials().forEach(existing::addUsedMaterial);
         }
     }
 
@@ -432,6 +450,102 @@ public class VisitService {
                 ENTITY_TYPE, visitId, oldSnapshot, VisitSnapshot.from(saved), changedFields);
 
         return saved;
+    }
+
+    // ===== DRAFT OPERATIONS =====
+
+    /**
+     * Save or update a draft for a visit. Called automatically by frontend every few seconds while
+     * editing.
+     *
+     * @param visitId the visit ID
+     * @param visitType the visit type
+     * @param interview interview notes
+     * @param examination examination notes
+     * @param diagnosis diagnosis notes
+     * @param treatment treatment notes
+     * @param recommendations recommendations
+     * @param weight patient weight
+     * @param temperature patient temperature
+     * @param nextVisitDate next visit date
+     * @param usedMaterials list of used materials
+     * @param medications list of medications
+     * @param currentUser the user saving the draft
+     * @return the saved draft
+     * @throws IllegalStateException if the visit is COMPLETED or CANCELLED
+     */
+    @Transactional
+    public VisitDraft saveDraft(
+            UUID visitId,
+            VisitType visitType,
+            String interview,
+            String examination,
+            String diagnosis,
+            String treatment,
+            String recommendations,
+            Double weight,
+            Double temperature,
+            LocalDate nextVisitDate,
+            List<UsedMaterialSnapshot> usedMaterials,
+            List<MedicationSnapshot> medications,
+            String currentUser) {
+
+        // Verify visit exists and is editable
+        var visit = getVisit(visitId);
+        if (visit.getStatus() == VisitStatus.COMPLETED
+                || visit.getStatus() == VisitStatus.CANCELLED) {
+            throw new IllegalStateException(
+                    "Cannot save draft for " + visit.getStatus() + " visit");
+        }
+
+        // Upsert draft (find existing or create new)
+        var draft =
+                draftRepository
+                        .findByVisitId(visitId)
+                        .orElseGet(
+                                () -> {
+                                    var newDraft = new VisitDraft();
+                                    newDraft.setVisitId(visitId);
+                                    newDraft.setClinicId(visit.getClinicId());
+                                    return newDraft;
+                                });
+
+        // Update draft fields
+        draft.setVisitType(visitType);
+        draft.setInterview(interview);
+        draft.setExamination(examination);
+        draft.setDiagnosis(diagnosis);
+        draft.setTreatment(treatment);
+        draft.setRecommendations(recommendations);
+        draft.setWeight(weight);
+        draft.setTemperature(temperature);
+        draft.setNextVisitDate(nextVisitDate);
+        draft.setUsedMaterials(usedMaterials);
+        draft.setMedications(medications);
+        draft.setSavedAt(Instant.now());
+        draft.setSavedBy(currentUser);
+
+        return draftRepository.save(draft);
+    }
+
+    /**
+     * Get existing draft for a visit.
+     *
+     * @param visitId the visit ID
+     * @return the draft if it exists
+     */
+    public Optional<VisitDraft> getDraft(UUID visitId) {
+        return draftRepository.findByVisitId(visitId);
+    }
+
+    /**
+     * Delete draft for a visit.
+     *
+     * @param visitId the visit ID
+     */
+    @Transactional
+    public void deleteDraft(UUID visitId) {
+        draftRepository.deleteByVisitId(visitId);
     }
 
     /** Validate that a visit does not conflict with existing appointments for the veterinarian. */

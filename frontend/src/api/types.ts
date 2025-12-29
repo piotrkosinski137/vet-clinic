@@ -95,7 +95,7 @@ export type VisitStatus = 'SCHEDULED' | 'CHECKED_IN' | 'IN_PROGRESS' | 'COMPLETE
 
 export type VisitPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
 
-export type VisitType = 'CONSULTATION' | 'VACCINATION' | 'LAB_WORK' | 'ULTRASOUND' | 'CARDIOLOGY' | 'SURGERY' | 'DENTAL' | 'GROOMING' | 'EMERGENCY' | 'FOLLOW_UP' | 'CHECKUP';
+export type VisitType = 'CONSULTATION' | 'VACCINATION' | 'DEWORMING' | 'LAB_WORK' | 'ULTRASOUND' | 'CARDIOLOGY' | 'SURGERY' | 'DENTAL' | 'GROOMING' | 'EMERGENCY' | 'FOLLOW_UP' | 'CHECKUP';
 
 export interface MedicationDto {
   medicationName: string;
@@ -116,7 +116,9 @@ export interface UsedMaterialDto {
 
 export interface VisitRequest {
   patientId: string;
+  patientName?: string;
   clientId?: string;
+  clientName?: string;
   veterinarianId?: string;
   veterinarianName?: string;
   visitDate: string; // ISO datetime
@@ -143,7 +145,9 @@ export interface VisitRequest {
 export interface VisitResponse {
   id: string;
   patientId: string;
+  patientName?: string;
   clientId?: string;
+  clientName?: string;
   veterinarianId?: string;
   veterinarianName?: string;
   visitDate: string;
@@ -611,4 +615,22 @@ export interface PaymentResponse {
   transactionReference?: string;
   notes?: string;
   createdAt: string;
+}
+
+// Visit Draft Types (auto-save functionality)
+export interface VisitDraftDto {
+  visitType?: VisitType;
+  interview?: string;
+  examination?: string;
+  diagnosis?: string;
+  treatment?: string;
+  recommendations?: string;
+  weight?: number;
+  temperature?: number;
+  nextVisitDate?: string;
+  usedMaterials?: UsedMaterialDto[];
+  medications?: MedicationDto[];
+  // Read-only metadata from server
+  savedAt?: string;
+  savedBy?: string;
 }

@@ -44,8 +44,16 @@ public class Visit extends TenantAwareEntity {
     @Column(name = "patient_id", nullable = false)
     private UUID patientId;
 
+    @Size(max = 200, message = "Patient name must not exceed 200 characters")
+    @Column(name = "patient_name")
+    private String patientName;
+
     @Column(name = "client_id")
     private UUID clientId;
+
+    @Size(max = 200, message = "Client name must not exceed 200 characters")
+    @Column(name = "client_name")
+    private String clientName;
 
     @Column(name = "veterinarian_id")
     private UUID veterinarianId;

@@ -55,9 +55,25 @@ export const formatWeight = (weight: number | null | undefined): string => {
 };
 
 /**
- * Formats temperature with unit.
+ * Formats temperature with unit (1 decimal place).
  */
 export const formatTemperature = (temp: number | null | undefined): string => {
   if (temp == null) return '';
-  return temp.toFixed(1) + ' C';
+  return temp.toFixed(1) + '°C';
+};
+
+/**
+ * Formats weight for display (2 decimal places).
+ */
+export const formatWeightDisplay = (weight: number | null | undefined): string => {
+  if (weight == null) return '-';
+  return weight.toFixed(2) + ' kg';
+};
+
+/**
+ * Formats temperature for display (1 decimal place).
+ */
+export const formatTemperatureDisplay = (temp: number | null | undefined): string => {
+  if (temp == null) return '-';
+  return temp.toFixed(1) + '°C';
 };

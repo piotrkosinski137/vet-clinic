@@ -106,7 +106,19 @@ export function PaymentsPage() {
     if (statusFilter) {
       result = result.filter(inv => inv.status === statusFilter);
     }
-    return result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Sort: unpaid first (OVERDUE, ISSUED), then by date
+    const statusPriority: Record<InvoiceStatus, number> = {
+      OVERDUE: 0,
+      ISSUED: 1,
+      DRAFT: 2,
+      PAID: 3,
+      CANCELLED: 4,
+    };
+    return result.sort((a, b) => {
+      const priorityDiff = statusPriority[a.status] - statusPriority[b.status];
+      if (priorityDiff !== 0) return priorityDiff;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   }, [invoices, statusFilter]);
 
   const paginatedInvoices = useMemo(() => {

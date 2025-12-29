@@ -38,4 +38,22 @@ public interface JpaClientRepository extends JpaRepository<Client, UUID> {
             @Param("email") String email,
             @Param("phone") String phone,
             @Param("city") String city);
+
+    /**
+     * Full-text search across client name, email, phone. Uses unaccent for diacritic-insensitive
+     * search (e.g., "Wozniak" finds "Woźniak").
+     */
+    @Query(
+            value =
+                    """
+            SELECT c.* FROM clients c
+            WHERE unaccent(lower(c.first_name)) LIKE unaccent(lower(concat('%', :query, '%')))
+               OR unaccent(lower(c.last_name)) LIKE unaccent(lower(concat('%', :query, '%')))
+               OR unaccent(lower(concat(c.first_name, ' ', c.last_name))) LIKE unaccent(lower(concat('%', :query, '%')))
+               OR unaccent(lower(COALESCE(c.email, ''))) LIKE unaccent(lower(concat('%', :query, '%')))
+               OR COALESCE(c.phone, '') LIKE concat('%', :query, '%')
+            ORDER BY c.last_name, c.first_name
+            """,
+            nativeQuery = true)
+    List<Client> searchByQuery(@Param("query") String query);
 }

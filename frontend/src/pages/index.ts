@@ -13,3 +13,4 @@ export { AuditPage } from './AuditPage';
 export { ConsentsPage } from './ConsentsPage';
 export { CertificatesPage } from './CertificatesPage';
 export { PaymentsPage } from './PaymentsPage';
+export { VisitDetailsPage } from './VisitDetailsPage';

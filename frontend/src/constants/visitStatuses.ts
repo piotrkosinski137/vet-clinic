@@ -14,6 +14,11 @@ export const VISIT_STATUS_CONFIG: Record<
     color: colors.primary.main,
     bg: colors.primary.light,
   },
+  CHECKED_IN: {
+    label: 'Checked In',
+    color: '#7B1FA2',
+    bg: '#F3E5F5',
+  },
   IN_PROGRESS: {
     label: 'In Progress',
     color: colors.warning.main,
@@ -28,6 +33,11 @@ export const VISIT_STATUS_CONFIG: Record<
     label: 'Cancelled',
     color: colors.neutral.textMuted,
     bg: colors.neutral.border,
+  },
+  NO_SHOW: {
+    label: 'No Show',
+    color: colors.danger.main,
+    bg: colors.danger.light,
   },
 };
 

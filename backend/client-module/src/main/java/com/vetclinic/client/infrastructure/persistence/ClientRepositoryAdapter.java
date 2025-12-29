@@ -79,4 +79,9 @@ class ClientRepositoryAdapter implements ClientRepository {
             String firstName, String lastName, String email, String phone, String city) {
         return jpaRepository.search(firstName, lastName, email, phone, city);
     }
+
+    @Override
+    public List<Client> searchByQuery(String query) {
+        return jpaRepository.searchByQuery(query);
+    }
 }

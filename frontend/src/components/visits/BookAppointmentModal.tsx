@@ -12,19 +12,10 @@ import {
   Text,
   useToast,
 } from "../ui";
+import { useDebounce } from "../../hooks";
 import { useI18n } from "../../i18n";
 import { colors, spacing, borderRadius, fontSize, fontWeight, zIndex } from "../../theme";
-import { VISIT_TYPE_CONFIG, VisitTypeKey } from "../../constants/visitTypes";
-
-// Debounce hook
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-  return debouncedValue;
-}
+import { VISIT_TYPE_CONFIG } from "../../constants/visitTypes";
 
 export interface BookAppointmentModalProps {
   open: boolean;
@@ -111,8 +102,12 @@ export function BookAppointmentModal({
   // Fetch clients for name display and veterinarians
   useEffect(() => {
     if (open) {
-      api.getClients().then(setClients).catch(() => { /* Silently fail */ });
-      api.getVeterinarians({ active: true }).then(setVeterinarians).catch(() => { /* Silently fail */ });
+      api.getClients().then(setClients).catch((err) => {
+        console.error('Failed to load clients:', err);
+      });
+      api.getVeterinarians({ active: true }).then(setVeterinarians).catch((err) => {
+        console.error('Failed to load veterinarians:', err);
+      });
     }
   }, [open]);
 

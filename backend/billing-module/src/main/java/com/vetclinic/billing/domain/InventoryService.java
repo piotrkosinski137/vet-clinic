@@ -109,7 +109,7 @@ public class InventoryService {
     public SupplierInvoice processInvoice(UUID invoiceId) {
         log.info("Processing invoice: {}", invoiceId);
 
-        SupplierInvoice invoice =
+        var invoice =
                 invoiceRepository
                         .findById(invoiceId)
                         .orElseThrow(
@@ -124,70 +124,12 @@ public class InventoryService {
 
         try {
             for (SupplierInvoiceItem item : invoice.getItems()) {
-                PriceListItem priceListItem;
-
-                if (item.getItemId() != null) {
-                    // Item matched to existing price list item - update stock
-                    priceListItem =
-                            priceListRepository
-                                    .findById(item.getItemId())
-                                    .orElseThrow(
-                                            () ->
-                                                    new PriceListItemNotFoundException(
-                                                            item.getItemId()));
-                    log.info(
-                            "Updating stock for existing item: {} ({})",
-                            priceListItem.getName(),
-                            priceListItem.getId());
-                } else {
-                    // Item not matched - create new price list item
-                    priceListItem = createPriceListItem(item);
-                    priceListItem = priceListRepository.save(priceListItem);
-                    item.setItemId(priceListItem.getId());
-                    log.info(
-                            "Created new price list item: {} ({})",
-                            priceListItem.getName(),
-                            priceListItem.getId());
-                }
-
-                // Update stock quantity
-                int quantityBefore = priceListItem.getStockQuantity();
-                int quantityAfter = quantityBefore + item.getQuantity();
-                priceListItem.setStockQuantity(quantityAfter);
-
-                // Update batch and expiration if provided
-                if (item.getBatchNumber() != null) {
-                    priceListItem.setBatchNumber(item.getBatchNumber());
-                }
-                if (item.getExpirationDate() != null) {
-                    priceListItem.setExpirationDate(item.getExpirationDate());
-                }
-
-                priceListRepository.save(priceListItem);
-
-                // Create RECEIPT transaction
-                createTransaction(
-                        TransactionRequest.builder()
-                                .itemId(priceListItem.getId())
-                                .type(TransactionType.RECEIPT)
-                                .quantity(item.getQuantity())
-                                .quantityBefore(quantityBefore)
-                                .quantityAfter(quantityAfter)
-                                .referenceId(invoiceId)
-                                .referenceType("SUPPLIER_INVOICE")
-                                .batchNumber(item.getBatchNumber())
-                                .expirationDate(item.getExpirationDate())
-                                .unitCost(item.getNetPrice())
-                                .notes(
-                                        "Receipt from supplier invoice: "
-                                                + invoice.getInvoiceNumber())
-                                .build());
+                processInvoiceItem(item, invoiceId, invoice.getInvoiceNumber());
             }
 
-            // Update invoice status
             invoice.setStatus(SupplierInvoiceStatus.PROCESSED);
             invoice.setProcessedAt(LocalDateTime.now());
-            SupplierInvoice processedInvoice = invoiceRepository.save(invoice);
+            var processedInvoice = invoiceRepository.save(invoice);
 
             log.info(
                     "Invoice {} processed successfully, {} items added to stock",
@@ -202,6 +144,81 @@ public class InventoryService {
             invoiceRepository.save(invoice);
             throw new InvoiceProcessingException("Failed to process invoice: " + e.getMessage(), e);
         }
+    }
+
+    /** Process a single invoice item - update or create price list item and record transaction. */
+    private void processInvoiceItem(
+            SupplierInvoiceItem item, UUID invoiceId, String invoiceNumber) {
+        var priceListItem = resolveOrCreatePriceListItem(item);
+
+        int quantityBefore = priceListItem.getStockQuantity();
+        int quantityAfter = quantityBefore + item.getQuantity();
+        priceListItem.setStockQuantity(quantityAfter);
+
+        updateBatchAndExpiration(priceListItem, item);
+        priceListRepository.save(priceListItem);
+
+        createReceiptTransaction(
+                priceListItem, item, invoiceId, invoiceNumber, quantityBefore, quantityAfter);
+    }
+
+    /** Resolve existing price list item or create a new one from invoice item. */
+    private PriceListItem resolveOrCreatePriceListItem(SupplierInvoiceItem item) {
+        if (item.getItemId() != null) {
+            var priceListItem =
+                    priceListRepository
+                            .findById(item.getItemId())
+                            .orElseThrow(
+                                    () -> new PriceListItemNotFoundException(item.getItemId()));
+            log.info(
+                    "Updating stock for existing item: {} ({})",
+                    priceListItem.getName(),
+                    priceListItem.getId());
+            return priceListItem;
+        } else {
+            var priceListItem = createPriceListItem(item);
+            priceListItem = priceListRepository.save(priceListItem);
+            item.setItemId(priceListItem.getId());
+            log.info(
+                    "Created new price list item: {} ({})",
+                    priceListItem.getName(),
+                    priceListItem.getId());
+            return priceListItem;
+        }
+    }
+
+    /** Update batch number and expiration date if provided. */
+    private void updateBatchAndExpiration(PriceListItem priceListItem, SupplierInvoiceItem item) {
+        if (item.getBatchNumber() != null) {
+            priceListItem.setBatchNumber(item.getBatchNumber());
+        }
+        if (item.getExpirationDate() != null) {
+            priceListItem.setExpirationDate(item.getExpirationDate());
+        }
+    }
+
+    /** Create a RECEIPT transaction for stock addition. */
+    private void createReceiptTransaction(
+            PriceListItem priceListItem,
+            SupplierInvoiceItem item,
+            UUID invoiceId,
+            String invoiceNumber,
+            int quantityBefore,
+            int quantityAfter) {
+        createTransaction(
+                TransactionRequest.builder()
+                        .itemId(priceListItem.getId())
+                        .type(TransactionType.RECEIPT)
+                        .quantity(item.getQuantity())
+                        .quantityBefore(quantityBefore)
+                        .quantityAfter(quantityAfter)
+                        .referenceId(invoiceId)
+                        .referenceType("SUPPLIER_INVOICE")
+                        .batchNumber(item.getBatchNumber())
+                        .expirationDate(item.getExpirationDate())
+                        .unitCost(item.getNetPrice())
+                        .notes("Receipt from supplier invoice: " + invoiceNumber)
+                        .build());
     }
 
     /**

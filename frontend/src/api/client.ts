@@ -14,7 +14,6 @@ import type {
   VisitFilters,
   VisitStatus,
   CheckInRequest,
-  VisitPriority,
   WaitingRoomVisitResponse,
   VisitDraftDto,
   ApiError,

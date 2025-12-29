@@ -40,7 +40,7 @@ const priorityOrder: Record<VisitPriority, number> = {
   LOW: 3,
 };
 
-function formatWaitingTime(checkedInAt: string | undefined, t: (key: string, params?: Record<string, unknown>) => string): string {
+function formatWaitingTime(checkedInAt: string | undefined, t: (key: string, params?: Record<string, string | number>) => string): string {
   if (!checkedInAt) return '-';
 
   const checkedIn = new Date(checkedInAt);
@@ -64,7 +64,7 @@ function formatTime(dateString: string | undefined): string {
 
 interface WaitingRoomCardProps {
   visit: WaitingRoomVisitResponse;
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
   onStartVisit: (visit: WaitingRoomVisitResponse) => void;
   onMarkNoShow: (visit: WaitingRoomVisitResponse) => void;
   onEditInfo: (visit: WaitingRoomVisitResponse) => void;
@@ -103,7 +103,7 @@ function WaitingRoomCard({ visit, t, onStartVisit, onMarkNoShow, onEditInfo }: W
                 {visit.patientLabels?.map((label) => (
                   <Badge
                     key={label}
-                    variant={label === 'AGGRESSIVE' ? 'error' : label === 'VIP' ? 'warning' : 'secondary'}
+                    variant={label === 'AGGRESSIVE' ? 'danger' : label === 'VIP' ? 'warning' : 'secondary'}
                     style={{ fontSize: fontSize.xs }}
                   >
                     {label}
@@ -172,7 +172,7 @@ function WaitingRoomCard({ visit, t, onStartVisit, onMarkNoShow, onEditInfo }: W
             {formatWaitingTime(visit.checkedInAt, t)}
           </Text>
           <Badge
-            variant={priority === 'URGENT' ? 'error' : priority === 'HIGH' ? 'warning' : priority === 'LOW' ? 'secondary' : 'primary'}
+            variant={priority === 'URGENT' ? 'danger' : priority === 'HIGH' ? 'warning' : priority === 'LOW' ? 'secondary' : 'primary'}
             style={{ marginTop: spacing.xs }}
           >
             {t(`waitingRoom.priorities.${priority}`)}
@@ -203,7 +203,7 @@ function WaitingRoomCard({ visit, t, onStartVisit, onMarkNoShow, onEditInfo }: W
             {formatCurrency(visit.clientDebt || 0)}
           </Text>
           {hasDebt && (
-            <Badge variant="error" style={{ marginTop: spacing.xs, fontSize: fontSize.xs }}>
+            <Badge variant="danger" style={{ marginTop: spacing.xs, fontSize: fontSize.xs }}>
               {t('waitingRoom.hasDebt')}
             </Badge>
           )}
@@ -511,7 +511,7 @@ export function WaitingRoomPage() {
                 const count = visits.filter((v) => (v.priority || 'NORMAL') === p).length;
                 if (count === 0) return null;
                 return (
-                  <Badge key={p} variant={p === 'URGENT' ? 'error' : p === 'HIGH' ? 'warning' : p === 'LOW' ? 'secondary' : 'primary'}>
+                  <Badge key={p} variant={p === 'URGENT' ? 'danger' : p === 'HIGH' ? 'warning' : p === 'LOW' ? 'secondary' : 'primary'}>
                     {t(`waitingRoom.priorities.${p}`)}: {count}
                   </Badge>
                 );

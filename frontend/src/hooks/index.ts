@@ -1,3 +1,4 @@
+export { useDebounce } from './useDebounce';
 export { useCrud, type CrudConfig, type UseCrudResult } from './useCrud';
 export { usePatients } from './usePatients';
 export { useClients } from './useClients';

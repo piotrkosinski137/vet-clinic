@@ -178,7 +178,9 @@
     "patientNotFound": "Patient not found",
     "certificates": "Certificates",
     "noCertificates": "No certificates",
-    "diagnosis": "Diagnosis"
+    "diagnosis": "Diagnosis",
+    "selectOwner": "Select owner...",
+    "ownerRequired": "Owner is required"
   },
   "clients": {
     "title": "Clients",

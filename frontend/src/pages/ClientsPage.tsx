@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useClients, useConfirmDialog } from '../hooks';
+import { useClients, useConfirmDialog, useDebounce } from '../hooks';
 import {
   ClientRequest,
   ClientResponse,
@@ -11,16 +11,6 @@ import {
   PatientLabel,
   api,
 } from '../api';
-
-// Debounce hook for search
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-  return debouncedValue;
-}
 import {
   Button,
   Card,
@@ -109,7 +99,9 @@ export function ClientsPage() {
         setAllPatients(patientsData);
         setAllConsents(consentsData);
       })
-      .catch(() => { /* Silently fail - data will be empty */ })
+      .catch((err) => {
+        console.error('Failed to load patients/consents for search:', err);
+      })
       .finally(() => setLoadingAllPatients(false));
   }, []);
 

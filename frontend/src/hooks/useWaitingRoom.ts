@@ -19,7 +19,7 @@ export function useWaitingRoom(autoRefresh = true): UseWaitingRoom {
   const [visits, setVisits] = useState<WaitingRoomVisitResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchWaitingRoom = useCallback(async () => {
     try {

@@ -3,6 +3,7 @@ import { colors, spacing } from '../../theme';
 
 export interface PageHeaderProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   title: ReactNode;
+  subtitle?: ReactNode;
   actions?: ReactNode;
 }
 
@@ -11,7 +12,7 @@ export interface PageHeaderProps extends Omit<HTMLAttributes<HTMLDivElement>, 't
  * Use this at the top of each page for consistent layout.
  */
 export const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(
-  ({ title, actions, style, ...props }, ref) => {
+  ({ title, subtitle, actions, style, ...props }, ref) => {
     return (
       <div
         ref={ref}
@@ -24,7 +25,10 @@ export const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(
         }}
         {...props}
       >
-        <h1 style={{ margin: 0, color: colors.secondary.main }}>{title}</h1>
+        <div>
+          <h1 style={{ margin: 0, color: colors.secondary.main }}>{title}</h1>
+          {subtitle && <p style={{ margin: `${spacing.xs} 0 0 0`, color: colors.neutral.textMuted }}>{subtitle}</p>}
+        </div>
         {actions && <div style={{ display: 'flex', gap: spacing.sm }}>{actions}</div>}
       </div>
     );

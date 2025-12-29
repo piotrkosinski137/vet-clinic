@@ -1,17 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usePatients, useConfirmDialog } from '../hooks';
-import { PatientRequest, PatientResponse, PatientLabel, api } from '../api';
-
-// Debounce hook for search
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-  return debouncedValue;
-}
+import { usePatients, useConfirmDialog, useDebounce } from '../hooks';
+import { PatientRequest, PatientResponse, PatientLabel, ClientResponse, api } from '../api';
 import {
   Button,
   Card,
@@ -61,7 +51,12 @@ export function PatientsPage() {
     neutered: false,
     notes: '',
     labels: [],
+    ownerId: '',
   });
+
+  // Clients for dropdown
+  const [clients, setClients] = useState<ClientResponse[]>([]);
+  const [clientsLoading, setClientsLoading] = useState(false);
 
   // Breed management
   const [availableBreeds, setAvailableBreeds] = useState<readonly string[]>([]);
@@ -75,6 +70,22 @@ export function PatientsPage() {
 
   // Debounced search for backend queries
   const debouncedSearch = useDebounce(searchQuery, 300);
+
+  // Load clients on mount
+  useEffect(() => {
+    const loadClients = async () => {
+      setClientsLoading(true);
+      try {
+        const data = await api.getClients();
+        setClients(data);
+      } catch (err) {
+        console.error('Failed to load clients:', err);
+      } finally {
+        setClientsLoading(false);
+      }
+    };
+    loadClients();
+  }, []);
 
   // Update available breeds when species changes
   useEffect(() => {
@@ -113,7 +124,7 @@ export function PatientsPage() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', species: 'DOG', breed: '', gender: 'UNKNOWN', neutered: false, notes: '', labels: [] });
+    setFormData({ name: '', species: 'DOG', breed: '', gender: 'UNKNOWN', neutered: false, notes: '', labels: [], ownerId: '' });
     setCustomBreed('');
     setEditingPatient(null);
   };
@@ -137,6 +148,7 @@ export function PatientsPage() {
       neutered: patient.neutered || false,
       notes: patient.notes || '',
       labels: patient.labels || [],
+      ownerId: patient.ownerId || '',
     });
     setCustomBreed(isCustomBreed ? breedValue : '');
     setShowForm(true);
@@ -150,6 +162,12 @@ export function PatientsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+
+    // Validate owner is selected for new patients
+    if (!editingPatient && !formData.ownerId) {
+      showError(t('patients.ownerRequired'));
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -250,6 +268,22 @@ export function PatientsPage() {
             <Text size="sm" style={{ fontWeight: fontWeight.semibold, marginBottom: spacing.sm, color: colors.primary.hover }}>
               {t('patients.basicInfo')}
             </Text>
+            {/* Owner selection - required for new patients */}
+            <FormField label={t('patients.owner')} required={!editingPatient}>
+              <Select
+                value={formData.ownerId || ''}
+                onChange={(e) => setFormData({ ...formData, ownerId: e.target.value })}
+                required={!editingPatient}
+                disabled={clientsLoading}
+              >
+                <option value="">{clientsLoading ? '...' : t('patients.selectOwner')}</option>
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.firstName} {client.lastName} {client.phone ? `(${client.phone})` : ''}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
             <FormField label={t('patients.name')} required>
               <Input
                 type="text"

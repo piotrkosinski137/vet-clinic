@@ -178,7 +178,9 @@
     "patientNotFound": "Nie znaleziono pacjenta",
     "certificates": "Certyfikaty",
     "noCertificates": "Brak certyfikatów",
-    "diagnosis": "Diagnoza"
+    "diagnosis": "Diagnoza",
+    "selectOwner": "Wybierz właściciela...",
+    "ownerRequired": "Właściciel jest wymagany"
   },
   "clients": {
     "title": "Klienci",

@@ -31,13 +31,13 @@ const statusTranslationKeys: Record<VisitStatus, string> = {
   NO_SHOW: 'visits.noShow',
 };
 
-const statusVariants: Record<VisitStatus, 'primary' | 'warning' | 'success' | 'secondary' | 'error'> = {
+const statusVariants: Record<VisitStatus, 'primary' | 'warning' | 'success' | 'secondary' | 'danger'> = {
   SCHEDULED: 'primary',
   CHECKED_IN: 'secondary',  // Purple badge
   IN_PROGRESS: 'warning',   // Orange badge
   COMPLETED: 'success',
   CANCELLED: 'secondary',
-  NO_SHOW: 'error',
+  NO_SHOW: 'danger',
 };
 
 function formatTime(dateString: string, language: string): string {

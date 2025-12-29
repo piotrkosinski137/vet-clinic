@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.vetclinic.billing.domain.ClientDebtService;
 import com.vetclinic.client.domain.ClientService;
 import com.vetclinic.client.domain.model.Client;
+import com.vetclinic.common.exception.ResourceNotFoundException;
+import com.vetclinic.common.tenant.TenantAccessDeniedException;
 import com.vetclinic.patient.domain.PatientService;
 import com.vetclinic.patient.domain.model.Patient;
 import com.vetclinic.visit.api.dto.WaitingRoomVisitResponse;
@@ -89,8 +91,11 @@ public class WaitingRoomFacadeService {
         }
         try {
             return patientService.getPatient(patientId);
-        } catch (Exception e) {
-            log.warn("Failed to fetch patient {}: {}", patientId, e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            log.warn("Patient not found {}: {}", patientId, e.getMessage());
+            return null;
+        } catch (TenantAccessDeniedException e) {
+            log.warn("Access denied to patient {}: {}", patientId, e.getMessage());
             return null;
         }
     }
@@ -101,8 +106,11 @@ public class WaitingRoomFacadeService {
         }
         try {
             return clientService.getClient(clientId);
-        } catch (Exception e) {
-            log.warn("Failed to fetch client {}: {}", clientId, e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            log.warn("Client not found {}: {}", clientId, e.getMessage());
+            return null;
+        } catch (TenantAccessDeniedException e) {
+            log.warn("Access denied to client {}: {}", clientId, e.getMessage());
             return null;
         }
     }
@@ -114,8 +122,11 @@ public class WaitingRoomFacadeService {
         try {
             var debtSummary = clientDebtService.calculateClientDebt(clientId);
             return debtSummary.totalOutstanding();
-        } catch (Exception e) {
-            log.warn("Failed to calculate debt for client {}: {}", clientId, e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            log.warn("Client not found for debt calculation {}: {}", clientId, e.getMessage());
+            return BigDecimal.ZERO;
+        } catch (TenantAccessDeniedException e) {
+            log.warn("Access denied to client debt {}: {}", clientId, e.getMessage());
             return BigDecimal.ZERO;
         }
     }

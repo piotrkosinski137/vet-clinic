@@ -136,7 +136,6 @@ export function VisitDetailsModal({
 }: VisitDetailsModalProps) {
   const { t } = useI18n();
   const [isSaving, setIsSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState('interview');
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -204,7 +203,6 @@ export function VisitDetailsModal({
               nextVisitDate: draft.nextVisitDate ?? visit.nextVisitDate,
               usedMaterials: draft.usedMaterials ?? visit.usedMaterials ?? [],
             });
-            setHasChanges(true); // Mark as changed since draft differs from saved
             setDraftRestored(true);
           } else {
             // No draft - use visit data
@@ -220,7 +218,6 @@ export function VisitDetailsModal({
               nextVisitDate: visit.nextVisitDate,
               usedMaterials: visit.usedMaterials || [],
             });
-            setHasChanges(false);
           }
           setIsLoadingDraft(false);
         });
@@ -238,7 +235,6 @@ export function VisitDetailsModal({
           nextVisitDate: visit.nextVisitDate,
           usedMaterials: visit.usedMaterials || [],
         });
-        setHasChanges(false);
         setIsLoadingDraft(false);
       }
     }
@@ -248,7 +244,6 @@ export function VisitDetailsModal({
   useEffect(() => {
     if (!open) {
       setActiveTab('interview');
-      setHasChanges(false);
       setDraftRestored(false);
       clearPending();
       setPatient(null);
@@ -299,7 +294,6 @@ export function VisitDetailsModal({
       }
       return newData;
     });
-    setHasChanges(true);
   }, [saveDraft, createDraftDto, visit?.status]);
 
   if (!visit) return null;
@@ -309,25 +303,12 @@ export function VisitDetailsModal({
   const visitTypeInfo = getVisitTypeInfo(visit.visitType || 'CONSULTATION');
   const statusConfig = getVisitStatusConfig(visit.status);
 
-  const handleSave = async () => {
-    if (!hasChanges) return;
-    setIsSaving(true);
-    try {
-      await onSave(formData);
-      setHasChanges(false);
-      clearPending(); // Clear any pending draft save since data is now committed
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   // Save data first, then change status to COMPLETED
   const handleCompleteVisit = async () => {
     setIsSaving(true);
     try {
       // Always save current form data before completing
       await onSave(formData);
-      setHasChanges(false);
       clearPending(); // Clear any pending draft save
       // Then change status to COMPLETED
       await onStatusChange('COMPLETED');

@@ -72,7 +72,11 @@
       "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend\\\\visit-module''; ..\\\\mvnw.cmd clean install -DskipTests -q\")",
       "WebFetch(domain:www.klinikaxp.pl)",
       "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend''; .\\\\mvnw.cmd spotless:apply -DskipTests\")",
-      "Bash(powershell.exe -Command \"Start-Sleep -Seconds 50; Get-Content ''C:\\\\Users\\\\piotr\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-piotr-IdeaProjects-drag-n-drop-klinikaxp\\\\tasks\\\\b79b04c.output'' -Tail 20\")"
+      "Bash(powershell.exe -Command \"Start-Sleep -Seconds 50; Get-Content ''C:\\\\Users\\\\piotr\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-piotr-IdeaProjects-drag-n-drop-klinikaxp\\\\tasks\\\\b79b04c.output'' -Tail 20\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend''; .\\\\mvnw.cmd test\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\frontend''; npm run build 2>&1 | Select-Object -Last 30\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\frontend''; npm run build 2>&1\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\frontend''; npm run build 2>&1 | Select-Object -Last 20\")"
     ],
     "defaultMode": "acceptEdits"
   }

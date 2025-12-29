@@ -840,6 +840,49 @@ class ApiClient {
   async getDashboardStats(): Promise<DashboardStatsResponse> {
     return this.request<DashboardStatsResponse>('/dashboard/stats');
   }
+
+  // === PDF Generation API ===
+
+  /**
+   * Download visit summary as PDF.
+   * @param visitId - The visit ID
+   * @param lang - Language code ('pl' or 'en')
+   */
+  async downloadVisitPdf(visitId: string, lang: 'pl' | 'en' = 'pl'): Promise<void> {
+    const url = `${API_BASE}/visits/${visitId}/pdf?lang=${lang}`;
+    const token = localStorage.getItem(TOKEN_KEYS.ACCESS);
+
+    const response = await fetch(url, {
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+
+    if (!response.ok) {
+      throw new ApiRequestError(`Failed to download PDF: ${response.statusText}`, response.status);
+    }
+
+    // Extract filename from Content-Disposition header if available
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = `visit-summary-${visitId}.pdf`;
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
+      if (match) {
+        filename = match[1];
+      }
+    }
+
+    // Create blob and trigger download
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  }
 }
 
 export const api = new ApiClient();

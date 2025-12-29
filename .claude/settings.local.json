@@ -69,7 +69,10 @@
       "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend''; .\\\\mvnw.cmd spotless:apply -q\")",
       "Bash(powershell.exe -Command \"Get-Process -Name java -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 3\")",
       "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend''; .\\\\mvnw.cmd clean compile -DskipTests -q\")",
-      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend\\\\visit-module''; ..\\\\mvnw.cmd clean install -DskipTests -q\")"
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend\\\\visit-module''; ..\\\\mvnw.cmd clean install -DskipTests -q\")",
+      "WebFetch(domain:www.klinikaxp.pl)",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend''; .\\\\mvnw.cmd spotless:apply -DskipTests\")",
+      "Bash(powershell.exe -Command \"Start-Sleep -Seconds 50; Get-Content ''C:\\\\Users\\\\piotr\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-piotr-IdeaProjects-drag-n-drop-klinikaxp\\\\tasks\\\\b79b04c.output'' -Tail 20\")"
     ],
     "defaultMode": "acceptEdits"
   }

@@ -144,6 +144,7 @@ export function VisitDetailsModal({
   const [checkInData, setCheckInData] = useState<CheckInRequest>({ priority: 'NORMAL' });
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [isLoadingDraft, setIsLoadingDraft] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
 
   // Patient and client data for pre-start and completed views
@@ -339,6 +340,21 @@ export function VisitDetailsModal({
   const handleClose = async () => {
     await flushDraft();
     onClose();
+  };
+
+  // Download PDF for completed visits
+  const handleDownloadPdf = async () => {
+    if (!visit) return;
+    setIsDownloadingPdf(true);
+    try {
+      // Get current language from i18n context
+      const lang = document.documentElement.lang === 'en' ? 'en' : 'pl';
+      await api.downloadVisitPdf(visit.id, lang);
+    } catch (err) {
+      console.error('Failed to download PDF:', err);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
 
   const visitDate = new Date(visit.visitDate);
@@ -1105,7 +1121,15 @@ export function VisitDetailsModal({
 
         {viewMode === 'completed' && (
           <>
-            {/* Completed: Just Close */}
+            {/* Completed: PDF Download and Close */}
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleDownloadPdf}
+              disabled={isDownloadingPdf}
+            >
+              {isDownloadingPdf ? t('visits.downloadingPdf') : `📄 ${t('visits.downloadPdf')}`}
+            </Button>
             <div style={{ flex: 1 }} />
             <Button variant="ghost" onClick={handleClose}>
               {t('common.close')}

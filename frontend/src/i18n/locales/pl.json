@@ -347,7 +347,11 @@
     "noHistory": "Brak historii wizyt dla tego pacjenta",
     "noExaminationNotes": "Brak danych z badania",
     "visitType": "Typ wizyty",
-    "selectVisitType": "Wybierz typ wizyty..."
+    "selectVisitType": "Wybierz typ wizyty...",
+    "downloadPdf": "Pobierz PDF",
+    "downloadingPdf": "Pobieranie...",
+    "pdfDownloaded": "PDF pobrany pomyślnie",
+    "pdfDownloadFailed": "Nie udało się pobrać PDF"
   },
   "visitTypes": {
     "CONSULTATION": "Konsultacja",

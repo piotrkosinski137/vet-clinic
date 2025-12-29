@@ -1316,6 +1316,174 @@
           ]
         },
         {
+          "name": "Download Visit PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/visits/:id/pdf?lang=pl",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visits",
+                ":id",
+                "pdf"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "pl",
+                  "description": "Language code: 'pl' (Polish) or 'en' (English)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+                  "description": "Visit UUID"
+                }
+              ]
+            },
+            "description": "Generate and download a PDF summary for a completed visit. Returns PDF file with Content-Disposition: attachment."
+          },
+          "response": [
+            {
+              "name": "PDF Generated",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/visits/:id/pdf?lang=pl",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "visits",
+                    ":id",
+                    "pdf"
+                  ],
+                  "query": [
+                    {
+                      "key": "lang",
+                      "value": "pl"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "text",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/pdf"
+                },
+                {
+                  "key": "Content-Disposition",
+                  "value": "attachment; filename=\"visit_Max_2025-12-21.pdf\""
+                }
+              ],
+              "body": "[PDF binary data]"
+            }
+          ]
+        },
+        {
+          "name": "Preview Visit PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/visits/:id/pdf/preview?lang=pl",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visits",
+                ":id",
+                "pdf",
+                "preview"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "pl",
+                  "description": "Language code: 'pl' (Polish) or 'en' (English)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+                  "description": "Visit UUID"
+                }
+              ]
+            },
+            "description": "Generate and preview a PDF summary for a completed visit in the browser. Returns PDF file with Content-Disposition: inline."
+          },
+          "response": [
+            {
+              "name": "PDF Preview",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/visits/:id/pdf/preview?lang=pl",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "visits",
+                    ":id",
+                    "pdf",
+                    "preview"
+                  ],
+                  "query": [
+                    {
+                      "key": "lang",
+                      "value": "pl"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "b2c3d4e5-f6a7-8901-bcde-f23456789012"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "text",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/pdf"
+                },
+                {
+                  "key": "Content-Disposition",
+                  "value": "inline; filename=\"visit_Max_2025-12-21.pdf\""
+                }
+              ],
+              "body": "[PDF binary data]"
+            }
+          ]
+        },
+        {
           "name": "Get Visits for Veterinarian on Date",
           "request": {
             "method": "GET",

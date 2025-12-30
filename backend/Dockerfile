@@ -7,6 +7,7 @@ WORKDIR /app
 # Copy Maven wrapper and pom files first (for better caching)
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
+RUN chmod +x mvnw
 COPY common/pom.xml common/
 COPY patient-module/pom.xml patient-module/
 COPY client-module/pom.xml client-module/

@@ -11,6 +11,10 @@ RUN chmod +x mvnw
 COPY common/pom.xml common/
 COPY patient-module/pom.xml patient-module/
 COPY client-module/pom.xml client-module/
+COPY veterinarian-module/pom.xml veterinarian-module/
+COPY visit-module/pom.xml visit-module/
+COPY billing-module/pom.xml billing-module/
+COPY compliance-module/pom.xml compliance-module/
 COPY application/pom.xml application/
 
 # Download dependencies (cached if pom files don't change)
@@ -20,6 +24,10 @@ RUN ./mvnw dependency:go-offline -B
 COPY common/src common/src/
 COPY patient-module/src patient-module/src/
 COPY client-module/src client-module/src/
+COPY veterinarian-module/src veterinarian-module/src/
+COPY visit-module/src visit-module/src/
+COPY billing-module/src billing-module/src/
+COPY compliance-module/src compliance-module/src/
 COPY application/src application/src/
 
 # Build the application

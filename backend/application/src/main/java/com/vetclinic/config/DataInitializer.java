@@ -911,18 +911,21 @@ public class DataInitializer implements ApplicationRunner {
                         || category == ItemCategory.LAB_TEST;
 
         // Generate realistic stock quantities for products
-        Integer stockQty = null;
+        BigDecimal stockQty = null;
         Integer reorderPt = null;
         if (!isService) {
             reorderPt = 10 + random.nextInt(15); // 10-25
             // Mix of stock levels: mostly good stock, some low (but never 0 for low stock)
             var stockLevel = random.nextDouble();
             if (stockLevel < 0.05) {
-                stockQty = 0; // Out of stock (5% - reduced to ensure most items available)
+                stockQty =
+                        BigDecimal
+                                .ZERO; // Out of stock (5% - reduced to ensure most items available)
             } else if (stockLevel < 0.15) {
-                stockQty = 1 + random.nextInt(reorderPt); // Low stock (10%) - always at least 1
+                stockQty = BigDecimal.valueOf(1 + random.nextInt(reorderPt)); // Low stock (10%)
             } else {
-                stockQty = reorderPt + 10 + random.nextInt(100); // In stock (85%)
+                stockQty =
+                        BigDecimal.valueOf(reorderPt + 10 + random.nextInt(100)); // In stock (85%)
             }
         }
 
@@ -1192,7 +1195,9 @@ public class DataInitializer implements ApplicationRunner {
                                                     || item.getCategory() == ItemCategory.LAB_TEST;
                                     return isService
                                             || (item.getStockQuantity() != null
-                                                    && item.getStockQuantity() > 0);
+                                                    && item.getStockQuantity()
+                                                                    .compareTo(BigDecimal.ZERO)
+                                                            > 0);
                                 })
                         .toList();
 
@@ -1216,7 +1221,7 @@ public class DataInitializer implements ApplicationRunner {
                     UsedMaterial.builder()
                             .materialId(item.getId())
                             .name(item.getName())
-                            .quantity(quantity)
+                            .quantity(BigDecimal.valueOf(quantity))
                             .costPrice(item.getCostPrice())
                             .sellPrice(item.getSellPrice())
                             .unit(item.getUnit())

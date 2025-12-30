@@ -8,6 +8,7 @@ import {
   Card,
   Text,
   Loading,
+  Spinner,
   PageHeader,
   useToast,
   Tabs,
@@ -396,6 +397,27 @@ export function VisitsPage() {
                 {t('errors.retry')}
               </Button>
             </Card>
+          )}
+
+          {/* Show loading indicator during refetch */}
+          {loading && visits.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: spacing.sm,
+                padding: spacing.sm,
+                marginBottom: spacing.sm,
+                backgroundColor: colors.primary.light,
+                borderRadius: borderRadius.md,
+              }}
+            >
+              <Spinner size="sm" />
+              <Text size="sm" style={{ color: colors.primary.main }}>
+                {t('visits.loading')}
+              </Text>
+            </div>
           )}
 
           <Calendar

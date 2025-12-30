@@ -10,7 +10,7 @@ import java.util.UUID;
 public record UsedMaterialSnapshot(
         UUID materialId,
         String name,
-        Integer quantity,
+        BigDecimal quantity,
         BigDecimal costPrice,
         BigDecimal sellPrice,
         String unit) {

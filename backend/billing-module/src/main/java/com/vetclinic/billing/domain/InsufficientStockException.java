@@ -1,5 +1,6 @@
 package com.vetclinic.billing.domain;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
@@ -11,12 +12,13 @@ import com.vetclinic.common.exception.ErrorCode;
 /** Exception thrown when there is insufficient stock for an operation. */
 public class InsufficientStockException extends BusinessException {
 
-    public InsufficientStockException(UUID itemId, String itemName, int requested, int available) {
+    public InsufficientStockException(
+            UUID itemId, String itemName, BigDecimal requested, BigDecimal available) {
         super(
                 ErrorCode.INSUFFICIENT_STOCK,
                 HttpStatus.CONFLICT,
                 String.format(
-                        "Insufficient stock for '%s': requested %d, available %d",
+                        "Insufficient stock for '%s': requested %s, available %s",
                         itemName, requested, available),
                 Map.of(
                         "itemId", itemId,

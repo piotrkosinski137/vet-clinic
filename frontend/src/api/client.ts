@@ -32,6 +32,10 @@ import type {
   InventoryTransaction,
   SupplierInvoice,
   StockAdjustmentRequest,
+  InventoryBatchResponse,
+  BatchStatus,
+  CompleteBatchRequest,
+  DisposeBatchRequest,
   AuditLogResponse,
   AuditLogFilters,
   AuditAction,
@@ -642,6 +646,44 @@ class ApiClient {
   async processSupplierInvoice(invoiceId: string): Promise<SupplierInvoice> {
     return this.request<SupplierInvoice>(`/inventory/invoices/${invoiceId}/process`, {
       method: 'POST',
+    });
+  }
+
+  // === Inventory Batches API (FIFO) ===
+
+  async getInventoryBatches(filters?: { status?: BatchStatus; itemId?: string }): Promise<InventoryBatchResponse[]> {
+    const params = new URLSearchParams();
+    if (filters) {
+      if (filters.status) params.append('status', filters.status);
+      if (filters.itemId) params.append('itemId', filters.itemId);
+    }
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<InventoryBatchResponse[]>(`/inventory/batches${query}`);
+  }
+
+  async getInventoryBatch(id: string): Promise<InventoryBatchResponse> {
+    return this.request<InventoryBatchResponse>(`/inventory/batches/${id}`);
+  }
+
+  async getExpiringBatches(days: number = 30): Promise<InventoryBatchResponse[]> {
+    return this.request<InventoryBatchResponse[]>(`/inventory/batches/expiring?days=${days}`);
+  }
+
+  async getPendingBatchCount(): Promise<number> {
+    return this.request<number>('/inventory/batches/pending/count');
+  }
+
+  async completeBatch(batchId: string, request: CompleteBatchRequest): Promise<InventoryBatchResponse> {
+    return this.request<InventoryBatchResponse>(`/inventory/batches/${batchId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async disposeBatch(batchId: string, request: DisposeBatchRequest): Promise<InventoryBatchResponse> {
+    return this.request<InventoryBatchResponse>(`/inventory/batches/${batchId}/dispose`, {
+      method: 'POST',
+      body: JSON.stringify(request),
     });
   }
 

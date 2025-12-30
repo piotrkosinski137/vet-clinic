@@ -12,7 +12,7 @@ import {
   Input,
   Text,
   Badge,
-  Loading,
+  ModalLoader,
   useToast,
   ConfirmDialog,
 } from "../ui";
@@ -325,10 +325,7 @@ export function DoctorsManagementModal({
     return (
       <Modal open={open} onClose={onClose}>
         <ModalTitle>{t('doctors.manageDoctors')}</ModalTitle>
-        <div style={{ padding: spacing.xl, textAlign: "center" }}>
-          <Loading />
-          <Text variant="muted">{t('common.loading')}</Text>
-        </div>
+        <ModalLoader text={t('common.loading')} minHeight="300px" />
       </Modal>
     );
   }
@@ -526,9 +523,7 @@ export function DoctorsManagementModal({
           </Text>
 
           {loadingVisits ? (
-            <div style={{ padding: spacing.md, textAlign: "center" }}>
-              <Loading />
-            </div>
+            <ModalLoader text={t('visits.loading')} minHeight="150px" />
           ) : todaysVisits.length === 0 ? (
             <div style={{ padding: spacing.md, textAlign: "center", backgroundColor: colors.neutral.background, borderRadius: borderRadius.md }}>
               <Text variant="muted">{t('visits.noAppointmentsToday')}</Text>

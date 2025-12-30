@@ -444,12 +444,12 @@ public class PriceListSeeder implements DataSeeder {
                         || category == ItemCategory.PROCEDURE
                         || category == ItemCategory.LAB_TEST;
 
-        Integer stockQty = null;
+        BigDecimal stockQty = null;
         Integer reorderPt = null;
 
         if (!isService) {
             reorderPt = MIN_REORDER_POINT + context.getRandom().nextInt(REORDER_POINT_RANGE);
-            stockQty = calculateStockQuantity(reorderPt, context);
+            stockQty = BigDecimal.valueOf(calculateStockQuantity(reorderPt, context));
         }
 
         var item =
@@ -470,7 +470,7 @@ public class PriceListSeeder implements DataSeeder {
         context.addPriceListItem(item);
     }
 
-    private Integer calculateStockQuantity(int reorderPoint, SeedContext context) {
+    private int calculateStockQuantity(int reorderPoint, SeedContext context) {
         var random = context.getRandom();
         var stockLevel = random.nextDouble();
 

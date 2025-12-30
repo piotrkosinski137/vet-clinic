@@ -3,6 +3,7 @@ package com.vetclinic.billing.domain;
 import static com.vetclinic.common.constants.AppConstants.DEFAULT_REORDER_POINT;
 import static com.vetclinic.common.constants.AppConstants.INITIAL_STOCK_QUANTITY;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,6 +38,7 @@ public class InventoryService {
     private final InventoryTransactionRepository transactionRepository;
     private final SupplierInvoiceRepository invoiceRepository;
     private final InvoiceParserService parserService;
+    private final InventoryBatchService batchService;
 
     /**
      * Upload and parse invoice (returns preview, doesn't add to stock yet)
@@ -151,12 +153,15 @@ public class InventoryService {
             SupplierInvoiceItem item, UUID invoiceId, String invoiceNumber) {
         var priceListItem = resolveOrCreatePriceListItem(item);
 
-        int quantityBefore = priceListItem.getStockQuantity();
-        int quantityAfter = quantityBefore + item.getQuantity();
+        var quantityBefore = priceListItem.getStockQuantity();
+        var quantityAfter = quantityBefore.add(BigDecimal.valueOf(item.getQuantity()));
         priceListItem.setStockQuantity(quantityAfter);
 
         updateBatchAndExpiration(priceListItem, item);
         priceListRepository.save(priceListItem);
+
+        // Create inventory batch for FIFO tracking
+        batchService.createBatchFromInvoiceItem(item, priceListItem.getId());
 
         createReceiptTransaction(
                 priceListItem, item, invoiceId, invoiceNumber, quantityBefore, quantityAfter);
@@ -203,13 +208,13 @@ public class InventoryService {
             SupplierInvoiceItem item,
             UUID invoiceId,
             String invoiceNumber,
-            int quantityBefore,
-            int quantityAfter) {
+            BigDecimal quantityBefore,
+            BigDecimal quantityAfter) {
         createTransaction(
                 TransactionRequest.builder()
                         .itemId(priceListItem.getId())
                         .type(TransactionType.RECEIPT)
-                        .quantity(item.getQuantity())
+                        .quantity(BigDecimal.valueOf(item.getQuantity()))
                         .quantityBefore(quantityBefore)
                         .quantityAfter(quantityAfter)
                         .referenceId(invoiceId)
@@ -222,7 +227,7 @@ public class InventoryService {
     }
 
     /**
-     * Record usage from visit (decrease stock)
+     * Record usage from visit (decrease stock using FIFO)
      *
      * @param visitId ID of the visit
      * @param materials List of used materials
@@ -232,61 +237,48 @@ public class InventoryService {
     public void recordUsage(UUID visitId, List<UsedMaterial> materials) {
         log.info("Recording usage for visit {}: {} materials", visitId, materials.size());
 
-        // First pass: validate all materials have sufficient stock
+        // Use FIFO consumption from batch service
         for (UsedMaterial material : materials) {
-            var item =
-                    priceListRepository
-                            .findById(material.getMaterialId())
-                            .orElseThrow(
-                                    () ->
-                                            new PriceListItemNotFoundException(
-                                                    material.getMaterialId()));
-
-            if (item.getStockQuantity() < material.getQuantity()) {
-                throw new InsufficientStockException(
-                        item.getId(),
-                        item.getName(),
-                        material.getQuantity(),
-                        item.getStockQuantity());
+            // Check if this item requires inventory tracking
+            var item = priceListRepository.findById(material.getMaterialId()).orElse(null);
+            if (item == null) {
+                log.warn(
+                        "Price list item not found for material {}, skipping consumption",
+                        material.getMaterialId());
+                continue;
             }
-        }
 
-        // Second pass: apply all stock changes
-        for (UsedMaterial material : materials) {
-            var item =
-                    priceListRepository
-                            .findById(material.getMaterialId())
-                            .orElseThrow(
-                                    () ->
-                                            new PriceListItemNotFoundException(
-                                                    material.getMaterialId()));
+            // Skip non-inventory categories (services don't consume physical stock)
+            if (!requiresInventoryTracking(item.getCategory())) {
+                log.debug(
+                        "Skipping inventory consumption for {} item: {} ({})",
+                        item.getCategory(),
+                        item.getName(),
+                        item.getId());
+                continue;
+            }
 
-            var quantityBefore = item.getStockQuantity();
-            var quantityAfter = quantityBefore - material.getQuantity();
-            item.setStockQuantity(quantityAfter);
-            priceListRepository.save(item);
-
-            // Create USAGE transaction
-            createTransaction(
-                    TransactionRequest.builder()
-                            .itemId(item.getId())
-                            .type(TransactionType.USAGE)
-                            .quantity(-material.getQuantity())
-                            .quantityBefore(quantityBefore)
-                            .quantityAfter(quantityAfter)
-                            .referenceId(visitId)
-                            .referenceType("VISIT")
-                            .notes(material.getNotes())
-                            .build());
+            // consumeStock handles validation, FIFO logic, and transactions
+            batchService.consumeStock(
+                    material.getMaterialId(), material.getQuantity(), visitId, "VISIT");
 
             log.info(
-                    "Used {} x {} for visit {}, stock: {} -> {}",
+                    "Used {} x item {} for visit {} (FIFO)",
                     material.getQuantity(),
-                    item.getName(),
-                    visitId,
-                    quantityBefore,
-                    quantityAfter);
+                    material.getMaterialId(),
+                    visitId);
         }
+    }
+
+    /**
+     * Determines if an item category requires inventory (batch) tracking. Services and
+     * consultations don't have physical inventory.
+     */
+    private boolean requiresInventoryTracking(ItemCategory category) {
+        return switch (category) {
+            case MEDICATION, PRODUCT, VACCINATION, OTHER -> true;
+            case SERVICE, CONSULTATION, PROCEDURE, LAB_TEST -> false;
+        };
     }
 
     /**
@@ -300,9 +292,14 @@ public class InventoryService {
      */
     @Transactional
     public PriceListItem adjustStock(UUID itemId, int newQuantity, String reason) {
+        return adjustStock(itemId, BigDecimal.valueOf(newQuantity), reason);
+    }
+
+    @Transactional
+    public PriceListItem adjustStock(UUID itemId, BigDecimal newQuantity, String reason) {
         log.info("Adjusting stock for item {}: new quantity = {}", itemId, newQuantity);
 
-        if (newQuantity < 0) {
+        if (newQuantity.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Stock quantity cannot be negative: " + newQuantity);
         }
 
@@ -320,7 +317,7 @@ public class InventoryService {
                 TransactionRequest.builder()
                         .itemId(itemId)
                         .type(TransactionType.ADJUSTMENT)
-                        .quantity(newQuantity - quantityBefore)
+                        .quantity(newQuantity.subtract(quantityBefore))
                         .quantityBefore(quantityBefore)
                         .quantityAfter(newQuantity)
                         .referenceType("MANUAL")
@@ -456,7 +453,7 @@ public class InventoryService {
                 .unit(invoiceItem.getUnit())
                 .active(true)
                 .code(invoiceItem.getProductCode())
-                .stockQuantity(INITIAL_STOCK_QUANTITY)
+                .stockQuantity(BigDecimal.valueOf(INITIAL_STOCK_QUANTITY))
                 .reorderPoint(DEFAULT_REORDER_POINT)
                 .barcode(invoiceItem.getBarcode())
                 .supplierCode(invoiceItem.getProductCode())

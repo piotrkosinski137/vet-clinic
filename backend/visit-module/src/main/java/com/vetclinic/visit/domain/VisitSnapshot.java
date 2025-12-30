@@ -1,10 +1,12 @@
 package com.vetclinic.visit.domain;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import com.vetclinic.visit.domain.model.Medication;
+import com.vetclinic.visit.domain.model.UsedMaterial;
 import com.vetclinic.visit.domain.model.Visit;
 import com.vetclinic.visit.domain.model.VisitPriority;
 import com.vetclinic.visit.domain.model.VisitStatus;
@@ -35,7 +37,8 @@ public record VisitSnapshot(
         LocalDateTime checkedInAt,
         String waitingRoomNotes,
         VisitPriority priority,
-        List<MedicationSnapshot> medications) {
+        List<MedicationSnapshot> medications,
+        List<UsedMaterialSnapshot> usedMaterials) {
 
     public record MedicationSnapshot(
             String name, String dosage, String frequency, String duration, String notes) {
@@ -46,6 +49,24 @@ public record VisitSnapshot(
                     med.getFrequency(),
                     med.getDuration(),
                     med.getNotes());
+        }
+    }
+
+    public record UsedMaterialSnapshot(
+            UUID materialId,
+            String name,
+            BigDecimal quantity,
+            BigDecimal costPrice,
+            BigDecimal sellPrice,
+            String unit) {
+        public static UsedMaterialSnapshot from(UsedMaterial mat) {
+            return new UsedMaterialSnapshot(
+                    mat.getMaterialId(),
+                    mat.getName(),
+                    mat.getQuantity(),
+                    mat.getCostPrice(),
+                    mat.getSellPrice(),
+                    mat.getUnit());
         }
     }
 
@@ -74,6 +95,9 @@ public record VisitSnapshot(
                 visit.getPriority(),
                 visit.getMedications() != null
                         ? visit.getMedications().stream().map(MedicationSnapshot::from).toList()
+                        : List.of(),
+                visit.getUsedMaterials() != null
+                        ? visit.getUsedMaterials().stream().map(UsedMaterialSnapshot::from).toList()
                         : List.of());
     }
 }

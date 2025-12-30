@@ -30,8 +30,8 @@ public class UsedMaterial {
     @Column(name = "material_name", nullable = false)
     private String name;
 
-    @Column(name = "quantity", nullable = false)
-    private Integer quantity;
+    @Column(name = "quantity", nullable = false, precision = 10, scale = 2)
+    private BigDecimal quantity;
 
     @Column(name = "cost_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal costPrice;
@@ -44,12 +44,12 @@ public class UsedMaterial {
 
     /** Calculate total cost for this material. */
     public BigDecimal getTotalCost() {
-        return costPrice.multiply(BigDecimal.valueOf(quantity));
+        return costPrice.multiply(quantity);
     }
 
     /** Calculate total sell price for this material. */
     public BigDecimal getTotalSell() {
-        return sellPrice.multiply(BigDecimal.valueOf(quantity));
+        return sellPrice.multiply(quantity);
     }
 
     /** Calculate profit for this material. */

@@ -20,7 +20,7 @@ public record InventoryItemResponse(
         String unit,
         Boolean active,
         String code,
-        Integer stockQuantity,
+        BigDecimal stockQuantity,
         Integer reorderPoint,
         String barcode,
         String supplierCode,

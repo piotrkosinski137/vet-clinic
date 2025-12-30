@@ -257,7 +257,7 @@ CREATE TABLE price_list_items (
     unit VARCHAR(20),
     active BOOLEAN NOT NULL DEFAULT TRUE,
     code VARCHAR(50),
-    stock_quantity INTEGER DEFAULT 0,
+    stock_quantity DECIMAL(10, 2) DEFAULT 0,
     reorder_point INTEGER DEFAULT 5,
     barcode VARCHAR(100),
     supplier_code VARCHAR(100),
@@ -278,7 +278,7 @@ CREATE TABLE visit_used_materials (
     visit_id UUID NOT NULL REFERENCES visits(id) ON DELETE CASCADE,
     material_id UUID,
     material_name VARCHAR(255) NOT NULL,
-    quantity INTEGER NOT NULL,
+    quantity DECIMAL(10, 2) NOT NULL,
     cost_price DECIMAL(10, 2) NOT NULL,
     sell_price DECIMAL(10, 2) NOT NULL,
     unit VARCHAR(20)
@@ -394,9 +394,9 @@ CREATE TABLE inventory_transactions (
     clinic_id UUID NOT NULL REFERENCES veterinary_clinics(id),
     item_id UUID NOT NULL,
     transaction_type VARCHAR(20) NOT NULL,
-    quantity INTEGER NOT NULL,
-    quantity_before INTEGER,
-    quantity_after INTEGER,
+    quantity DECIMAL(10, 2) NOT NULL,
+    quantity_before DECIMAL(10, 2),
+    quantity_after DECIMAL(10, 2),
     reference_id UUID,
     reference_type VARCHAR(100),
     batch_number VARCHAR(100),
@@ -404,6 +404,7 @@ CREATE TABLE inventory_transactions (
     unit_cost DECIMAL(10, 2),
     notes VARCHAR(1000),
     created_by VARCHAR(255),
+    batch_id UUID,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     version BIGINT NOT NULL DEFAULT 0
@@ -411,6 +412,32 @@ CREATE TABLE inventory_transactions (
 
 CREATE INDEX idx_inventory_transactions_clinic ON inventory_transactions(clinic_id);
 CREATE INDEX idx_inventory_transactions_item ON inventory_transactions(item_id);
+
+-- Inventory batches for FIFO stock tracking
+CREATE TABLE inventory_batches (
+    id UUID PRIMARY KEY,
+    clinic_id UUID NOT NULL REFERENCES veterinary_clinics(id),
+    item_id UUID NOT NULL REFERENCES price_list_items(id),
+    lot_number VARCHAR(100),
+    expiration_date DATE,
+    quantity DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    unit_cost DECIMAL(10, 2),
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    invoice_item_id UUID REFERENCES supplier_invoice_items(id),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    version BIGINT NOT NULL DEFAULT 0
+);
+
+CREATE INDEX idx_inventory_batches_clinic ON inventory_batches(clinic_id);
+CREATE INDEX idx_inventory_batches_item ON inventory_batches(item_id);
+CREATE INDEX idx_inventory_batches_status ON inventory_batches(status);
+CREATE INDEX idx_inventory_batches_expiration ON inventory_batches(expiration_date);
+CREATE INDEX idx_inventory_batches_fifo ON inventory_batches(item_id, status, expiration_date);
+
+-- Add foreign key for batch_id in inventory_transactions
+ALTER TABLE inventory_transactions ADD CONSTRAINT fk_inventory_transactions_batch
+    FOREIGN KEY (batch_id) REFERENCES inventory_batches(id);
 
 ----------------------------------------------
 -- COMPLIANCE

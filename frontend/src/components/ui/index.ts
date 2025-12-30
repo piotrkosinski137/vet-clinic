@@ -47,6 +47,7 @@ export { Badge, type BadgeProps, type BadgeVariant } from './Badge';
 export { FormField, type FormFieldProps } from './FormField';
 export { Text, type TextProps, type TextVariant, type TextSize } from './Text';
 export { Spinner, Loading, type SpinnerProps, type SpinnerSize, type LoadingProps } from './Spinner';
+export { ModalLoader } from './ModalLoader';
 export { PageHeader, type PageHeaderProps } from './PageHeader';
 export { Grid, type GridProps } from './Grid';
 export { ToastProvider, useToast, type Toast, type ToastVariant } from './Toast';

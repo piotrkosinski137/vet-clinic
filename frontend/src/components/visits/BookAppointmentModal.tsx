@@ -5,6 +5,7 @@ import {
   Modal,
   ModalTitle,
   ModalActions,
+  ModalLoader,
   FormField,
   Input,
   Select,
@@ -69,6 +70,9 @@ export function BookAppointmentModal({
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<ClientResponse[]>([]);
   const [veterinarians, setVeterinarians] = useState<VeterinarianResponse[]>([]);
+  const [clientsLoaded, setClientsLoaded] = useState(false);
+  const [vetsLoaded, setVetsLoaded] = useState(false);
+  const isDataReady = clientsLoaded && vetsLoaded;
   const [formData, setFormData] = useState<VisitRequest>({
     patientId: "",
     visitDate: "",
@@ -102,12 +106,29 @@ export function BookAppointmentModal({
   // Fetch clients for name display and veterinarians
   useEffect(() => {
     if (open) {
-      api.getClients().then(setClients).catch((err) => {
-        console.error('Failed to load clients:', err);
-      });
-      api.getVeterinarians({ active: true }).then(setVeterinarians).catch((err) => {
-        console.error('Failed to load veterinarians:', err);
-      });
+      // Reset loading states when modal opens
+      setClientsLoaded(false);
+      setVetsLoaded(false);
+
+      api.getClients()
+        .then((data) => {
+          setClients(data);
+          setClientsLoaded(true);
+        })
+        .catch((err) => {
+          console.error('Failed to load clients:', err);
+          setClientsLoaded(true); // Mark as loaded even on error to show form
+        });
+
+      api.getVeterinarians({ active: true })
+        .then((data) => {
+          setVeterinarians(data);
+          setVetsLoaded(true);
+        })
+        .catch((err) => {
+          console.error('Failed to load veterinarians:', err);
+          setVetsLoaded(true); // Mark as loaded even on error to show form
+        });
     }
   }, [open]);
 
@@ -244,18 +265,25 @@ export function BookAppointmentModal({
   }, [open, initialDate, initialHour, initialMinute, initialPatientId, initialPatientName, initialClientId, initialClientName, initialVisitType, initialReason, previousVisitId, initialVeterinarianId, veterinarians]);
 
   // Set initial veterinarian when veterinarians load after modal is already open
+  // Use functional update to avoid stale closure issues
   useEffect(() => {
-    if (open && initialVeterinarianId && veterinarians.length > 0 && !formData.veterinarianId) {
+    if (open && initialVeterinarianId && veterinarians.length > 0) {
       const selectedVet = veterinarians.find((v) => v.id === initialVeterinarianId);
       if (selectedVet) {
-        setFormData((prev) => ({
-          ...prev,
-          veterinarianId: initialVeterinarianId,
-          veterinarianName: selectedVet.fullName,
-        }));
+        setFormData((prev) => {
+          // Only update if vet is not already set correctly
+          if (prev.veterinarianId !== initialVeterinarianId) {
+            return {
+              ...prev,
+              veterinarianId: initialVeterinarianId,
+              veterinarianName: selectedVet.fullName,
+            };
+          }
+          return prev;
+        });
       }
     }
-  }, [open, initialVeterinarianId, veterinarians, formData.veterinarianId]);
+  }, [open, initialVeterinarianId, veterinarians]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -336,6 +364,10 @@ export function BookAppointmentModal({
           </Text>
         )}
       </ModalTitle>
+
+      {!isDataReady ? (
+        <ModalLoader text={t('common.loading')} minHeight="400px" />
+      ) : (
       <form onSubmit={handleSubmit}>
         <FormField label={t('visits.patient')} required>
           <div style={{ position: 'relative' }}>
@@ -521,6 +553,7 @@ export function BookAppointmentModal({
           </Button>
         </ModalActions>
       </form>
+      )}
     </Modal>
   );
 }

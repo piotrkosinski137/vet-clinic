@@ -64,9 +64,10 @@ public class PriceListItem extends TenantAwareEntity {
     @Column(length = 50)
     private String code;
 
-    @Column(nullable = false)
+    @PositiveOrZero(message = "Stock quantity cannot be negative")
+    @Column(name = "stock_quantity", nullable = false, precision = 10, scale = 2)
     @Builder.Default
-    private Integer stockQuantity = 0;
+    private BigDecimal stockQuantity = BigDecimal.ZERO;
 
     @Column(nullable = false)
     @Builder.Default
@@ -84,7 +85,9 @@ public class PriceListItem extends TenantAwareEntity {
     private String batchNumber;
 
     public boolean isLowStock() {
-        return stockQuantity != null && reorderPoint != null && stockQuantity <= reorderPoint;
+        return stockQuantity != null
+                && reorderPoint != null
+                && stockQuantity.compareTo(BigDecimal.valueOf(reorderPoint)) <= 0;
     }
 
     public boolean isExpired() {
@@ -92,6 +95,6 @@ public class PriceListItem extends TenantAwareEntity {
     }
 
     public boolean isInStock() {
-        return stockQuantity != null && stockQuantity > 0;
+        return stockQuantity != null && stockQuantity.compareTo(BigDecimal.ZERO) > 0;
     }
 }

@@ -297,6 +297,7 @@ export function AuditPage() {
 
   const { logs, loading, error, refetch } = useAuditLogs(filters);
 
+  // All hooks must be called before any conditional returns
   const paginatedLogs = useMemo(() => {
     const start = (page - 1) * ITEMS_PER_PAGE;
     return logs.slice(start, start + ITEMS_PER_PAGE);
@@ -323,6 +324,11 @@ export function AuditPage() {
     flex: '1 1 200px',
     maxWidth: '250px',
   };
+
+  // Show full-page loader on initial load (after all hooks)
+  if (loading && logs.length === 0) {
+    return <Loading text={t('audit.loading')} />;
+  }
 
   return (
     <div>
@@ -392,8 +398,9 @@ export function AuditPage() {
       </Card>
 
       <Card variant="default">
-        {loading && (
-          <div style={{ padding: spacing.xl, textAlign: 'center' }}>
+        {/* Show inline loader during refetch (when we already have data) */}
+        {loading && logs.length > 0 && (
+          <div style={{ padding: spacing.md, textAlign: 'center', borderBottom: `1px solid ${colors.neutral.border}` }}>
             <Loading text={t('audit.loading')} />
           </div>
         )}

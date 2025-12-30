@@ -636,3 +636,37 @@ export interface VisitDraftDto {
   savedAt?: string;
   savedBy?: string;
 }
+
+// Inventory Batch Types (FIFO stock tracking)
+export type BatchStatus = 'PENDING' | 'COMPLETE' | 'DEPLETED';
+
+export interface InventoryBatchResponse {
+  id: string;
+  itemId: string;
+  itemName: string;
+  lotNumber?: string;
+  expirationDate?: string;
+  quantity: number;
+  unitCost?: number;
+  totalValue?: number;
+  status: BatchStatus;
+  isExpiringSoon: boolean;
+  daysUntilExpiration?: number;
+  isExpired: boolean;
+  createdAt: string;
+}
+
+export interface CompleteBatchRequest {
+  lotNumber: string;
+  expirationDate?: string;
+}
+
+export interface DisposeBatchRequest {
+  quantity: number;
+  reason: string;
+}
+
+export interface BatchFilters {
+  status?: BatchStatus;
+  itemId?: string;
+}

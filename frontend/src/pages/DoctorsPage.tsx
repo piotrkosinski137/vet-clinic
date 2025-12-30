@@ -18,6 +18,7 @@ import {
   TextArea,
   Text,
   Loading,
+  Spinner,
   PageHeader,
   useToast,
   ConfirmDialog,
@@ -476,6 +477,7 @@ export function DoctorsPage() {
               {t('common.cancel')}
             </Button>
             <Button type="submit" variant="primary" disabled={inviting}>
+              {inviting && <Spinner size="sm" style={{ marginRight: spacing.xs }} />}
               {inviting ? t('doctors.inviting') : t('doctors.inviteDoctor')}
             </Button>
           </ModalActions>

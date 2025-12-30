@@ -7,6 +7,7 @@ import {
   Card,
   Text,
   Loading,
+  Spinner,
   Input,
   Select,
   FormField,
@@ -558,6 +559,7 @@ export function PriceListPage() {
               {t("common.cancel")}
             </Button>
             <Button type="submit" variant="primary" disabled={submitting}>
+              {submitting && <Spinner size="sm" style={{ marginRight: spacing.xs }} />}
               {submitting ? t("priceList.adding") : t("common.add")}
             </Button>
           </ModalActions>
@@ -681,7 +683,8 @@ export function PriceListPage() {
               {t("common.cancel")}
             </Button>
             <Button type="submit" variant="primary" disabled={submitting}>
-              {submitting ? t("common.loading") : t("common.save")}
+              {submitting && <Spinner size="sm" style={{ marginRight: spacing.xs }} />}
+              {submitting ? t("common.saving") : t("common.save")}
             </Button>
           </ModalActions>
         </form>

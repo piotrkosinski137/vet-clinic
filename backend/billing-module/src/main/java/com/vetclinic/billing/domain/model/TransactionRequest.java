@@ -14,9 +14,9 @@ import lombok.Builder;
 public record TransactionRequest(
         UUID itemId,
         TransactionType type,
-        int quantity,
-        int quantityBefore,
-        int quantityAfter,
+        BigDecimal quantity,
+        BigDecimal quantityBefore,
+        BigDecimal quantityAfter,
         UUID referenceId,
         String referenceType,
         String batchNumber,

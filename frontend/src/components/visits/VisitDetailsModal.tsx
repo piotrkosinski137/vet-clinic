@@ -56,6 +56,7 @@ import {
   TabPanel,
   ConfirmDialog,
   Loading,
+  ModalLoader,
 } from '../ui';
 import { MaterialsSelector } from '../materials';
 import { VISIT_TYPE_OPTIONS, getVisitTypeInfo, getSpeciesInfo, LOCALE, DATE_FORMAT_OPTIONS, getLabelInfo } from '../../constants';
@@ -443,9 +444,7 @@ export function VisitDetailsModal({
       {/* Content based on view mode */}
       <ModalContent>
         {isLoadingDraft || loadingPatientData ? (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: spacing.xl }}>
-            <Loading />
-          </div>
+          <ModalLoader text={t('common.loading')} minHeight="300px" />
         ) : viewMode === 'pre-start' ? (
           /* Pre-start View - Patient info, reason, notes, history */
           <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>

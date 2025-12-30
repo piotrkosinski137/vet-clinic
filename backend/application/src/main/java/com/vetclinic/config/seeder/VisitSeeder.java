@@ -1,5 +1,6 @@
 package com.vetclinic.config.seeder;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -241,7 +242,9 @@ public class VisitSeeder implements DataSeeder {
                                                     || item.getCategory() == ItemCategory.LAB_TEST;
                                     return isService
                                             || (item.getStockQuantity() != null
-                                                    && item.getStockQuantity() > 0);
+                                                    && item.getStockQuantity()
+                                                                    .compareTo(BigDecimal.ZERO)
+                                                            > 0);
                                 })
                         .toList();
 
@@ -258,7 +261,7 @@ public class VisitSeeder implements DataSeeder {
                     UsedMaterial.builder()
                             .materialId(item.getId())
                             .name(item.getName())
-                            .quantity(quantity)
+                            .quantity(BigDecimal.valueOf(quantity))
                             .costPrice(item.getCostPrice())
                             .sellPrice(item.getSellPrice())
                             .unit(item.getUnit())

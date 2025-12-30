@@ -1,5 +1,6 @@
 package com.vetclinic.billing.domain.model;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
@@ -14,6 +15,6 @@ import lombok.NoArgsConstructor;
 public class UsedMaterial {
 
     private UUID materialId;
-    private Integer quantity;
+    private BigDecimal quantity;
     private String notes;
 }

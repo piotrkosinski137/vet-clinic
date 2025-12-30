@@ -38,14 +38,14 @@ public class InventoryTransaction extends TenantAwareEntity {
     private TransactionType transactionType;
 
     @NotNull(message = "Quantity is required")
-    @Column(nullable = false)
-    private Integer quantity;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal quantity;
 
-    @Column(nullable = false)
-    private Integer quantityBefore;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal quantityBefore;
 
-    @Column(nullable = false)
-    private Integer quantityAfter;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal quantityAfter;
 
     @Column private UUID referenceId;
 
@@ -65,4 +65,7 @@ public class InventoryTransaction extends TenantAwareEntity {
 
     @Column(length = 255)
     private String createdBy;
+
+    @Column(name = "batch_id")
+    private UUID batchId;
 }

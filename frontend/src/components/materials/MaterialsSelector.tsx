@@ -98,16 +98,41 @@ export function MaterialsSelector({ value, onChange, readOnly = false }: Materia
     onChange(value.filter((m) => m.materialId !== materialId));
   }, [value, onChange]);
 
-  const handleQuantityChange = useCallback((materialId: string, delta: number) => {
+  // Get appropriate delta based on unit type for +/- buttons
+  const getDelta = (unit: string): number => {
+    const lowerUnit = unit.toLowerCase();
+    // For items typically measured in fractions (liquids, weights)
+    if (['ml', 'g', 'mg', 'l', 'kg', 'oz', 'fl oz'].includes(lowerUnit)) {
+      return 0.1;
+    }
+    return 1;
+  };
+
+  const handleQuantityChange = useCallback((materialId: string, direction: number) => {
     onChange(
       value.map((m) => {
         if (m.materialId === materialId) {
-          const newQuantity = Math.max(1, m.quantity + delta);
-          return { ...m, quantity: newQuantity };
+          const delta = getDelta(m.unit) * direction;
+          const newQuantity = Math.max(0.01, m.quantity + delta);
+          return { ...m, quantity: Math.round(newQuantity * 100) / 100 };
         }
         return m;
       })
     );
+  }, [value, onChange]);
+
+  const handleQuantityInput = useCallback((materialId: string, newValue: string) => {
+    const parsed = parseFloat(newValue);
+    if (!isNaN(parsed) && parsed > 0) {
+      onChange(
+        value.map((m) => {
+          if (m.materialId === materialId) {
+            return { ...m, quantity: Math.round(parsed * 100) / 100 };
+          }
+          return m;
+        })
+      );
+    }
   }, [value, onChange]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -410,30 +435,40 @@ export function MaterialsSelector({ value, onChange, readOnly = false }: Materia
                   <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
                     <button
                       onClick={() => handleQuantityChange(item.materialId, -1)}
-                      disabled={item.quantity <= 1}
+                      disabled={item.quantity <= 0.01}
                       style={{
                         width: "28px",
                         height: "28px",
                         borderRadius: borderRadius.full,
                         border: "none",
                         backgroundColor: colors.neutral.border,
-                        cursor: item.quantity <= 1 ? "not-allowed" : "pointer",
-                        opacity: item.quantity <= 1 ? 0.5 : 1,
+                        cursor: item.quantity <= 0.01 ? "not-allowed" : "pointer",
+                        opacity: item.quantity <= 0.01 ? 0.5 : 1,
                         fontSize: fontSize.lg,
                         fontWeight: fontWeight.bold,
                       }}
                     >
                       -
                     </button>
-                    <span
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={item.quantity}
+                      onChange={(e) => handleQuantityInput(item.materialId, e.target.value)}
                       style={{
-                        minWidth: "40px",
+                        width: "60px",
                         textAlign: "center",
                         fontWeight: fontWeight.medium,
+                        padding: `${spacing.xs} ${spacing.xs}`,
+                        borderRadius: borderRadius.sm,
+                        border: `1px solid ${colors.neutral.border}`,
+                        fontSize: fontSize.sm,
                       }}
-                    >
-                      {item.quantity}
-                    </span>
+                    />
+                    <Text variant="muted" size="sm" style={{ minWidth: "30px" }}>
+                      {item.unit}
+                    </Text>
                     <button
                       onClick={() => handleQuantityChange(item.materialId, 1)}
                       style={{

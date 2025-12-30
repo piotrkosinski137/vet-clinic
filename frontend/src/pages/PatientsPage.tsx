@@ -276,7 +276,7 @@ export function PatientsPage() {
                 required={!editingPatient}
                 disabled={clientsLoading}
               >
-                <option value="">{clientsLoading ? '...' : t('patients.selectOwner')}</option>
+                <option value="">{clientsLoading ? t('common.loading') : t('patients.selectOwner')}</option>
                 {clients.map((client) => (
                   <option key={client.id} value={client.id}>
                     {client.firstName} {client.lastName} {client.phone ? `(${client.phone})` : ''}

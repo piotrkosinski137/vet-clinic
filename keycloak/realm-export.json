@@ -1,0 +1,95 @@
+{
+  "realm": "vetclinic",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 3600,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      {"name": "user", "description": "Basic user with read-only access"},
+      {"name": "admin", "description": "Administrator with full system access"},
+      {"name": "vet", "description": "Veterinarian - can manage patients, visits, and medical records"},
+      {"name": "receptionist", "description": "Receptionist - can manage clients, appointments, and basic patient info"},
+      {"name": "accountant", "description": "Accountant - can manage invoices, payments, and financial reports"}
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "vetclinic-app",
+      "name": "Vet Clinic Backend",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "vetclinic-secret-prod",
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "name": "clinic_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "clinic_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clinic_id",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "vetclinic-frontend",
+      "name": "Vet Clinic Frontend",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "protocol": "openid-connect",
+      "attributes": {"pkce.code.challenge.method": "S256"},
+      "protocolMappers": [
+        {
+          "name": "clinic_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "clinic_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clinic_id",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@vetclinic.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "User",
+      "credentials": [{"type": "password", "value": "admin123!", "temporary": false}],
+      "realmRoles": ["admin", "vet", "receptionist", "accountant", "user"],
+      "attributes": {"clinic_id": ["00000000-0000-0000-0000-000000000001"]}
+    }
+  ]
+}

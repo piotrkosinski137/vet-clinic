@@ -107,7 +107,17 @@
       "Bash($headers = @{ Authorization = 'Bearer ' + $token })",
       "Bash($items = Invoke-RestMethod -Uri 'http://localhost:8080/api/v1/price-list/items' -Headers $headers)",
       "Bash(Write-Host '=== MEDICATION items ===')",
-      "Bash($items)"
+      "Bash($items)",
+      "Bash(powershell.exe -Command \"Start-Sleep -Seconds 45; cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp''; docker-compose ps\")",
+      "Bash(powershell.exe -Command \"Start-Sleep -Seconds 30; curl -s http://localhost:8080/actuator/health\")",
+      "Bash(powershell.exe -Command \"Start-Sleep -Seconds 30; Invoke-RestMethod -Uri ''http://localhost:8080/actuator/health'' -Method Get\")",
+      "Bash(powershell.exe -Command \"Invoke-RestMethod -Uri ''http://localhost:8080/api/v1/audit-logs?entityType=Veterinarian&action=CREATE'' -Method Get | ConvertTo-Json -Depth 3 | Select-Object -First 50\")",
+      "Bash(powershell.exe -Command \"\\(Invoke-RestMethod -Uri ''http://localhost:8080/api/v1/audit-logs'' -Method Get\\).Count\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend''; .\\\\mvnw.cmd compile -DskipTests -e 2>&1 | Select-Object -Last 100\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\piotr\\\\IdeaProjects\\\\drag-n-drop\\\\klinikaxp\\\\backend''; .\\\\mvnw.cmd compile -DskipTests -Pfast -q\")",
+      "Bash(powershell.exe -Command \"Start-Sleep -Seconds 35; Invoke-RestMethod -Uri ''http://localhost:8080/actuator/health'' -Method Get\")",
+      "Bash(../mvnw.cmd spring-boot:run:*)",
+      "Bash(ping:*)"
     ],
     "defaultMode": "acceptEdits"
   }

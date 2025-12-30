@@ -21,3 +21,19 @@ export { useDashboardStats, type UseDashboardStatsResult } from './useDashboardS
 export { usePagination, type UsePaginationOptions, type UsePaginationResult } from './usePagination';
 export { useConfirmDialog, type ConfirmDialogState, type UseConfirmDialogResult } from './useConfirmDialog';
 export { useVisitDraft } from './useVisitDraft';
+
+// React Query hooks (new pattern)
+export { queryKeys } from './queryKeys';
+export {
+  useVisitsQuery,
+  useVisitsForDateQuery,
+  useVisitsForVetQuery,
+  useVisitsForVetRangeQuery,
+  useCreateVisitMutation,
+  useUpdateVisitMutation,
+  useUpdateVisitStatusMutation,
+  useReassignVisitMutation,
+  useDeleteVisitMutation,
+  useCheckInVisitMutation,
+  useVisitsWithQuery,
+} from './useVisitsQuery';

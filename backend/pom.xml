@@ -44,9 +44,10 @@
 
         <!-- Plugin versions -->
         <spotless.version>2.43.0</spotless.version>
-        
         <checkstyle.version>3.4.0</checkstyle.version>
         <jacoco.version>0.8.11</jacoco.version>
+        <spotbugs.version>4.8.3.0</spotbugs.version>
+        <enforcer.version>3.4.1</enforcer.version>
     </properties>
 
     <dependencyManagement>
@@ -229,6 +230,34 @@
                     </executions>
                 </plugin>
 
+                <!-- SpotBugs - Bug Detection -->
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>${spotbugs.version}</version>
+                    <configuration>
+                        <effort>Max</effort>
+                        <threshold>Medium</threshold>
+                        <failOnError>true</failOnError>
+                        <plugins>
+                            <plugin>
+                                <groupId>com.h3xstream.findsecbugs</groupId>
+                                <artifactId>findsecbugs-plugin</artifactId>
+                                <version>1.13.0</version>
+                            </plugin>
+                        </plugins>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>spotbugs-check</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
                 <!-- JaCoCo - Code Coverage -->
                 <plugin>
                     <groupId>org.jacoco</groupId>
@@ -261,10 +290,42 @@
                                             <limit>
                                                 <counter>LINE</counter>
                                                 <value>COVEREDRATIO</value>
-                                                <minimum>0.0</minimum>
+                                                <minimum>0.50</minimum>
+                                            </limit>
+                                            <limit>
+                                                <counter>BRANCH</counter>
+                                                <value>COVEREDRATIO</value>
+                                                <minimum>0.40</minimum>
                                             </limit>
                                         </limits>
                                     </rule>
+                                </rules>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!-- Maven Enforcer - Dependency Rules -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>${enforcer.version}</version>
+                    <executions>
+                        <execution>
+                            <id>enforce-rules</id>
+                            <goals>
+                                <goal>enforce</goal>
+                            </goals>
+                            <configuration>
+                                <rules>
+                                    <requireMavenVersion>
+                                        <version>[3.8.0,)</version>
+                                    </requireMavenVersion>
+                                    <requireJavaVersion>
+                                        <version>[21,)</version>
+                                    </requireJavaVersion>
+                                    <banDuplicatePomDependencyVersions/>
+                                    <reactorModuleConvergence/>
                                 </rules>
                             </configuration>
                         </execution>
@@ -316,6 +377,14 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
 
@@ -326,8 +395,9 @@
             <properties>
                 <spotless.check.skip>true</spotless.check.skip>
                 <checkstyle.skip>true</checkstyle.skip>
-                
                 <jacoco.skip>true</jacoco.skip>
+                <spotbugs.skip>true</spotbugs.skip>
+                <enforcer.skip>true</enforcer.skip>
             </properties>
         </profile>
 
@@ -339,6 +409,10 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-checkstyle-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-maven-plugin</artifactId>
                     </plugin>
                 </plugins>
             </build>
@@ -354,7 +428,7 @@
             </activation>
             <properties>
                 <checkstyle.skip>true</checkstyle.skip>
-                
+                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
     </profiles>

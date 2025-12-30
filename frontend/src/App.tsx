@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth';
 import { I18nProvider, useI18n, LanguageSelector } from './i18n';
+import { QueryProvider } from './providers';
 import { useAuthErrorHandler, useDashboardStats } from './hooks';
 import { PatientsPage, PatientDetailsPage, ClientsPage, VisitsPage, WaitingRoomPage, StatisticsPage, InventoryUsagePage, PriceListPage, LoginPage, DoctorsPage, InventoryPage, AuditPage, ConsentsPage, CertificatesPage, PaymentsPage, VisitDetailsPage } from './pages';
 import { Button, Card, CardTitle, Text, Loading, ToastProvider, StatCard } from './components/ui';
@@ -12,15 +13,17 @@ import { colors, spacing, borderRadius, shadows, layout, fontSize, fontWeight } 
 function App() {
   return (
     <ErrorBoundary>
-      <I18nProvider>
-        <ToastProvider>
-          <AuthProvider>
-            <BrowserRouter>
-              <AppContent />
-            </BrowserRouter>
-          </AuthProvider>
-        </ToastProvider>
-      </I18nProvider>
+      <QueryProvider>
+        <I18nProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <BrowserRouter>
+                <AppContent />
+              </BrowserRouter>
+            </AuthProvider>
+          </ToastProvider>
+        </I18nProvider>
+      </QueryProvider>
     </ErrorBoundary>
   );
 }

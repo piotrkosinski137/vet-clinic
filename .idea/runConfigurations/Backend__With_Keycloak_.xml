@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Backend (With Keycloak)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="application" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.vetclinic.VetClinicApplication" />
+    <option name="ACTIVE_PROFILES" value="postgres,keycloak" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/backend/application" />
+    <envs>
+      <env name="KEYCLOAK_URL" value="http://localhost:8180" />
+      <env name="KEYCLOAK_REALM" value="vetclinic" />
+    </envs>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

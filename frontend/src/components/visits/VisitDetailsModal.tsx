@@ -55,7 +55,6 @@ import {
   Tab,
   TabPanel,
   ConfirmDialog,
-  Loading,
   ModalLoader,
 } from '../ui';
 import { MaterialsSelector } from '../materials';

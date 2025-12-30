@@ -35,7 +35,7 @@ import { queryKeys } from './queryKeys';
  */
 export function useVisitsQuery(filters?: VisitFilters) {
   return useQuery({
-    queryKey: queryKeys.visits.list(filters),
+    queryKey: queryKeys.visits.list(filters as Record<string, unknown> | undefined),
     queryFn: () => api.getVisits(filters),
   });
 }

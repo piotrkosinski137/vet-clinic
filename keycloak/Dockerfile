@@ -18,4 +18,7 @@ ENV KC_HOSTNAME_STRICT=false
 ENV KC_PROXY=edge
 ENV KC_HEALTH_ENABLED=true
 
+# Limit JVM memory for Railway free tier
+ENV JAVA_OPTS_APPEND="-XX:MaxRAMPercentage=70.0 -XX:InitialRAMPercentage=50.0 -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -Djava.security.egd=file:/dev/urandom"
+
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start", "--import-realm", "--optimized"]

@@ -21,4 +21,8 @@ ENV KC_HEALTH_ENABLED=true
 # Limit JVM memory for Railway free tier
 ENV JAVA_OPTS_APPEND="-XX:MaxRAMPercentage=70.0 -XX:InitialRAMPercentage=50.0 -Djava.security.egd=file:/dev/urandom"
 
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start", "--import-realm", "--optimized"]
+# Copy startup script that converts Railway env vars to Keycloak format
+COPY start.sh /opt/keycloak/start.sh
+RUN chmod +x /opt/keycloak/start.sh
+
+ENTRYPOINT ["/opt/keycloak/start.sh"]

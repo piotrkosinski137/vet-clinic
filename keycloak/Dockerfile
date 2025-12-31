@@ -22,7 +22,6 @@ ENV KC_HEALTH_ENABLED=true
 ENV JAVA_OPTS_APPEND="-XX:MaxRAMPercentage=70.0 -XX:InitialRAMPercentage=50.0 -Djava.security.egd=file:/dev/urandom"
 
 # Copy startup script that converts Railway env vars to Keycloak format
-COPY start.sh /opt/keycloak/start.sh
-RUN chmod +x /opt/keycloak/start.sh
+COPY --chmod=755 start.sh /opt/keycloak/start.sh
 
 ENTRYPOINT ["/opt/keycloak/start.sh"]

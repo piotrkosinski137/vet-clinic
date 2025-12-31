@@ -1,5 +1,7 @@
 # Railway Production Profile - Memory Optimized
 spring:
+  main:
+    lazy-initialization: true
   datasource:
     url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}
     username: ${PGUSER}

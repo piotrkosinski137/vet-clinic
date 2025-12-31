@@ -58,4 +58,12 @@
         </root>
         <logger name="com.vetclinic" level="DEBUG"/>
     </springProfile>
+
+    <!-- Railway production profile - console only -->
+    <springProfile name="railway">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.vetclinic" level="INFO"/>
+    </springProfile>
 </configuration>

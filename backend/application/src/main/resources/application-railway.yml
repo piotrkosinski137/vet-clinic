@@ -36,7 +36,7 @@ server:
   forward-headers-strategy: native
 
 cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://frontend-production-6b31.up.railway.app}
   allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
   allowed-headers: "*"
   allow-credentials: true

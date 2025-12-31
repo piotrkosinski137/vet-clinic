@@ -3,6 +3,7 @@
  */
 
 import { dispatchAuthError } from '../hooks/useAuthErrorHandler';
+import { config } from '../config/env';
 import type {
   PatientRequest,
   PatientResponse,
@@ -52,7 +53,7 @@ import type {
   PaymentResponse,
 } from './types';
 
-const API_BASE = '/api/v1';
+const API_BASE = config.api.baseUrl;
 
 /** Token storage keys */
 const TOKEN_KEYS = {

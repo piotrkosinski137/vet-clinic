@@ -1,4 +1,4 @@
-# Railway Production Profile
+# Railway Production Profile - Memory Optimized
 spring:
   datasource:
     url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}
@@ -6,8 +6,11 @@ spring:
     password: ${PGPASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 5
-      minimum-idle: 2
+      maximum-pool-size: 4
+      minimum-idle: 1
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
 
   jpa:
     hibernate:
@@ -16,6 +19,8 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
+        query.plan_cache_max_size: 512
+        query.in_clause_parameter_padding: true
     show-sql: false
 
   flyway:
@@ -34,6 +39,11 @@ server:
   port: ${PORT:8080}
   shutdown: graceful
   forward-headers-strategy: native
+  tomcat:
+    threads:
+      max: 50
+      min-spare: 5
+    max-connections: 200
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:https://frontend-production-6b31.up.railway.app}
@@ -56,11 +66,25 @@ logging:
     com.vetclinic: INFO
     org.hibernate.SQL: WARN
 
+# Disable Swagger UI in production (saves ~20-30MB)
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# Minimal actuator endpoints (saves ~10-20MB)
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health
   endpoint:
     health:
-      show-details: when-authorized
+      show-details: never
+      probes:
+        enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: false

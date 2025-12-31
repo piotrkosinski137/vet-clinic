@@ -58,8 +58,13 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
 
-# JVM options for containers
-ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=50.0"
+# JVM options for containers (optimized for Railway 1GB limit)
+ENV JAVA_OPTS="-XX:+UseContainerSupport \
+    -XX:MaxRAMPercentage=60.0 \
+    -XX:InitialRAMPercentage=40.0 \
+    -Xss512k \
+    -XX:MaxMetaspaceSize=128m \
+    -XX:ReservedCodeCacheSize=96m"
 
 # Set Spring profile to railway
 ENV SPRING_PROFILES_ACTIVE=railway

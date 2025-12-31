@@ -2,7 +2,6 @@
   <configuration default="false" name="Backend (PostgreSQL)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <module name="application" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="com.vetclinic.VetClinicApplication" />
-    <option name="ACTIVE_PROFILES" value="postgres" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/backend/application" />
     <method v="2">
       <option name="Make" enabled="true" />
